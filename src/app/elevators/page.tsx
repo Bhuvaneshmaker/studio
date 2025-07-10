@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
+import { BackButton } from '@/components/back-button';
 
 export default function ElevatorsPage() {
   const searchParams = useSearchParams();
@@ -42,9 +43,7 @@ export default function ElevatorsPage() {
               {pageTitle}
             </h2>
           </div>
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link href="/">Dashboard</Link>
-          </Button>
+          <BackButton />
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">

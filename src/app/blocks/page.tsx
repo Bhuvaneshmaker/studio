@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { BlockCard } from '@/components/block-card';
 import { AddBlockForm } from '@/components/add-block-form';
 import { useNaming } from '@/hooks/use-naming';
+import { BackButton } from '@/components/back-button';
 
 export default function BlocksPage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
@@ -18,18 +19,21 @@ export default function BlocksPage() {
   const notifiedErrors = useRef<Set<string>>(new Set());
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false);
   const { setBlockName } = useNaming();
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     setElevators(generateInitialElevators());
+    setInitialLoad(false);
   }, []);
 
   useEffect(() => {
-    if (elevators.length === 0) return;
+    if (initialLoad || elevators.length === 0) return;
 
     const interval = setInterval(() => {
       const { updatedElevators, newAlerts } = updateElevatorState(elevators, notifiedErrors.current);
-      setElevators(updatedElevators);
       
+      setElevators(updatedElevators);
+
       newAlerts.forEach(alert => {
         if (!notifiedErrors.current.has(alert.id)) {
           toast({
@@ -43,7 +47,7 @@ export default function BlocksPage() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [elevators, toast]);
+  }, [elevators, toast, initialLoad]);
   
   const elevatorsByBlock = elevators.reduce((acc, elevator) => {
     const blockId = elevator.blockId;
@@ -81,9 +85,7 @@ export default function BlocksPage() {
               Blocks
             </h2>
           </div>
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link href="/elevators"><SlidersHorizontal className="w-4 h-4 mr-2"/>View Elevators</Link>
-          </Button>
+          <BackButton />
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">

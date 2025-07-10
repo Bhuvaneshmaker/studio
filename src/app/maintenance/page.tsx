@@ -7,24 +7,27 @@ import { useNaming } from '@/hooks/use-naming';
 import { useToast } from "@/hooks/use-toast";
 import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
 import Link from 'next/link';
-import { Building, Home, Wrench, ShieldCheck, ListChecks, Info } from 'lucide-react';
+import { Building, Wrench, ShieldCheck, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
+import { BackButton } from '@/components/back-button';
 
 export default function MaintenancePage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const { getBlockName, getElevatorName } = useNaming();
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     setElevators(generateInitialElevators());
+    setInitialLoad(false);
   }, []);
 
   useEffect(() => {
-    if (elevators.length === 0) return;
+    if (initialLoad || elevators.length === 0) return;
 
     const interval = setInterval(() => {
       const { updatedElevators, newAlerts } = updateElevatorState(elevators, notifiedErrors.current);
@@ -43,7 +46,7 @@ export default function MaintenancePage() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [elevators, toast]);
+  }, [elevators, toast, initialLoad]);
 
   const maintenanceElevators = elevators.filter(e => e.status === 'MAINTENANCE');
 
@@ -65,12 +68,7 @@ export default function MaintenancePage() {
               Maintenance Day
             </h2>
           </div>
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link href="/">
-              <Home className="w-4 h-4 mr-2" />
-              Dashboard
-            </Link>
-          </Button>
+          <BackButton />
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserManagementCard } from '@/components/user-management-card';
 import { Building, Users, Home } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 
 export default function UsersPage() {
   return (
@@ -24,12 +25,7 @@ export default function UsersPage() {
               User Management
             </h2>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/">
-              <Home className="w-4 h-4 mr-2" />
-              Dashboard
-            </Link>
-          </Button>
+          <BackButton />
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">

@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { BackButton } from '@/components/back-button';
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
     <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
@@ -36,13 +37,15 @@ export default function ElevatorDetailPage() {
 
     const { toast } = useToast();
     const notifiedErrors = useRef<Set<string>>(new Set());
+    const [initialLoad, setInitialLoad] = useState(true);
 
      useEffect(() => {
         setAllElevators(generateInitialElevators());
+        setInitialLoad(false);
     }, []);
 
     useEffect(() => {
-        if (allElevators.length === 0) return;
+        if (initialLoad || allElevators.length === 0) return;
 
         const interval = setInterval(() => {
             const { updatedElevators, newAlerts } = updateElevatorState(allElevators, notifiedErrors.current);
@@ -66,7 +69,7 @@ export default function ElevatorDetailPage() {
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [id, toast, allElevators]);
+    }, [id, toast, allElevators, initialLoad]);
     
     useEffect(() => {
         if (!elevator && allElevators.length > 0) {
@@ -124,7 +127,7 @@ export default function ElevatorDetailPage() {
                                 ElevateView
                             </h1>
                         </Link>
-                        <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
+                         <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
                          <Link href="/elevators" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
                             All Elevators
                         </Link>
@@ -133,9 +136,7 @@ export default function ElevatorDetailPage() {
                             {elevatorName} (Block {elevator.blockId})
                          </h2>
                     </div>
-                    <Button asChild variant="outline" size="sm" className="shrink-0">
-                        <Link href="/elevators"><ArrowLeft/> Back</Link>
-                    </Button>
+                    <BackButton />
                 </div>
             </header>
             <main className="container mx-auto p-4 sm:p-6">

@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS, NUM_BLOCKS } from '@/lib/elevator-simulation';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { BackButton } from '@/components/back-button';
 
 const allBlockIds = Array.from({ length: NUM_BLOCKS }, (_, i) => (i + 1).toString());
 const allElevatorIds = Array.from({ length: NUM_BLOCKS }, (_, i) => {
@@ -200,12 +201,7 @@ export default function NamingPage() {
                             Manage Naming
                         </h2>
                     </div>
-                     <Button asChild variant="outline" size="sm">
-                        <Link href="/">
-                            <Home className="w-4 h-4 mr-2" />
-                            Dashboard
-                        </Link>
-                    </Button>
+                     <BackButton />
                 </div>
             </header>
             <main className="container mx-auto p-4 sm:p-6">
