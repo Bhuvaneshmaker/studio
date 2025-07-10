@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Building, Home, Save, Trash2, Info, Search, Router, SlidersHorizontal, MapPin } from 'lucide-react';
+import { Building, Home, Save, Trash2, Info, Search, Landmark, SlidersHorizontal, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS, NUM_BLOCKS } from '@/lib/elevator-simulation';
 import { cn } from '@/lib/utils';
@@ -211,7 +211,7 @@ export default function NamingPage() {
             <main className="container mx-auto p-4 sm:p-6">
                 <Tabs defaultValue="block" className="w-full mb-6" onValueChange={handleTabChange}>
                     <TabsList className="grid w-full grid-cols-3 h-12 text-base">
-                        <TabsTrigger value="block"><Router className="mr-2"/>Blocks</TabsTrigger>
+                        <TabsTrigger value="block"><Landmark className="mr-2"/>Blocks</TabsTrigger>
                         <TabsTrigger value="elevator"><SlidersHorizontal className="mr-2"/>Elevators</TabsTrigger>
                         <TabsTrigger value="floor"><MapPin className="mr-2"/>Floors</TabsTrigger>
                     </TabsList>

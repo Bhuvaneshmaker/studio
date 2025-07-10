@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ElevatorGrid } from '@/components/elevator-grid';
-import { Building, Search, X, Router } from 'lucide-react';
+import { Building, Search, X, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';

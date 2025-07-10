@@ -1,6 +1,6 @@
 
 import ElevatorDashboard from '@/components/elevator-dashboard';
-import { Building, Pencil, Wrench, Router, SlidersHorizontal, Users } from 'lucide-react';
+import { Building, Pencil, Wrench, Landmark, SlidersHorizontal, Users } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -19,7 +19,7 @@ export default function Home() {
             </div>
             <nav className="flex items-center gap-2">
                 <Button asChild variant="outline" size="sm" className="shrink-0">
-                    <Link href="/blocks"><Router className="w-4 h-4 mr-2"/>View Blocks</Link>
+                    <Link href="/blocks"><Landmark className="w-4 h-4 mr-2"/>View Blocks</Link>
                 </Button>
                 <Button asChild variant="outline" size="sm" className="shrink-0">
                     <Link href="/elevators"><SlidersHorizontal className="w-4 h-4 mr-2"/>View Elevators</Link>

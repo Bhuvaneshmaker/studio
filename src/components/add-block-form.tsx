@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { PlusCircle, Router, SlidersHorizontal } from 'lucide-react';
+import { PlusCircle, Landmark, SlidersHorizontal } from 'lucide-react';
 
 const addBlockSchema = z.object({
   blockName: z.string().min(1, { message: "Block name is required." }),
@@ -59,7 +59,7 @@ export function AddBlockForm({ open, onOpenChange, onAddBlock, children }: AddBl
               name="blockName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2"><Router/> Block Name</FormLabel>
+                  <FormLabel className="flex items-center gap-2"><Landmark/> Block Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., North Tower, Research Wing" {...field} />
                   </FormControl>

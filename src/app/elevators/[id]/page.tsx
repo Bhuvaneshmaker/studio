@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Router } from 'lucide-react';
+import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
@@ -171,7 +171,7 @@ export default function ElevatorDetailPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <DetailItem 
-                                    icon={<Router className="w-6 h-6 text-muted-foreground" />}
+                                    icon={<Landmark className="w-6 h-6 text-muted-foreground" />}
                                     label="Block ID"
                                     value={elevator.blockId}
                                 />
