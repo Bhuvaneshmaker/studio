@@ -170,7 +170,6 @@ export default function NamingPage() {
                         >
                              <div className="flex justify-between items-center">
                                 <span className="font-medium truncate">{nameGetters[type](id)}</span>
-                                <span className="text-xs text-muted-foreground">{id}</span>
                             </div>
                         </button>
                     ))}
