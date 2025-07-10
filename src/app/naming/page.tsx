@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Building, Home, Save, Trash2, Info } from 'lucide-react';
+import { Building, Home, Save, Trash2, Info, Search } from 'lucide-react';
 import Link from 'next/link';
 import { NUM_BLOCKS, NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS } from '@/lib/elevator-simulation';
 import { cn } from '@/lib/utils';
@@ -116,6 +116,7 @@ export default function NamingPage() {
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [selectedType, setSelectedType] = useState<NamingType | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const handleSelect = (id: string, type: NamingType) => {
         setSelectedId(id);
@@ -146,28 +147,37 @@ export default function NamingPage() {
     const renderNamingList = (
         itemIds: string[], 
         type: NamingType
-    ) => (
-        <ScrollArea className="h-[65vh]">
-            <div className="space-y-2 pr-4">
-                {itemIds.map(id => (
-                    <button 
-                        key={id} 
-                        onClick={() => handleSelect(id, type)}
-                        className={cn(
-                            "w-full text-left p-3 border rounded-lg transition-colors",
-                            "hover:bg-muted/80",
-                            selectedId === id && selectedType === type ? "bg-muted border-primary" : "bg-muted/40"
-                        )}
-                    >
-                         <div className="flex justify-between items-center">
-                            <span className="font-medium">{nameGetters[type](id)}</span>
-                            <span className="text-xs text-muted-foreground">{id}</span>
-                        </div>
-                    </button>
-                ))}
-            </div>
-        </ScrollArea>
-    );
+    ) => {
+        const query = searchQuery.toLowerCase();
+        const filteredIds = itemIds.filter(id => {
+            if (!query) return true;
+            const name = nameGetters[type](id).toLowerCase();
+            return name.includes(query) || id.toLowerCase().includes(query);
+        });
+
+        return (
+            <ScrollArea className="h-[58vh]">
+                <div className="space-y-2 pr-4">
+                    {filteredIds.map(id => (
+                        <button 
+                            key={id} 
+                            onClick={() => handleSelect(id, type)}
+                            className={cn(
+                                "w-full text-left p-3 border rounded-lg transition-colors",
+                                "hover:bg-muted/80",
+                                selectedId === id && selectedType === type ? "bg-muted border-primary" : "bg-muted/40"
+                            )}
+                        >
+                             <div className="flex justify-between items-center">
+                                <span className="font-medium truncate">{nameGetters[type](id)}</span>
+                                <span className="text-xs text-muted-foreground">{id}</span>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </ScrollArea>
+        );
+    }
 
     return (
         <div className="min-h-screen">
@@ -198,30 +208,35 @@ export default function NamingPage() {
             <main className="container mx-auto p-4 sm:p-6">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-1">
-                        <Tabs defaultValue="blocks" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="blocks">Blocks</TabsTrigger>
-                                <TabsTrigger value="elevators">Elevators</TabsTrigger>
-                                <TabsTrigger value="floors">Floors</TabsTrigger>
-                            </TabsList>
-                            <Card className="mt-4">
-                                <TabsContent value="blocks" className="m-0">
-                                    <CardContent className="pt-6">
+                        <Card>
+                            <CardContent className="p-4 space-y-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input 
+                                        placeholder="Filter by name or ID..."
+                                        className="pl-10 w-full"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                <Tabs defaultValue="blocks" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="blocks">Blocks</TabsTrigger>
+                                        <TabsTrigger value="elevators">Elevators</TabsTrigger>
+                                        <TabsTrigger value="floors">Floors</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="blocks" className="mt-4">
                                         {renderNamingList(allBlockIds, 'block')}
-                                    </CardContent>
-                                </TabsContent>
-                                <TabsContent value="elevators" className="m-0">
-                                     <CardContent className="pt-6">
+                                    </TabsContent>
+                                    <TabsContent value="elevators" className="mt-4">
                                         {renderNamingList(allElevatorIds, 'elevator')}
-                                    </CardContent>
-                                </TabsContent>
-                                <TabsContent value="floors" className="m-0">
-                                     <CardContent className="pt-6">
+                                    </TabsContent>
+                                    <TabsContent value="floors" className="mt-4">
                                         {renderNamingList(allFloorIds, 'floor')}
-                                    </CardContent>
-                                </TabsContent>
-                            </Card>
-                        </Tabs>
+                                    </TabsContent>
+                                </Tabs>
+                            </CardContent>
+                        </Card>
                     </div>
                      <div className="md:col-span-2">
                         <NamingEditor 
