@@ -13,4 +13,5 @@ export interface ElevatorData {
   totalFloors: number;
   mainPower: boolean;
   emergencyStop: boolean;
+  maintenanceDetails?: string;
 }

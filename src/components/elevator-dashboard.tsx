@@ -14,10 +14,6 @@ export default function ElevatorDashboard() {
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
 
-  const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
-  const errorCount = elevators.filter(e => e.status === 'ERROR').length;
-  const activeCount = TOTAL_ELEVATORS - maintenanceCount - errorCount;
-
   useEffect(() => {
     setElevators(generateInitialElevators());
   }, []);
@@ -28,7 +24,7 @@ export default function ElevatorDashboard() {
     const interval = setInterval(() => {
       const { updatedElevators, newAlerts } = updateElevatorState(elevators, notifiedErrors.current);
       setElevators(updatedElevators);
-
+      
       newAlerts.forEach(alert => {
         if (!notifiedErrors.current.has(alert.id)) {
           toast({
@@ -43,6 +39,10 @@ export default function ElevatorDashboard() {
 
     return () => clearInterval(interval);
   }, [elevators, toast]);
+
+  const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
+  const errorCount = elevators.filter(e => e.status === 'ERROR' || e.emergencyStop).length;
+  const activeCount = TOTAL_ELEVATORS - maintenanceCount - errorCount;
 
   return (
     <>
@@ -67,11 +67,13 @@ export default function ElevatorDashboard() {
                   <p className="text-sm text-muted-foreground">Elevators Active</p>
               </div>
             </Link>
-            <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center">
-              <Wrench className="w-8 h-8 mx-auto text-yellow-500 mb-2"/>
-              <p className="text-2xl sm:text-3xl font-bold">{maintenanceCount}</p>
-              <p className="text-sm text-muted-foreground">In Maintenance</p>
-            </div>
+            <Link href="/maintenance" className="block hover:scale-105 transition-transform duration-200">
+                <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center h-full">
+                <Wrench className="w-8 h-8 mx-auto text-yellow-500 mb-2"/>
+                <p className="text-2xl sm:text-3xl font-bold">{maintenanceCount}</p>
+                <p className="text-sm text-muted-foreground">In Maintenance</p>
+                </div>
+            </Link>
             <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center">
               <ShieldAlert className="w-8 h-8 mx-auto text-red-500 mb-2"/>
               <p className="text-2xl sm:text-3xl font-bold">{errorCount}</p>

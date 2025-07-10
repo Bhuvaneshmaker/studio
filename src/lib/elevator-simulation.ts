@@ -5,6 +5,16 @@ export const NUM_BLOCKS = 15;
 export const MAX_FLOORS = 15;
 export const TOTAL_ELEVATORS = NUM_BLOCKS * NUM_ELEVATORS_PER_BLOCK;
 
+const maintenanceReasons = [
+  "Scheduled monthly inspection.",
+  "Replacing worn-out door sensors.",
+  "Upgrading control panel software.",
+  "Repairing faulty wiring.",
+  "Annual safety certification.",
+  "Calibrating floor leveling system.",
+  "Emergency brake system check.",
+];
+
 export const generateInitialElevators = (): ElevatorData[] => {
   const elevators: ElevatorData[] = [];
   
@@ -17,10 +27,12 @@ export const generateInitialElevators = (): ElevatorData[] => {
         let direction: ElevatorData['direction'] = 'IDLE';
         let doorState: ElevatorData['doorState'] = 'CLOSED';
         let destinationFloor = currentFloor;
+        let maintenanceDetails: string | undefined = undefined;
 
         const rand = Math.random();
         if (rand < 0.1) {
           status = 'MAINTENANCE';
+          maintenanceDetails = maintenanceReasons[Math.floor(Math.random() * maintenanceReasons.length)];
         } else if (rand < 0.3) {
           status = 'MOVING';
           destinationFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
@@ -39,6 +51,7 @@ export const generateInitialElevators = (): ElevatorData[] => {
           destinationFloor,
           mainPower: Math.random() > 0.05,
           emergencyStop: false,
+          maintenanceDetails,
         });
     }
   }
@@ -75,6 +88,11 @@ export const updateElevatorState = (
         }
 
         if (newElevator.status === 'MAINTENANCE') {
+             // Occasionally, a maintenance task finishes
+            if (Math.random() < 0.01) {
+                newElevator.status = 'IDLE';
+                newElevator.maintenanceDetails = undefined;
+            }
             return newElevator;
         }
 
