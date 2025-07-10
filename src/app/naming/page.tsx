@@ -9,12 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Building, Home, Save, Trash2, Info, Search, Menu } from 'lucide-react';
+import { Building, Home, Save, Trash2, Info, Search } from 'lucide-react';
 import Link from 'next/link';
 import { NUM_BLOCKS, NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS } from '@/lib/elevator-simulation';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarInset, SidebarHeader } from '@/components/ui/sidebar';
 
 const allBlockIds = Array.from({ length: NUM_BLOCKS }, (_, i) => (i + 1).toString());
 const allElevatorIds = Array.from({ length: NUM_BLOCKS }, (_, i) => {
@@ -57,7 +56,7 @@ const NamingEditor = ({
                 <CardContent className="pt-6 flex flex-col items-center justify-center text-center h-48">
                     <Info className="w-12 h-12 text-muted-foreground mb-4" />
                     <p className="font-semibold">Select an item</p>
-                    <p className="text-sm text-muted-foreground">Click an item from the list on the left to edit its name.</p>
+                    <p className="text-sm text-muted-foreground">Click an item from the list to edit its name.</p>
                 </CardContent>
             </Card>
         );
@@ -163,7 +162,7 @@ export default function NamingPage() {
         });
 
         return (
-            <ScrollArea className="h-[calc(100vh-220px)]">
+            <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-2 pr-4">
                     {filteredIds.map(id => (
                         <button 
@@ -184,49 +183,44 @@ export default function NamingPage() {
     }
 
     return (
-        <SidebarProvider>
-            <div className="min-h-screen">
-                 <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="container mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-2 sm:gap-3 truncate">
-                            <SidebarTrigger className="md:hidden">
-                                <Menu />
-                            </SidebarTrigger>
-                            <Link href="/" className="flex items-center gap-2 sm:gap-3">
-                                <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                                    <Building className="w-6 h-6" />
-                                </div>
-                                <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
-                                    ElevateView
-                                </h1>
-                            </Link>
-                            <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-                            <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
-                                Manage Naming
-                            </h2>
-                        </div>
-                         <Button asChild variant="outline" size="sm">
-                            <Link href="/">
-                                <Home className="w-4 h-4 mr-2" />
-                                Dashboard
-                            </Link>
-                        </Button>
+        <div className="min-h-screen">
+             <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+                <div className="container mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-2 sm:gap-3 truncate">
+                        <Link href="/" className="flex items-center gap-2 sm:gap-3">
+                            <div className="bg-primary text-primary-foreground p-2 rounded-lg">
+                                <Building className="w-6 h-6" />
+                            </div>
+                            <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
+                                ElevateView
+                            </h1>
+                        </Link>
+                        <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
+                        <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
+                            Manage Naming
+                        </h2>
                     </div>
-                </header>
-                <div className="flex">
-                    <Sidebar>
-                        <SidebarHeader>
-                            <Tabs defaultValue="block" className="w-full" onValueChange={handleTabChange}>
-                                <TabsList className="grid w-full grid-cols-3 h-12 text-base">
-                                    <TabsTrigger value="block">Blocks</TabsTrigger>
-                                    <TabsTrigger value="elevator">Elevators</TabsTrigger>
-                                    <TabsTrigger value="floor">Floors</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </SidebarHeader>
-                        <SidebarContent>
-                           <div className="p-4 space-y-4">
-                                <div className="relative">
+                     <Button asChild variant="outline" size="sm">
+                        <Link href="/">
+                            <Home className="w-4 h-4 mr-2" />
+                            Dashboard
+                        </Link>
+                    </Button>
+                </div>
+            </header>
+            <main className="container mx-auto p-4 sm:p-6">
+                <Tabs defaultValue="block" className="w-full mb-6" onValueChange={handleTabChange}>
+                    <TabsList className="grid w-full grid-cols-3 h-12 text-base">
+                        <TabsTrigger value="block">Blocks</TabsTrigger>
+                        <TabsTrigger value="elevator">Elevators</TabsTrigger>
+                        <TabsTrigger value="floor">Floors</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1">
+                       <Card>
+                           <CardContent className="pt-6 space-y-4">
+                               <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input 
                                         placeholder="Filter by name or ID..."
@@ -238,32 +232,30 @@ export default function NamingPage() {
                                 {selectedType === 'block' && renderNamingList(allBlockIds, 'block')}
                                 {selectedType === 'elevator' && renderNamingList(allElevatorIds, 'elevator')}
                                 {selectedType === 'floor' && renderNamingList(allFloorIds, 'floor')}
-                           </div>
-                        </SidebarContent>
-                    </Sidebar>
-                    <SidebarInset>
-                        <main className="container mx-auto p-4 sm:p-6">
-                            <NamingEditor 
-                                selectedId={selectedId}
-                                selectedType={selectedType}
-                                currentName={selectedId && selectedType ? nameGetters[selectedType](selectedId) : ''}
-                                customName={selectedId && selectedType ? customNameMaps[selectedType][selectedId] || '' : ''}
-                                onSave={(name) => {
-                                    if (selectedId && selectedType) {
-                                        nameSetters[selectedType](selectedId, name);
-                                    }
-                                }}
-                                onDelete={() => {
-                                     if (selectedId && selectedType) {
-                                        nameDeleters[selectedType](selectedId);
-                                        handleSelect(selectedId, selectedType); // Reselect to refresh editor
-                                    }
-                                }}
-                            />
-                        </main>
-                    </SidebarInset>
+                           </CardContent>
+                       </Card>
+                    </div>
+                    <div className="md:col-span-2">
+                        <NamingEditor 
+                            selectedId={selectedId}
+                            selectedType={selectedType}
+                            currentName={selectedId && selectedType ? nameGetters[selectedType](selectedId) : ''}
+                            customName={selectedId && selectedType ? customNameMaps[selectedType][selectedId] || '' : ''}
+                            onSave={(name) => {
+                                if (selectedId && selectedType) {
+                                    nameSetters[selectedType](selectedId, name);
+                                }
+                            }}
+                            onDelete={() => {
+                                 if (selectedId && selectedType) {
+                                    nameDeleters[selectedType](selectedId);
+                                    handleSelect(selectedId, selectedType); // Reselect to refresh editor
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
-            </div>
-        </SidebarProvider>
+            </main>
+        </div>
     );
 }
