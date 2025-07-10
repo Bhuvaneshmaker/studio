@@ -2,11 +2,10 @@
 "use client";
 
 import ElevatorDashboard from '@/components/elevator-dashboard';
-import { Building, Pencil, Wrench, Landmark, SlidersHorizontal, Users, LogOut } from 'lucide-react';
+import { Building, Pencil, Wrench, Users, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function Home() {
   const { user, logout } = useAuth();
@@ -34,12 +33,6 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-4">
               <nav className="hidden sm:flex items-center gap-2">
-                  <Button asChild variant="outline" size="sm" className="shrink-0">
-                      <Link href="/blocks"><Landmark className="w-4 h-4 mr-2"/>View Blocks</Link>
-                  </Button>
-                  <Button asChild variant="outline" size="sm" className="shrink-0">
-                      <Link href="/elevators"><SlidersHorizontal className="w-4 h-4 mr-2"/>View Elevators</Link>
-                  </Button>
                   <Button asChild variant="ghost" size="icon" className="shrink-0">
                       <Link href="/naming" aria-label="Manage Naming">
                           <Pencil className="w-5 h-5"/>
