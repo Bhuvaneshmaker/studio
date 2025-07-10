@@ -7,44 +7,47 @@ import { Building, Wrench, ShieldAlert } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
-const NUM_ELEVATORS = 10;
+const NUM_ELEVATORS_PER_BLOCK = 10;
 const NUM_BLOCKS = 15;
 const MAX_FLOORS = 15;
+const TOTAL_ELEVATORS = NUM_BLOCKS * NUM_ELEVATORS_PER_BLOCK;
+
 
 const generateInitialElevators = (): ElevatorData[] => {
   const elevators: ElevatorData[] = [];
   const blockLetters = Array.from({ length: NUM_BLOCKS }, (_, i) => String.fromCharCode(65 + i));
   
-  for (let i = 1; i <= NUM_ELEVATORS; i++) {
-    const block = blockLetters[Math.floor(Math.random() * NUM_BLOCKS)];
-    const id = `${block}-${i}`;
-    const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
-    
-    let status: ElevatorData['status'] = 'IDLE';
-    let direction: ElevatorData['direction'] = 'IDLE';
-    let doorState: ElevatorData['doorState'] = 'CLOSED';
-    let destinationFloor = currentFloor;
+  for (const block of blockLetters) {
+    for (let i = 1; i <= NUM_ELEVATORS_PER_BLOCK; i++) {
+        const id = `${block}-${i}`;
+        const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
+        
+        let status: ElevatorData['status'] = 'IDLE';
+        let direction: ElevatorData['direction'] = 'IDLE';
+        let doorState: ElevatorData['doorState'] = 'CLOSED';
+        let destinationFloor = currentFloor;
 
-    const rand = Math.random();
-    if (rand < 0.1) {
-      status = 'MAINTENANCE';
-    } else if (rand < 0.3) {
-      status = 'MOVING';
-      destinationFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
-      if (destinationFloor === currentFloor) destinationFloor = (currentFloor % MAX_FLOORS) + 1;
-      direction = destinationFloor > currentFloor ? 'UP' : 'DOWN';
+        const rand = Math.random();
+        if (rand < 0.1) {
+          status = 'MAINTENANCE';
+        } else if (rand < 0.3) {
+          status = 'MOVING';
+          destinationFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
+          if (destinationFloor === currentFloor) destinationFloor = (currentFloor % MAX_FLOORS) + 1;
+          direction = destinationFloor > currentFloor ? 'UP' : 'DOWN';
+        }
+
+        elevators.push({
+          id,
+          currentFloor,
+          direction,
+          status,
+          doorState,
+          errorCode: 0,
+          totalFloors: MAX_FLOORS,
+          destinationFloor,
+        });
     }
-
-    elevators.push({
-      id,
-      currentFloor,
-      direction,
-      status,
-      doorState,
-      errorCode: 0,
-      totalFloors: MAX_FLOORS,
-      destinationFloor,
-    });
   }
   return elevators;
 };
@@ -56,7 +59,7 @@ export default function ElevatorDashboard() {
 
   const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
   const errorCount = elevators.filter(e => e.status === 'ERROR').length;
-  const activeCount = NUM_ELEVATORS - maintenanceCount - errorCount;
+  const activeCount = TOTAL_ELEVATORS - maintenanceCount - errorCount;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -115,7 +118,7 @@ export default function ElevatorDashboard() {
              }
           }
 
-          if (Math.random() < 0.01 && !notifiedErrors.current.has(newElevator.id)) {
+          if (Math.random() < 0.001 && !notifiedErrors.current.has(newElevator.id)) {
             newElevator.status = 'ERROR';
             newElevator.errorCode = Math.floor(Math.random() * 5) + 101;
             if (!notifiedErrors.current.has(newElevator.id)) {
@@ -153,7 +156,7 @@ export default function ElevatorDashboard() {
             </Link>
             <div className="bg-muted/50 p-4 rounded-lg">
                 <div className="w-8 h-8 mx-auto text-green-500 mb-2 font-bold text-3xl flex items-center justify-center">{activeCount}</div>
-                <p className="text-3xl font-bold">{NUM_ELEVATORS}</p>
+                <p className="text-3xl font-bold">{TOTAL_ELEVATORS}</p>
                 <p className="text-sm text-muted-foreground">Total Elevators</p>
             </div>
             <div className="bg-muted/50 p-4 rounded-lg">

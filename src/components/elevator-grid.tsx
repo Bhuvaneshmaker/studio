@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { ElevatorCard } from '@/components/elevator-card';
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from './ui/separator';
 
-const NUM_ELEVATORS = 10;
+const NUM_ELEVATORS_PER_BLOCK = 10;
 const NUM_BLOCKS = 15;
 const MAX_FLOORS = 15;
 
@@ -13,36 +14,37 @@ const generateInitialElevators = (): ElevatorData[] => {
   const elevators: ElevatorData[] = [];
   const blockLetters = Array.from({ length: NUM_BLOCKS }, (_, i) => String.fromCharCode(65 + i));
   
-  for (let i = 1; i <= NUM_ELEVATORS; i++) {
-    const block = blockLetters[Math.floor(Math.random() * NUM_BLOCKS)];
-    const id = `${block}-${i}`;
-    const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
-    
-    let status: ElevatorData['status'] = 'IDLE';
-    let direction: ElevatorData['direction'] = 'IDLE';
-    let doorState: ElevatorData['doorState'] = 'CLOSED';
-    let destinationFloor = currentFloor;
+  for (const block of blockLetters) {
+    for (let i = 1; i <= NUM_ELEVATORS_PER_BLOCK; i++) {
+        const id = `${block}-${i}`;
+        const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
+        
+        let status: ElevatorData['status'] = 'IDLE';
+        let direction: ElevatorData['direction'] = 'IDLE';
+        let doorState: ElevatorData['doorState'] = 'CLOSED';
+        let destinationFloor = currentFloor;
 
-    const rand = Math.random();
-    if (rand < 0.1) {
-      status = 'MAINTENANCE';
-    } else if (rand < 0.3) {
-      status = 'MOVING';
-      destinationFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
-      if (destinationFloor === currentFloor) destinationFloor = (currentFloor % MAX_FLOORS) + 1;
-      direction = destinationFloor > currentFloor ? 'UP' : 'DOWN';
+        const rand = Math.random();
+        if (rand < 0.1) {
+          status = 'MAINTENANCE';
+        } else if (rand < 0.3) {
+          status = 'MOVING';
+          destinationFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
+          if (destinationFloor === currentFloor) destinationFloor = (currentFloor % MAX_FLOORS) + 1;
+          direction = destinationFloor > currentFloor ? 'UP' : 'DOWN';
+        }
+
+        elevators.push({
+          id,
+          currentFloor,
+          direction,
+          status,
+          doorState,
+          errorCode: 0,
+          totalFloors: MAX_FLOORS,
+          destinationFloor,
+        });
     }
-
-    elevators.push({
-      id,
-      currentFloor,
-      direction,
-      status,
-      doorState,
-      errorCode: 0,
-      totalFloors: MAX_FLOORS,
-      destinationFloor,
-    });
   }
   return elevators;
 };
@@ -109,7 +111,7 @@ export function ElevatorGrid() {
              }
           }
 
-          if (Math.random() < 0.01 && !notifiedErrors.current.has(newElevator.id)) {
+          if (Math.random() < 0.001 && !notifiedErrors.current.has(newElevator.id)) {
             newElevator.status = 'ERROR';
             newElevator.errorCode = Math.floor(Math.random() * 5) + 101;
             if (!notifiedErrors.current.has(newElevator.id)) {
@@ -130,10 +132,28 @@ export function ElevatorGrid() {
     return () => clearInterval(interval);
   }, [toast]);
 
+  const elevatorsByBlock = elevators.reduce((acc, elevator) => {
+    const block = elevator.id.split('-')[0];
+    if (!acc[block]) {
+      acc[block] = [];
+    }
+    acc[block].push(elevator);
+    return acc;
+  }, {} as Record<string, ElevatorData[]>);
+
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-      {elevators.map(elevator => (
-        <ElevatorCard key={elevator.id} elevator={elevator} />
+    <div className="space-y-8">
+      {Object.entries(elevatorsByBlock).sort(([blockA], [blockB]) => blockA.localeCompare(blockB)).map(([block, blockElevators]) => (
+        <section key={block} id={`block-${block}`}>
+            <h3 className="text-2xl font-bold text-primary mb-4">Block {block}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-6">
+                {blockElevators.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})).map(elevator => (
+                    <ElevatorCard key={elevator.id} elevator={elevator} />
+                ))}
+            </div>
+            <Separator className="my-8" />
+        </section>
       ))}
     </div>
   );
