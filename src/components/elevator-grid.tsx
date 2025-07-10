@@ -47,15 +47,15 @@ export function ElevatorGrid() {
 
   return (
     <div className="space-y-8">
-      {Object.entries(elevatorsByBlock).sort(([blockA], [blockB]) => parseInt(blockA) - parseInt(blockB)).map(([block, blockElevators]) => (
+      {Object.entries(elevatorsByBlock).sort(([blockA], [blockB]) => parseInt(blockA) - parseInt(blockB)).map(([block, blockElevators], index) => (
         <section key={block} id={`block-${block}`}>
             <h3 className="text-2xl font-bold text-primary mb-4">Block {block}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {blockElevators.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})).map(elevator => (
                     <ElevatorCard key={elevator.id} elevator={elevator} />
                 ))}
             </div>
-            <Separator className="my-8" />
+            {index < Object.keys(elevatorsByBlock).length - 1 && <Separator className="my-8" />}
         </section>
       ))}
     </div>
