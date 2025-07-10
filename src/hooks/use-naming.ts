@@ -7,9 +7,11 @@ import type { CustomNames } from '@/types/naming';
 const NAMING_STORAGE_KEY = 'elevateview-custom-names';
 
 const defaultNames: CustomNames = {
+  blocks: {},
+  elevators: {},
+  floors: {},
   devices: {},
   slaves: {},
-  floors: {},
 };
 
 // This function needs to be defined outside the hook to be accessible in the initial state.
@@ -63,39 +65,39 @@ export const useNaming = () => {
     };
   }, []);
 
-  const getDeviceName = useCallback((ipAddress: string) => {
-    return customNames.devices[ipAddress] || `Device (${ipAddress})`;
-  }, [customNames.devices]);
+  const getBlockName = useCallback((blockId: string) => {
+    return customNames.blocks[blockId] || `Block ${blockId}`;
+  }, [customNames.blocks]);
 
-  const getSlaveName = useCallback((slaveId: string) => {
-    return customNames.slaves[slaveId] || `Slave ${slaveId.split('-')[1]}`;
-  }, [customNames.slaves]);
+  const getElevatorName = useCallback((elevatorId: string) => {
+    return customNames.elevators[elevatorId] || `Elevator ${elevatorId.split('-')[1]}`;
+  }, [customNames.elevators]);
   
   const getFloorName = useCallback((floorId: string) => {
     return customNames.floors[floorId] || `Floor ${floorId}`;
   }, [customNames.floors]);
 
-  const setDeviceName = useCallback((ipAddress: string, name: string) => {
+  const setBlockName = useCallback((blockId: string, name: string) => {
     setCustomNames(prev => {
-        const newDevices = {...prev.devices};
+        const newBlocks = {...prev.blocks};
         if(name) {
-            newDevices[ipAddress] = name;
+            newBlocks[blockId] = name;
         } else {
-            delete newDevices[ipAddress];
+            delete newBlocks[blockId];
         }
-        return { ...prev, devices: newDevices };
+        return { ...prev, blocks: newBlocks };
     });
   }, []);
 
-  const setSlaveName = useCallback((slaveId: string, name: string) => {
+  const setElevatorName = useCallback((elevatorId: string, name: string) => {
     setCustomNames(prev => {
-        const newSlaves = {...prev.slaves};
+        const newElevators = {...prev.elevators};
         if(name) {
-            newSlaves[slaveId] = name;
+            newElevators[elevatorId] = name;
         } else {
-            delete newSlaves[slaveId];
+            delete newElevators[elevatorId];
         }
-        return { ...prev, slaves: newSlaves };
+        return { ...prev, elevators: newElevators };
     });
   }, []);
 
@@ -111,19 +113,19 @@ export const useNaming = () => {
     });
   }, []);
   
-  const deleteDeviceName = useCallback((ipAddress: string) => {
+  const deleteBlockName = useCallback((blockId: string) => {
     setCustomNames(prev => {
-        const newDevices = {...prev.devices};
-        delete newDevices[ipAddress];
-        return {...prev, devices: newDevices};
+        const newBlocks = {...prev.blocks};
+        delete newBlocks[blockId];
+        return {...prev, blocks: newBlocks};
     });
   }, []);
 
-  const deleteSlaveName = useCallback((slaveId: string) => {
+  const deleteElevatorName = useCallback((elevatorId: string) => {
     setCustomNames(prev => {
-        const newSlaves = {...prev.slaves};
-        delete newSlaves[slaveId];
-        return {...prev, slaves: newSlaves};
+        const newElevators = {...prev.elevators};
+        delete newElevators[elevatorId];
+        return {...prev, elevators: newElevators};
     });
   }, []);
 
@@ -138,14 +140,14 @@ export const useNaming = () => {
 
   return {
     customNames,
-    getDeviceName,
-    getSlaveName,
+    getBlockName,
+    getElevatorName,
     getFloorName,
-    setDeviceName,
-    setSlaveName,
+    setBlockName,
+    setElevatorName,
     setFloorName,
-    deleteDeviceName,
-    deleteSlaveName,
+    deleteBlockName,
+    deleteElevatorName,
     deleteFloorName,
   };
 };

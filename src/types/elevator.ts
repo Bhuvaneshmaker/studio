@@ -1,15 +1,16 @@
-export type SlaveDirection = 'UP' | 'DOWN' | 'IDLE';
-export type SlaveStatus = 'MOVING' | 'IDLE' | 'MAINTENANCE' | 'ERROR';
+
+export type ElevatorDirection = 'UP' | 'DOWN' | 'IDLE';
+export type ElevatorStatus = 'MOVING' | 'IDLE' | 'MAINTENANCE' | 'ERROR';
 export type DoorState = 'OPEN' | 'CLOSED' | 'OPENING' | 'CLOSING';
 
-export interface SlaveData {
-  // Composite ID for React keys, e.g., "192.168.1.10-1"
+export interface ElevatorData {
+  // Composite ID for React keys, e.g., "1-1" for Block 1, Elevator 1
   id: string; 
-  deviceIp: string;
-  slaveId: number;
+  blockId: string;
+  elevatorNum: number;
   currentFloor: number;
-  direction: SlaveDirection;
-  status: SlaveStatus;
+  direction: ElevatorDirection;
+  status: ElevatorStatus;
   doorState: DoorState;
   errorCode: number;
   destinationFloor: number;

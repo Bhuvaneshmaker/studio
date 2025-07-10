@@ -1,6 +1,8 @@
 
 export interface CustomNames {
-  devices: Record<string, string>; // Key is IP Address
-  slaves: Record<string, string>; // Key is composite ID "ip-slaveId"
+  blocks: Record<string, string>; // Key is Block ID
+  elevators: Record<string, string>; // Key is composite ID "blockId-elevatorNum"
   floors: Record<string, string>; // Key is floor number
+  devices: Record<string, string>;
+  slaves: Record<string, string>;
 }

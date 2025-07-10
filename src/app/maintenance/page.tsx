@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import type { SlaveData } from '@/types/elevator';
+import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 import { useToast } from "@/hooks/use-toast";
-import { generateInitialSlaves, updateSlaveState } from '@/lib/elevator-simulation';
+import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
 import Link from 'next/link';
 import { Building, Home, Wrench, ShieldCheck, ListChecks, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,21 +14,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from '@/components/ui/badge';
 
 export default function MaintenancePage() {
-  const [slaves, setSlaves] = useState<SlaveData[]>([]);
-  const { getDeviceName, getSlaveName } = useNaming();
+  const [elevators, setElevators] = useState<ElevatorData[]>([]);
+  const { getBlockName, getElevatorName } = useNaming();
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    setSlaves(generateInitialSlaves());
+    setElevators(generateInitialElevators());
   }, []);
 
   useEffect(() => {
-    if (slaves.length === 0) return;
+    if (elevators.length === 0) return;
 
     const interval = setInterval(() => {
-      const { updatedSlaves, newAlerts } = updateSlaveState(slaves, notifiedErrors.current);
-      setSlaves(updatedSlaves);
+      const { updatedElevators, newAlerts } = updateElevatorState(elevators, notifiedErrors.current);
+      setElevators(updatedElevators);
       
       newAlerts.forEach(alert => {
         if (!notifiedErrors.current.has(alert.id)) {
@@ -43,9 +43,9 @@ export default function MaintenancePage() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [slaves, toast]);
+  }, [elevators, toast]);
 
-  const maintenanceSlaves = slaves.filter(e => e.status === 'MAINTENANCE');
+  const maintenanceElevators = elevators.filter(e => e.status === 'MAINTENANCE');
 
   return (
     <div className="min-h-screen">
@@ -78,30 +78,30 @@ export default function MaintenancePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wrench className="w-6 h-6 text-yellow-500" />
-              Slaves Under Maintenance
+              Elevators Under Maintenance
             </CardTitle>
             <CardDescription>
-              The following slaves are currently offline for scheduled maintenance or repairs.
+              The following elevators are currently offline for scheduled maintenance or repairs.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {maintenanceSlaves.length > 0 ? (
+            {maintenanceElevators.length > 0 ? (
               <div className="border rounded-lg">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Slave</TableHead>
-                      <TableHead>Device</TableHead>
+                      <TableHead>Elevator</TableHead>
+                      <TableHead>Block</TableHead>
                       <TableHead>Reason</TableHead>
                       <TableHead className="text-right">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {maintenanceSlaves.map(slave => (
-                      <TableRow key={slave.id}>
-                        <TableCell className="font-medium">{getSlaveName(slave.id)}</TableCell>
-                        <TableCell>{getDeviceName(slave.deviceIp)}</TableCell>
-                        <TableCell className="text-muted-foreground">{slave.maintenanceDetails || "No details provided."}</TableCell>
+                    {maintenanceElevators.map(elevator => (
+                      <TableRow key={elevator.id}>
+                        <TableCell className="font-medium">{getElevatorName(elevator.id)}</TableCell>
+                        <TableCell>{getBlockName(elevator.blockId)}</TableCell>
+                        <TableCell className="text-muted-foreground">{elevator.maintenanceDetails || "No details provided."}</TableCell>
                         <TableCell className="text-right">
                           <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
                             <Wrench className="w-3 h-3 mr-1.5" />
@@ -118,12 +118,12 @@ export default function MaintenancePage() {
                 <ShieldCheck className="w-16 h-16 text-green-500" />
                 <h3 className="text-2xl font-bold">All Systems Operational</h3>
                 <p className="text-muted-foreground">
-                  There are currently no slaves under maintenance.
+                  There are currently no elevators under maintenance.
                 </p>
                 <Button asChild>
-                    <Link href="/slaves">
+                    <Link href="/elevators">
                         <ListChecks className="mr-2 h-4 w-4" />
-                        View All Slaves
+                        View All Elevators
                     </Link>
                 </Button>
               </div>
