@@ -31,7 +31,7 @@ export default function ElevatorDetailPage() {
     
     const [elevator, setElevator] = useState<ElevatorData | null>(null);
     const [allElevators, setAllElevators] = useState<ElevatorData[]>(generateInitialElevators);
-    const { getElevatorName } = useNaming();
+    const { getElevatorName, getFloorName } = useNaming();
     const elevatorName = getElevatorName(id);
 
     const { toast } = useToast();
@@ -150,7 +150,7 @@ export default function ElevatorDetailPage() {
                                     <div>
                                         <p className="text-lg text-muted-foreground">Floor</p>
                                         <p className="text-8xl sm:text-9xl font-bold text-primary relative">
-                                            {isOperational ? currentFloor : '-'}
+                                            {isOperational ? getFloorName(currentFloor.toString()) : '-'}
                                         </p>
                                         <p className="text-sm text-muted-foreground">of {totalFloors}</p>
                                     </div>
@@ -190,7 +190,7 @@ export default function ElevatorDetailPage() {
                                 <DetailItem 
                                     icon={<CircleDot className={cn("w-6 h-6", status === 'MOVING' ? 'text-blue-500' : 'text-muted-foreground')} />}
                                     label="Destination"
-                                    value={isOperational ? (destinationFloor === currentFloor ? "Holding" : destinationFloor) : "N/A"}
+                                    value={isOperational ? (destinationFloor === currentFloor ? "Holding" : getFloorName(destinationFloor.toString())) : "N/A"}
                                 />
                                  <Separator/>
                                  {status === 'ERROR' && isOperational && (

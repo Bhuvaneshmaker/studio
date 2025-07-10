@@ -9,6 +9,7 @@ const NAMING_STORAGE_KEY = 'elevateview-custom-names';
 const defaultNames: CustomNames = {
   blocks: {},
   elevators: {},
+  floors: {},
 };
 
 // This function needs to be defined outside the hook to be accessible in the initial state.
@@ -19,7 +20,9 @@ const loadNamesFromStorage = (): CustomNames => {
   try {
     const storedNames = window.localStorage.getItem(NAMING_STORAGE_KEY);
     if (storedNames) {
-      return JSON.parse(storedNames);
+      // Ensure all keys exist even if they are not in storage, merging with defaults.
+      const parsedNames = JSON.parse(storedNames);
+      return { ...defaultNames, ...parsedNames };
     }
   } catch (error) {
     console.error("Failed to parse custom names from localStorage", error);
@@ -46,7 +49,8 @@ export const useNaming = () => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === NAMING_STORAGE_KEY && event.newValue) {
         try {
-          setCustomNames(JSON.parse(event.newValue));
+          const parsedNames = JSON.parse(event.newValue);
+          setCustomNames({ ...defaultNames, ...parsedNames });
         } catch (error) {
             console.error("Failed to parse storage update", error);
         }
@@ -66,6 +70,10 @@ export const useNaming = () => {
   const getElevatorName = useCallback((elevatorId: string) => {
     return customNames.elevators[elevatorId] || `Elevator ${elevatorId}`;
   }, [customNames.elevators]);
+  
+  const getFloorName = useCallback((floorId: string) => {
+    return customNames.floors[floorId] || `Floor ${floorId}`;
+  }, [customNames.floors]);
 
   const setBlockName = useCallback((blockId: string, name: string) => {
     setCustomNames(prev => {
@@ -90,6 +98,18 @@ export const useNaming = () => {
         return { ...prev, elevators: newElevators };
     });
   }, []);
+
+  const setFloorName = useCallback((floorId: string, name: string) => {
+    setCustomNames(prev => {
+        const newFloors = {...prev.floors};
+        if(name) {
+            newFloors[floorId] = name;
+        } else {
+            delete newFloors[floorId];
+        }
+        return { ...prev, floors: newFloors };
+    });
+  }, []);
   
   const deleteBlockName = useCallback((blockId: string) => {
     setCustomNames(prev => {
@@ -107,13 +127,25 @@ export const useNaming = () => {
     });
   }, []);
 
+  const deleteFloorName = useCallback((floorId: string) => {
+    setCustomNames(prev => {
+        const newFloors = {...prev.floors};
+        delete newFloors[floorId];
+        return {...prev, floors: newFloors};
+    });
+  }, []);
+
+
   return {
     customNames,
     getBlockName,
     getElevatorName,
+    getFloorName,
     setBlockName,
     setElevatorName,
+    setFloorName,
     deleteBlockName,
-    deleteElevatorName
+    deleteElevatorName,
+    deleteFloorName,
   };
 };
