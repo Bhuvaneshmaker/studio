@@ -115,7 +115,7 @@ export default function NamingPage() {
     } = useNaming();
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [selectedType, setSelectedType] = useState<NamingType | null>('blocks');
+    const [selectedType, setSelectedType] = useState<NamingType | null>('block');
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSelect = (id: string, type: NamingType) => {
@@ -211,11 +211,11 @@ export default function NamingPage() {
             <main className="container mx-auto p-4 sm:p-6">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-1">
-                         <Tabs defaultValue="blocks" className="w-full" onValueChange={handleTabChange}>
+                         <Tabs defaultValue="block" className="w-full" onValueChange={handleTabChange}>
                             <TabsList className="grid w-full grid-cols-3 h-12 text-base">
-                                <TabsTrigger value="blocks">Blocks</TabsTrigger>
-                                <TabsTrigger value="elevators">Elevators</TabsTrigger>
-                                <TabsTrigger value="floors">Floors</TabsTrigger>
+                                <TabsTrigger value="block">Blocks</TabsTrigger>
+                                <TabsTrigger value="elevator">Elevators</TabsTrigger>
+                                <TabsTrigger value="floor">Floors</TabsTrigger>
                             </TabsList>
                             <Card className="mt-4">
                                 <CardContent className="p-4 space-y-4">
@@ -228,13 +228,13 @@ export default function NamingPage() {
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
                                     </div>
-                                    <TabsContent value="blocks" className="mt-4">
+                                    <TabsContent value="block" className="mt-4">
                                         {renderNamingList(allBlockIds, 'block')}
                                     </TabsContent>
-                                    <TabsContent value="elevators" className="mt-4">
+                                    <TabsContent value="elevator" className="mt-4">
                                         {renderNamingList(allElevatorIds, 'elevator')}
                                     </TabsContent>
-                                    <TabsContent value="floors" className="mt-4">
+                                    <TabsContent value="floor" className="mt-4">
                                         {renderNamingList(allFloorIds, 'floor')}
                                     </TabsContent>
                                 </CardContent>
