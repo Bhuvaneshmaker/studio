@@ -24,26 +24,23 @@ export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string
     if (elevators.length === 0) return;
 
     const interval = setInterval(() => {
-       setElevators(prevElevators => {
-        const { updatedElevators, newAlerts } = updateElevatorState(prevElevators, notifiedErrors.current);
-        
-        newAlerts.forEach(alert => {
-          if (!notifiedErrors.current.has(alert.id)) {
-            toast({
-              variant: "destructive",
-              title: alert.title,
-              description: alert.description,
-            });
-            notifiedErrors.current.add(alert.id);
-          }
-        });
+      const { updatedElevators, newAlerts } = updateElevatorState(elevators, notifiedErrors.current);
+      setElevators(updatedElevators);
 
-        return updatedElevators;
+      newAlerts.forEach(alert => {
+        if (!notifiedErrors.current.has(alert.id)) {
+          toast({
+            variant: "destructive",
+            title: alert.title,
+            description: alert.description,
+          });
+          notifiedErrors.current.add(alert.id);
+        }
       });
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [toast, elevators.length]);
+  }, [elevators, toast]);
 
   const filteredElevators = elevators.filter(elevator => {
     const block = elevator.id.split('-')[0];

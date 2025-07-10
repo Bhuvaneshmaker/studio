@@ -45,14 +45,15 @@ export default function ElevatorDetailPage() {
         if (allElevators.length === 0) return;
 
         const interval = setInterval(() => {
-           setAllElevators(prevElevators => {
-                const { updatedElevators, newAlerts } = updateElevatorState(prevElevators, notifiedErrors.current);
-                const currentElevator = updatedElevators.find(e => e.id === id);
-                if (currentElevator) {
-                    setElevator(currentElevator);
-                }
-                
-                newAlerts.forEach(alert => {
+            const { updatedElevators, newAlerts } = updateElevatorState(allElevators, notifiedErrors.current);
+            setAllElevators(updatedElevators);
+            
+            const currentElevator = updatedElevators.find(e => e.id === id);
+            if (currentElevator) {
+                setElevator(currentElevator);
+            }
+            
+            newAlerts.forEach(alert => {
                 if (!notifiedErrors.current.has(alert.id)) {
                     toast({
                     variant: "destructive",
@@ -61,14 +62,11 @@ export default function ElevatorDetailPage() {
                     });
                     notifiedErrors.current.add(alert.id);
                 }
-                });
-
-                return updatedElevators;
             });
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [id, toast, allElevators.length]);
+    }, [id, toast, allElevators]);
     
     useEffect(() => {
         if (!elevator && allElevators.length > 0) {
