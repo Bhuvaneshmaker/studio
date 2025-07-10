@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, DoorOpen, DoorClosed, CircleDot } from 'lucide-react';
+import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
@@ -82,7 +82,7 @@ export default function ElevatorDetailPage() {
         );
     }
     
-    const { currentFloor, direction, status, doorState, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
+    const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
     const isOperational = mainPower && !emergencyStop;
 
     const getStatusInfo = () => {
@@ -104,17 +104,6 @@ export default function ElevatorDetailPage() {
             case 'UP': return <ArrowUp className="w-6 h-6 text-green-500" />;
             case 'DOWN': return <ArrowDown className="w-6 h-6 text-orange-500" />;
             default: return <Minus className="w-6 h-6 text-muted-foreground" />;
-        }
-    };
-    
-    const getDoorIcon = () => {
-        if (!isOperational) return <DoorClosed className="w-6 h-6 text-muted-foreground" />;
-        switch(doorState) {
-            case 'OPEN':
-            case 'OPENING':
-                return <DoorOpen className="w-6 h-6 text-blue-500" />;
-            default:
-                return <DoorClosed className="w-6 h-6 text-muted-foreground" />;
         }
     };
 
@@ -200,11 +189,6 @@ export default function ElevatorDetailPage() {
                                     label="Destination"
                                     value={isOperational ? (destinationFloor === currentFloor ? "Holding" : destinationFloor) : "N/A"}
                                 />
-                                 <DetailItem 
-                                    icon={getDoorIcon()}
-                                    label="Door Status"
-                                    value={isOperational ? doorState : "N/A"}
-                                />
                                  <Separator/>
                                  {status === 'ERROR' && isOperational && (
                                     <Alert variant="destructive" className="border-2">
@@ -240,5 +224,4 @@ export default function ElevatorDetailPage() {
             </main>
         </div>
     );
-
-    
+}

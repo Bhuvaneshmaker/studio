@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { ElevatorData } from "@/types/elevator";
-import { ArrowUp, ArrowDown, Minus, DoorOpen, DoorClosed, ShieldAlert, Wrench, CircleDot, Power, PowerOff, TriangleAlert } from "lucide-react";
+import { ArrowUp, ArrowDown, Minus, ShieldAlert, Wrench, CircleDot, Power, PowerOff, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -17,16 +17,6 @@ const DirectionIcon = ({ direction }: { direction: ElevatorData['direction'] }) 
       return <ArrowDown className="w-5 h-5 text-orange-500" />;
     default:
       return <Minus className="w-5 h-5 text-muted-foreground" />;
-  }
-};
-
-const DoorIcon = ({ state }: { state: ElevatorData['doorState'] }) => {
-  switch (state) {
-    case 'OPEN':
-    case 'OPENING':
-      return <DoorOpen className="w-5 h-5 text-blue-500" />;
-    default:
-      return <DoorClosed className="w-5 h-5 text-muted-foreground" />;
   }
 };
 
@@ -52,7 +42,7 @@ const StatusBadge = ({ status, mainPower, emergencyStop }: { status: ElevatorDat
 };
 
 export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
-  const { id, currentFloor, direction, status, doorState, errorCode, destinationFloor, mainPower, emergencyStop } = elevator;
+  const { id, currentFloor, direction, status, errorCode, destinationFloor, mainPower, emergencyStop } = elevator;
   const block = id.split('-')[0];
 
   const isOperational = mainPower && !emergencyStop;
@@ -67,8 +57,8 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
             </CardTitle>
             <CardDescription className="text-xs">Block {block}</CardDescription>
         </CardHeader>
-        <CardContent className="flex-grow p-4 pt-0 grid grid-cols-2 gap-4">
-            <div className="col-span-1 flex flex-col justify-center text-center bg-muted/50 p-2 rounded-lg">
+        <CardContent className="flex-grow p-4 pt-0 flex items-center justify-around gap-4">
+            <div className="flex flex-col justify-center text-center bg-muted/50 p-2 rounded-lg w-1/2 h-full">
                 <p className="text-xs text-muted-foreground">Floor</p>
                 <p className="text-5xl font-bold text-primary relative">
                     {isOperational ? currentFloor : '-'}
@@ -79,20 +69,11 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
                     }
                 </p>
             </div>
-            <div className="col-span-1 space-y-2">
-                <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md h-full text-xs">
-                    <DirectionIcon direction={isOperational ? direction : 'IDLE'} />
-                    <div>
-                        <p className="font-semibold">{isOperational ? direction : 'N/A'}</p>
-                        <p className="text-muted-foreground">Direction</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md h-full text-xs">
-                    <DoorIcon state={isOperational ? doorState : 'CLOSED'} />
-                    <div>
-                        <p className="font-semibold">{isOperational ? doorState : 'N/A'}</p>
-                        <p className="text-muted-foreground">Door</p>
-                    </div>
+            <div className="flex items-center justify-center gap-2 p-2 bg-muted/50 rounded-md w-1/2 h-full text-xs">
+                <DirectionIcon direction={isOperational ? direction : 'IDLE'} />
+                <div>
+                    <p className="font-semibold">{isOperational ? direction : 'N/A'}</p>
+                    <p className="text-muted-foreground">Direction</p>
                 </div>
             </div>
         </CardContent>
@@ -121,5 +102,3 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
     </Link>
   );
 }
-
-    
