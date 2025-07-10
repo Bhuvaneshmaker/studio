@@ -1,11 +1,15 @@
-import type {Metadata} from 'next';
+
+"use client";
+
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from '@/context/auth-context';
 
-export const metadata: Metadata = {
-  title: 'ElevateView',
-  description: 'Real-time Elevator Management System',
-};
+// No metadata export from client component
+// export const metadata: Metadata = {
+//   title: 'ElevateView',
+//   description: 'Real-time Elevator Management System',
+// };
 
 export default function RootLayout({
   children,
@@ -15,13 +19,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
+        <title>ElevateView</title>
+        <meta name="description" content="Real-time Elevator Management System" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        {children}
-        <Toaster />
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
