@@ -10,8 +10,6 @@ const defaultNames: CustomNames = {
   blocks: {},
   elevators: {},
   floors: {},
-  devices: {},
-  slaves: {},
 };
 
 // This function needs to be defined outside the hook to be accessible in the initial state.
