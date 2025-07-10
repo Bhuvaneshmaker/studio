@@ -115,7 +115,7 @@ export default function ElevatorDetailPage() {
     };
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen flex flex-col">
              <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
                 <div className="container mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3 truncate">
@@ -139,7 +139,7 @@ export default function ElevatorDetailPage() {
                     <BackButton />
                 </div>
             </header>
-            <main className="container mx-auto p-4 sm:p-6">
+            <main className="container mx-auto p-4 sm:p-6 flex-grow">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                    <div className="lg:col-span-1">
                         <Card className="shadow-lg h-full">
@@ -238,6 +238,11 @@ export default function ElevatorDetailPage() {
                    </div>
                 </div>
             </main>
+             <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
+                <p className="text-center text-sm text-muted-foreground">
+                    ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline">support@bhuvitech.com</a>.
+                </p>
+            </footer>
         </div>
     );
 }

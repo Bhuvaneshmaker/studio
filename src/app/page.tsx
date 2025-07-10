@@ -83,7 +83,7 @@ export default function Home() {
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">
-          ElevateView &copy; {new Date().getFullYear()}. Real-time data is simulated.
+          ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline">support@bhuvitech.com</a>.
         </p>
       </footer>
     </div>

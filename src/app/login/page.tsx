@@ -105,7 +105,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
          <p className="text-center text-sm text-muted-foreground">
-          ElevateView &copy; {new Date().getFullYear()}. Real-time data is simulated.
+          ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline">support@bhuvitech.com</a>.
         </p>
       </div>
     </div>
