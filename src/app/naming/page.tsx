@@ -115,13 +115,19 @@ export default function NamingPage() {
     } = useNaming();
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [selectedType, setSelectedType] = useState<NamingType | null>(null);
+    const [selectedType, setSelectedType] = useState<NamingType | null>('blocks');
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSelect = (id: string, type: NamingType) => {
         setSelectedId(id);
         setSelectedType(type);
     };
+
+    const handleTabChange = (value: string) => {
+        setSelectedId(null);
+        setSelectedType(value as NamingType);
+        setSearchQuery('');
+    }
 
     const nameGetters: Record<NamingType, (id: string) => string> = {
         block: getBlockName,
@@ -205,23 +211,23 @@ export default function NamingPage() {
             <main className="container mx-auto p-4 sm:p-6">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-1">
-                        <Card>
-                            <CardContent className="p-4 space-y-4">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input 
-                                        placeholder="Filter by name or ID..."
-                                        className="pl-10 w-full"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                </div>
-                                <Tabs defaultValue="blocks" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-3">
-                                        <TabsTrigger value="blocks">Blocks</TabsTrigger>
-                                        <TabsTrigger value="elevators">Elevators</TabsTrigger>
-                                        <TabsTrigger value="floors">Floors</TabsTrigger>
-                                    </TabsList>
+                         <Tabs defaultValue="blocks" className="w-full" onValueChange={handleTabChange}>
+                            <TabsList className="grid w-full grid-cols-3 h-12 text-base">
+                                <TabsTrigger value="blocks">Blocks</TabsTrigger>
+                                <TabsTrigger value="elevators">Elevators</TabsTrigger>
+                                <TabsTrigger value="floors">Floors</TabsTrigger>
+                            </TabsList>
+                            <Card className="mt-4">
+                                <CardContent className="p-4 space-y-4">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                        <Input 
+                                            placeholder="Filter by name or ID..."
+                                            className="pl-10 w-full"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
                                     <TabsContent value="blocks" className="mt-4">
                                         {renderNamingList(allBlockIds, 'block')}
                                     </TabsContent>
@@ -231,9 +237,9 @@ export default function NamingPage() {
                                     <TabsContent value="floors" className="mt-4">
                                         {renderNamingList(allFloorIds, 'floor')}
                                     </TabsContent>
-                                </Tabs>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        </Tabs>
                     </div>
                      <div className="md:col-span-2">
                         <NamingEditor 
