@@ -4,15 +4,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import type { ElevatorData } from '@/types/elevator';
-import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
+import type { SlaveData } from '@/types/elevator';
+import { generateInitialSlaves, updateSlaveState } from '@/lib/elevator-simulation';
 import { useToast } from "@/hooks/use-toast";
 import { useNaming } from "@/hooks/use-naming";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot } from 'lucide-react';
+import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Router } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
@@ -25,32 +25,32 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
-export default function ElevatorDetailPage() {
+export default function SlaveDetailPage() {
     const params = useParams();
     const id = params.id as string;
     
-    const [elevator, setElevator] = useState<ElevatorData | null>(null);
-    const [allElevators, setAllElevators] = useState<ElevatorData[]>([]);
-    const { getElevatorName, getFloorName } = useNaming();
-    const elevatorName = getElevatorName(id);
+    const [slave, setSlave] = useState<SlaveData | null>(null);
+    const [allSlaves, setAllSlaves] = useState<SlaveData[]>([]);
+    const { getSlaveName, getFloorName } = useNaming();
+    const slaveName = getSlaveName(id);
 
     const { toast } = useToast();
     const notifiedErrors = useRef<Set<string>>(new Set());
 
      useEffect(() => {
-        setAllElevators(generateInitialElevators());
+        setAllSlaves(generateInitialSlaves());
     }, []);
 
     useEffect(() => {
-        if (allElevators.length === 0) return;
+        if (allSlaves.length === 0) return;
 
         const interval = setInterval(() => {
-            const { updatedElevators, newAlerts } = updateElevatorState(allElevators, notifiedErrors.current);
-            setAllElevators(updatedElevators);
+            const { updatedSlaves, newAlerts } = updateSlaveState(allSlaves, notifiedErrors.current);
+            setAllSlaves(updatedSlaves);
             
-            const currentElevator = updatedElevators.find(e => e.id === id);
-            if (currentElevator) {
-                setElevator(currentElevator);
+            const currentSlave = updatedSlaves.find(e => e.id === id);
+            if (currentSlave) {
+                setSlave(currentSlave);
             }
             
             newAlerts.forEach(alert => {
@@ -66,27 +66,27 @@ export default function ElevatorDetailPage() {
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [id, toast, allElevators]);
+    }, [id, toast, allSlaves]);
     
     useEffect(() => {
-        if (!elevator && allElevators.length > 0) {
-            const initialElevator = allElevators.find(e => e.id === id);
-            setElevator(initialElevator || null);
+        if (!slave && allSlaves.length > 0) {
+            const initialSlave = allSlaves.find(e => e.id === id);
+            setSlave(initialSlave || null);
         }
-    }, [id, allElevators, elevator]);
+    }, [id, allSlaves, slave]);
 
-    if (!elevator) {
+    if (!slave) {
         return (
             <div className="min-h-screen flex items-center justify-center p-4">
                 <div className="text-center">
-                    <p className="text-2xl font-semibold">Loading Elevator Data...</p>
+                    <p className="text-2xl font-semibold">Loading Slave Data...</p>
                     <p className="text-muted-foreground">Please wait a moment.</p>
                 </div>
             </div>
         );
     }
     
-    const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
+    const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = slave;
     const isOperational = mainPower && !emergencyStop;
 
     const getStatusInfo = () => {
@@ -125,16 +125,16 @@ export default function ElevatorDetailPage() {
                             </h1>
                         </Link>
                         <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-                         <Link href="/elevators" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
-                            All Elevators
+                         <Link href="/slaves" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
+                            All Slaves
                         </Link>
                          <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
                          <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
-                            {elevatorName}
+                            {slaveName} ({slave.deviceIp})
                         </h2>
                     </div>
                     <Button asChild variant="outline" size="sm" className="shrink-0">
-                        <Link href="/elevators"><ArrowLeft/> Back</Link>
+                        <Link href="/slaves"><ArrowLeft/> Back</Link>
                     </Button>
                 </div>
             </header>
@@ -144,7 +144,7 @@ export default function ElevatorDetailPage() {
                         <Card className="shadow-lg h-full">
                             <CardHeader>
                                 <CardTitle>Current Status</CardTitle>
-                                <CardDescription>Real-time elevator overview</CardDescription>
+                                <CardDescription>Real-time slave overview</CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center justify-center text-center gap-4">
                                <div className="flex items-center justify-center text-center bg-muted/50 p-6 rounded-lg w-full">
@@ -170,6 +170,17 @@ export default function ElevatorDetailPage() {
                                 <CardDescription>In-depth system and sensor information.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
+                                <DetailItem 
+                                    icon={<Router className="w-6 h-6 text-muted-foreground" />}
+                                    label="Device IP"
+                                    value={slave.deviceIp}
+                                />
+                                <DetailItem 
+                                    icon={<SlidersHorizontal className="w-6 h-6 text-muted-foreground" />}
+                                    label="Slave ID"
+                                    value={slave.slaveId}
+                                />
+                                <Separator/>
                                 <DetailItem 
                                     icon={mainPower ? <Power className="w-6 h-6 text-green-500" /> : <PowerOff className="w-6 h-6 text-red-500" />}
                                     label="Main Power"
@@ -208,7 +219,7 @@ export default function ElevatorDetailPage() {
                                         <Wrench className="h-4 w-4 !text-yellow-500" />
                                         <AlertTitle className="font-bold">Under Maintenance</AlertTitle>
                                         <AlertDescription>
-                                            This elevator is currently undergoing scheduled maintenance.
+                                            This slave is currently undergoing scheduled maintenance.
                                         </AlertDescription>
                                     </Alert>
                                 )}

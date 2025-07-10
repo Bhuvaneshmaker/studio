@@ -3,22 +3,22 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ElevatorGrid } from '@/components/elevator-grid';
-import { Building, Search, X } from 'lucide-react';
+import { SlaveGrid } from '@/components/slave-grid';
+import { Building, Search, X, Router } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
 
-export default function ElevatorsPage() {
+export default function SlavesPage() {
   const searchParams = useSearchParams();
-  const blockFilter = searchParams.get('block');
+  const deviceFilter = searchParams.get('device');
   const [searchQuery, setSearchQuery] = useState("");
-  const { getBlockName } = useNaming();
+  const { getDeviceName } = useNaming();
 
-  const pageTitle = blockFilter 
-    ? `${getBlockName(blockFilter)} Elevators`
-    : 'All Elevators';
+  const pageTitle = deviceFilter 
+    ? getDeviceName(deviceFilter)
+    : 'All Slaves';
 
   return (
     <div className="min-h-screen">
@@ -34,8 +34,8 @@ export default function ElevatorsPage() {
               </h1>
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-            <Link href="/blocks" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
-                Blocks
+            <Link href="/devices" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
+                Devices
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
             <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
@@ -49,12 +49,12 @@ export default function ElevatorsPage() {
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-           {blockFilter && (
+           {deviceFilter && (
                 <div className="flex items-center gap-2">
                     <Button asChild variant="secondary">
-                        <Link href="/elevators">
+                        <Link href="/slaves">
                             <X className="mr-2 h-4 w-4" />
-                            Clear block filter
+                            Clear device filter
                         </Link>
                     </Button>
                 </div>
@@ -62,18 +62,18 @@ export default function ElevatorsPage() {
             <div className="relative w-full sm:w-auto sm:ml-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
-                    placeholder="Search by name, ID or floor..." 
+                    placeholder="Search by name, ID, IP or floor..." 
                     className="pl-10 w-full sm:w-64 max-w-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
         </div>
-        <ElevatorGrid searchQuery={searchQuery} blockFilter={blockFilter} />
+        <SlaveGrid searchQuery={searchQuery} deviceFilter={deviceFilter} />
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">
-          ElevateView &copy; {new Date().getFullYear()}. Real-time data is simulated.
+          ElevateView &copy; {new D_ate().getFullYear()}. Real-time data is simulated.
         </p>
       </footer>
     </div>

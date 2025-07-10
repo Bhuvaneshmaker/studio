@@ -4,18 +4,18 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { ElevatorData } from "@/types/elevator";
+import type { SlaveData } from "@/types/elevator";
 import { useNaming } from '@/hooks/use-naming';
 import { Wrench, ShieldAlert, CheckCircle2, ArrowRight } from "lucide-react";
 import { cn } from '@/lib/utils';
 
-export function BlockCard({ blockId, elevators }: { blockId: string, elevators: ElevatorData[] }) {
-  const { getBlockName } = useNaming();
-  const blockName = getBlockName(blockId);
+export function DeviceCard({ deviceIp, slaves }: { deviceIp: string, slaves: SlaveData[] }) {
+  const { getDeviceName } = useNaming();
+  const deviceName = getDeviceName(deviceIp);
 
-  const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
-  const errorCount = elevators.filter(e => e.status === 'ERROR' || e.emergencyStop).length;
-  const activeCount = elevators.length - maintenanceCount - errorCount;
+  const maintenanceCount = slaves.filter(e => e.status === 'MAINTENANCE').length;
+  const errorCount = slaves.filter(e => e.status === 'ERROR' || e.emergencyStop).length;
+  const activeCount = slaves.length - maintenanceCount - errorCount;
 
   const hasFault = errorCount > 0;
 
@@ -25,8 +25,8 @@ export function BlockCard({ blockId, elevators }: { blockId: string, elevators: 
         hasFault && "border-red-500/80 shadow-red-500/20"
       )}>
       <CardHeader className="p-4">
-        <CardTitle>{blockName}</CardTitle>
-        <CardDescription>{elevators.length} Elevators</CardDescription>
+        <CardTitle className="truncate">{deviceName}</CardTitle>
+        <CardDescription>{slaves.length} Slaves</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow p-4 pt-0 space-y-3">
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
@@ -53,8 +53,8 @@ export function BlockCard({ blockId, elevators }: { blockId: string, elevators: 
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full" variant="outline">
-          <Link href={`/elevators?block=${blockId}`}>
-            View Elevators <ArrowRight className="ml-2 w-4 h-4" />
+          <Link href={`/slaves?device=${deviceIp}`}>
+            View Slaves <ArrowRight className="ml-2 w-4 h-4" />
           </Link>
         </Button>
       </CardFooter>

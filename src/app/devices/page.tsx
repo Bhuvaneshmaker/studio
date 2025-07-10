@@ -2,31 +2,30 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import type { ElevatorData } from '@/types/elevator';
-import { generateInitialElevators, updateElevatorState, NUM_BLOCKS } from '@/lib/elevator-simulation';
+import type { SlaveData } from '@/types/elevator';
+import { generateInitialSlaves, updateSlaveState, NUM_DEVICES } from '@/lib/elevator-simulation';
 import { useToast } from "@/hooks/use-toast";
-import { useNaming } from "@/hooks/use-naming";
 import Link from 'next/link';
-import { Building, Search } from 'lucide-react';
+import { Building, Router } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BlockCard } from '@/components/block-card';
+import { DeviceCard } from '@/components/device-card';
+import { SlidersHorizontal } from 'lucide-react';
 
-export default function BlocksPage() {
-  const [elevators, setElevators] = useState<ElevatorData[]>([]);
-  const { getBlockName } = useNaming();
+export default function DevicesPage() {
+  const [slaves, setSlaves] = useState<SlaveData[]>([]);
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    setElevators(generateInitialElevators());
+    setSlaves(generateInitialSlaves());
   }, []);
 
   useEffect(() => {
-    if (elevators.length === 0) return;
+    if (slaves.length === 0) return;
 
     const interval = setInterval(() => {
-      const { updatedElevators, newAlerts } = updateElevatorState(elevators, notifiedErrors.current);
-      setElevators(updatedElevators);
+      const { updatedSlaves, newAlerts } = updateSlaveState(slaves, notifiedErrors.current);
+      setSlaves(updatedSlaves);
       
       newAlerts.forEach(alert => {
         if (!notifiedErrors.current.has(alert.id)) {
@@ -41,14 +40,17 @@ export default function BlocksPage() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [elevators, toast]);
+  }, [slaves, toast]);
   
-  const elevatorsByBlock = Array.from({ length: NUM_BLOCKS }, (_, i) => i + 1).map(blockNum => {
-    return {
-      blockId: blockNum.toString(),
-      elevators: elevators.filter(e => e.id.startsWith(`${blockNum}-`))
-    };
-  });
+  const slavesByDevice = slaves.reduce((acc, slave) => {
+    const ip = slave.deviceIp;
+    if (!acc[ip]) {
+      acc[ip] = [];
+    }
+    acc[ip].push(slave);
+    return acc;
+  }, {} as Record<string, SlaveData[]>);
+
 
   return (
     <div className="min-h-screen">
@@ -65,18 +67,18 @@ export default function BlocksPage() {
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
             <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
-              Blocks
+              Devices
             </h2>
           </div>
           <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link href="/elevators">View Elevators</Link>
+            <Link href="/slaves"><SlidersHorizontal className="w-4 h-4 mr-2"/>View Slaves</Link>
           </Button>
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {elevatorsByBlock.map(({ blockId, elevators }) => (
-            <BlockCard key={blockId} blockId={blockId} elevators={elevators} />
+          {Object.entries(slavesByDevice).map(([ip, slaves]) => (
+            <DeviceCard key={ip} deviceIp={ip} slaves={slaves} />
           ))}
         </div>
       </main>

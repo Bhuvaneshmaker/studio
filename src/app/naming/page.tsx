@@ -9,20 +9,20 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Building, Home, Save, Trash2, Info, Search } from 'lucide-react';
+import { Building, Home, Save, Trash2, Info, Search, Router, SlidersHorizontal, MapPin } from 'lucide-react';
 import Link from 'next/link';
-import { NUM_BLOCKS, NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS } from '@/lib/elevator-simulation';
+import { NUM_SLAVES_PER_DEVICE, MAX_FLOORS, NUM_DEVICES } from '@/lib/elevator-simulation';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const allBlockIds = Array.from({ length: NUM_BLOCKS }, (_, i) => (i + 1).toString());
-const allElevatorIds = Array.from({ length: NUM_BLOCKS }, (_, i) => {
-    const blockId = i + 1;
-    return Array.from({ length: NUM_ELEVATORS_PER_BLOCK }, (_, j) => `${blockId}-${j + 1}`);
+const allDeviceIps = Array.from({ length: NUM_DEVICES }, (_, i) => `192.168.1.${10 + i}`);
+const allSlaveIds = Array.from({ length: NUM_DEVICES }, (_, i) => {
+    const ip = `192.168.1.${10 + i}`;
+    return Array.from({ length: NUM_SLAVES_PER_DEVICE }, (_, j) => `${ip}-${j + 1}`);
 }).flat();
 const allFloorIds = Array.from({ length: MAX_FLOORS }, (_, i) => (i + 1).toString());
 
-type NamingType = 'block' | 'elevator' | 'floor';
+type NamingType = 'device' | 'slave' | 'floor';
 
 const NamingEditor = ({ 
     selectedId, 
@@ -63,8 +63,8 @@ const NamingEditor = ({
     }
 
     const typeLabels = {
-        block: { title: "Block", idLabel: "Current Block Name", nameLabel: "Custom Block Name" },
-        elevator: { title: "Elevator", idLabel: "Current Elevator Name", nameLabel: "Custom Elevator Name" },
+        device: { title: "Device", idLabel: "Current Device Name", nameLabel: "Custom Device Name" },
+        slave: { title: "Slave", idLabel: "Current Slave Name", nameLabel: "Custom Slave Name" },
         floor: { title: "Floor", idLabel: "Current Floor Name", nameLabel: "Custom Floor Name" },
     }
     const labels = typeLabels[selectedType];
@@ -87,7 +87,7 @@ const NamingEditor = ({
                             id="customName" 
                             value={name} 
                             onChange={(e) => setName(e.target.value)} 
-                            placeholder={`e.g. Lobby, Main Elevator...`}
+                            placeholder={`e.g. Main PLC, Lobby, Slave 5...`}
                         />
                     </div>
                     <div className="flex justify-between items-center gap-2 pt-2">
@@ -109,13 +109,13 @@ const NamingEditor = ({
 export default function NamingPage() {
     const { 
         customNames, 
-        getBlockName, getElevatorName, getFloorName,
-        setBlockName, setElevatorName, setFloorName,
-        deleteBlockName, deleteElevatorName, deleteFloorName
+        getDeviceName, getSlaveName, getFloorName,
+        setDeviceName, setSlaveName, setFloorName,
+        deleteDeviceName, deleteSlaveName, deleteFloorName
     } = useNaming();
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [selectedType, setSelectedType] = useState<NamingType>('block');
+    const [selectedType, setSelectedType] = useState<NamingType>('device');
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSelect = (id: string, type: NamingType) => {
@@ -130,23 +130,23 @@ export default function NamingPage() {
     }
 
     const nameGetters: Record<NamingType, (id: string) => string> = {
-        block: getBlockName,
-        elevator: getElevatorName,
+        device: getDeviceName,
+        slave: getSlaveName,
         floor: getFloorName,
     };
     const nameSetters: Record<NamingType, (id: string, name: string) => void> = {
-        block: setBlockName,
-        elevator: setElevatorName,
+        device: setDeviceName,
+        slave: setSlaveName,
         floor: setFloorName,
     };
     const nameDeleters: Record<NamingType, (id: string) => void> = {
-        block: deleteBlockName,
-        elevator: deleteElevatorName,
+        device: deleteDeviceName,
+        slave: deleteSlaveName,
         floor: deleteFloorName,
     };
      const customNameMaps: Record<NamingType, Record<string, string>> = {
-        block: customNames.blocks,
-        elevator: customNames.elevators,
+        device: customNames.devices,
+        slave: customNames.slaves,
         floor: customNames.floors,
     };
 
@@ -158,7 +158,14 @@ export default function NamingPage() {
         const filteredIds = itemIds.filter(id => {
             if (!query) return true;
             const name = nameGetters[type](id).toLowerCase();
-            return name.includes(query) || id.toLowerCase().includes(query);
+            const idLower = id.toLowerCase();
+
+            // For slaves, also check device IP part of the ID
+            if (type === 'slave') {
+              const deviceIp = id.split('-')[0].toLowerCase();
+              return name.includes(query) || idLower.includes(query) || deviceIp.includes(query)
+            }
+            return name.includes(query) || idLower.includes(query);
         });
 
         return (
@@ -209,11 +216,11 @@ export default function NamingPage() {
                 </div>
             </header>
             <main className="container mx-auto p-4 sm:p-6">
-                <Tabs defaultValue="block" className="w-full mb-6" onValueChange={handleTabChange}>
+                <Tabs defaultValue="device" className="w-full mb-6" onValueChange={handleTabChange}>
                     <TabsList className="grid w-full grid-cols-3 h-12 text-base">
-                        <TabsTrigger value="block">Blocks</TabsTrigger>
-                        <TabsTrigger value="elevator">Elevators</TabsTrigger>
-                        <TabsTrigger value="floor">Floors</TabsTrigger>
+                        <TabsTrigger value="device"><Router className="mr-2"/>Devices</TabsTrigger>
+                        <TabsTrigger value="slave"><SlidersHorizontal className="mr-2"/>Slaves</TabsTrigger>
+                        <TabsTrigger value="floor"><MapPin className="mr-2"/>Floors</TabsTrigger>
                     </TabsList>
                 </Tabs>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -229,8 +236,8 @@ export default function NamingPage() {
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
-                                {selectedType === 'block' && renderNamingList(allBlockIds, 'block')}
-                                {selectedType === 'elevator' && renderNamingList(allElevatorIds, 'elevator')}
+                                {selectedType === 'device' && renderNamingList(allDeviceIps, 'device')}
+                                {selectedType === 'slave' && renderNamingList(allSlaveIds, 'slave')}
                                 {selectedType === 'floor' && renderNamingList(allFloorIds, 'floor')}
                            </CardContent>
                        </Card>

@@ -7,8 +7,8 @@ import type { CustomNames } from '@/types/naming';
 const NAMING_STORAGE_KEY = 'elevateview-custom-names';
 
 const defaultNames: CustomNames = {
-  blocks: {},
-  elevators: {},
+  devices: {},
+  slaves: {},
   floors: {},
 };
 
@@ -63,39 +63,39 @@ export const useNaming = () => {
     };
   }, []);
 
-  const getBlockName = useCallback((blockId: string) => {
-    return customNames.blocks[blockId] || `Block ${blockId}`;
-  }, [customNames.blocks]);
+  const getDeviceName = useCallback((ipAddress: string) => {
+    return customNames.devices[ipAddress] || `Device (${ipAddress})`;
+  }, [customNames.devices]);
 
-  const getElevatorName = useCallback((elevatorId: string) => {
-    return customNames.elevators[elevatorId] || `Elevator ${elevatorId}`;
-  }, [customNames.elevators]);
+  const getSlaveName = useCallback((slaveId: string) => {
+    return customNames.slaves[slaveId] || `Slave ${slaveId.split('-')[1]}`;
+  }, [customNames.slaves]);
   
   const getFloorName = useCallback((floorId: string) => {
     return customNames.floors[floorId] || `Floor ${floorId}`;
   }, [customNames.floors]);
 
-  const setBlockName = useCallback((blockId: string, name: string) => {
+  const setDeviceName = useCallback((ipAddress: string, name: string) => {
     setCustomNames(prev => {
-        const newBlocks = {...prev.blocks};
+        const newDevices = {...prev.devices};
         if(name) {
-            newBlocks[blockId] = name;
+            newDevices[ipAddress] = name;
         } else {
-            delete newBlocks[blockId];
+            delete newDevices[ipAddress];
         }
-        return { ...prev, blocks: newBlocks };
+        return { ...prev, devices: newDevices };
     });
   }, []);
 
-  const setElevatorName = useCallback((elevatorId: string, name: string) => {
+  const setSlaveName = useCallback((slaveId: string, name: string) => {
     setCustomNames(prev => {
-        const newElevators = {...prev.elevators};
+        const newSlaves = {...prev.slaves};
         if(name) {
-            newElevators[elevatorId] = name;
+            newSlaves[slaveId] = name;
         } else {
-            delete newElevators[elevatorId];
+            delete newSlaves[slaveId];
         }
-        return { ...prev, elevators: newElevators };
+        return { ...prev, slaves: newSlaves };
     });
   }, []);
 
@@ -111,19 +111,19 @@ export const useNaming = () => {
     });
   }, []);
   
-  const deleteBlockName = useCallback((blockId: string) => {
+  const deleteDeviceName = useCallback((ipAddress: string) => {
     setCustomNames(prev => {
-        const newBlocks = {...prev.blocks};
-        delete newBlocks[blockId];
-        return {...prev, blocks: newBlocks};
+        const newDevices = {...prev.devices};
+        delete newDevices[ipAddress];
+        return {...prev, devices: newDevices};
     });
   }, []);
 
-  const deleteElevatorName = useCallback((elevatorId: string) => {
+  const deleteSlaveName = useCallback((slaveId: string) => {
     setCustomNames(prev => {
-        const newElevators = {...prev.elevators};
-        delete newElevators[elevatorId];
-        return {...prev, elevators: newElevators};
+        const newSlaves = {...prev.slaves};
+        delete newSlaves[slaveId];
+        return {...prev, slaves: newSlaves};
     });
   }, []);
 
@@ -138,14 +138,14 @@ export const useNaming = () => {
 
   return {
     customNames,
-    getBlockName,
-    getElevatorName,
+    getDeviceName,
+    getSlaveName,
     getFloorName,
-    setBlockName,
-    setElevatorName,
+    setDeviceName,
+    setSlaveName,
     setFloorName,
-    deleteBlockName,
-    deleteElevatorName,
+    deleteDeviceName,
+    deleteSlaveName,
     deleteFloorName,
   };
 };

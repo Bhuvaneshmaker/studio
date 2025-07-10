@@ -1,31 +1,33 @@
-import type { ElevatorData } from '@/types/elevator';
+import type { SlaveData } from '@/types/elevator';
 
-export const NUM_ELEVATORS_PER_BLOCK = 10;
-export const NUM_BLOCKS = 15;
+export const NUM_SLAVES_PER_DEVICE = 10;
+export const NUM_DEVICES = 15;
 export const MAX_FLOORS = 15;
-export const TOTAL_ELEVATORS = NUM_BLOCKS * NUM_ELEVATORS_PER_BLOCK;
+export const TOTAL_SLAVES = NUM_DEVICES * NUM_SLAVES_PER_DEVICE;
 
 const maintenanceReasons = [
   "Scheduled monthly inspection.",
   "Replacing worn-out door sensors.",
   "Upgrading control panel software.",
-  "Repairing faulty wiring.",
+  "Repairing faulty Modbus wiring.",
   "Annual safety certification.",
   "Calibrating floor leveling system.",
   "Emergency brake system check.",
 ];
 
-export const generateInitialElevators = (): ElevatorData[] => {
-  const elevators: ElevatorData[] = [];
+export const generateInitialSlaves = (): SlaveData[] => {
+  const slaves: SlaveData[] = [];
   
-  for (let blockNum = 1; blockNum <= NUM_BLOCKS; blockNum++) {
-    for (let i = 1; i <= NUM_ELEVATORS_PER_BLOCK; i++) {
-        const id = `${blockNum}-${i}`;
+  for (let deviceNum = 1; deviceNum <= NUM_DEVICES; deviceNum++) {
+    const deviceIp = `192.168.1.${9 + deviceNum}`;
+    for (let i = 1; i <= NUM_SLAVES_PER_DEVICE; i++) {
+        const slaveId = i;
+        const compositeId = `${deviceIp}-${slaveId}`;
         const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
         
-        let status: ElevatorData['status'] = 'IDLE';
-        let direction: ElevatorData['direction'] = 'IDLE';
-        let doorState: ElevatorData['doorState'] = 'CLOSED';
+        let status: SlaveData['status'] = 'IDLE';
+        let direction: SlaveData['direction'] = 'IDLE';
+        let doorState: SlaveData['doorState'] = 'CLOSED';
         let destinationFloor = currentFloor;
         let maintenanceDetails: string | undefined = undefined;
 
@@ -40,8 +42,10 @@ export const generateInitialElevators = (): ElevatorData[] => {
           direction = destinationFloor > currentFloor ? 'UP' : 'DOWN';
         }
 
-        elevators.push({
-          id,
+        slaves.push({
+          id: compositeId,
+          deviceIp,
+          slaveId,
           currentFloor,
           direction,
           status,
@@ -55,7 +59,7 @@ export const generateInitialElevators = (): ElevatorData[] => {
         });
     }
   }
-  return elevators;
+  return slaves;
 };
 
 
@@ -65,97 +69,97 @@ interface AlertInfo {
     description: string;
 }
 
-export const updateElevatorState = (
-    prevElevators: ElevatorData[], 
+export const updateSlaveState = (
+    prevSlaves: SlaveData[], 
     notifiedErrors: Set<string>
-): { updatedElevators: ElevatorData[], newAlerts: AlertInfo[] } => {
+): { updatedSlaves: SlaveData[], newAlerts: AlertInfo[] } => {
     const newAlerts: AlertInfo[] = [];
 
-    const updatedElevators = prevElevators.map(elevator => {
-        let newElevator = { ...elevator };
+    const updatedSlaves = prevSlaves.map(slave => {
+        let newSlave = { ...slave };
 
-        if (!newElevator.mainPower || newElevator.emergencyStop) {
-            return newElevator;
+        if (!newSlave.mainPower || newSlave.emergencyStop) {
+            return newSlave;
         }
 
-        if (newElevator.status === 'ERROR') {
+        if (newSlave.status === 'ERROR') {
             if (Math.random() < 0.1) {
-            newElevator.status = 'IDLE';
-            newElevator.errorCode = 0;
-            notifiedErrors.delete(newElevator.id);
+            newSlave.status = 'IDLE';
+            newSlave.errorCode = 0;
+            notifiedErrors.delete(newSlave.id);
             }
-            return newElevator;
+            return newSlave;
         }
 
-        if (newElevator.status === 'MAINTENANCE') {
+        if (newSlave.status === 'MAINTENANCE') {
              // Occasionally, a maintenance task finishes
             if (Math.random() < 0.01) {
-                newElevator.status = 'IDLE';
-                newElevator.maintenanceDetails = undefined;
+                newSlave.status = 'IDLE';
+                newSlave.maintenanceDetails = undefined;
             }
-            return newElevator;
+            return newSlave;
         }
 
-        if (newElevator.doorState === 'OPENING') {
-            newElevator.doorState = 'OPEN';
-            return newElevator;
+        if (newSlave.doorState === 'OPENING') {
+            newSlave.doorState = 'OPEN';
+            return newSlave;
         }
-        if (newElevator.doorState === 'OPEN') {
-            newElevator.doorState = 'CLOSING';
-            return newElevator;
+        if (newSlave.doorState === 'OPEN') {
+            newSlave.doorState = 'CLOSING';
+            return newSlave;
         }
-        if (newElevator.doorState === 'CLOSING') {
-            newElevator.doorState = 'CLOSED';
+        if (newSlave.doorState === 'CLOSING') {
+            newSlave.doorState = 'CLOSED';
         }
         
-        if (newElevator.currentFloor !== newElevator.destinationFloor) {
-            newElevator.status = 'MOVING';
-            if (newElevator.currentFloor < newElevator.destinationFloor) {
-            newElevator.direction = 'UP';
-            newElevator.currentFloor++;
+        if (newSlave.currentFloor !== newSlave.destinationFloor) {
+            newSlave.status = 'MOVING';
+            if (newSlave.currentFloor < newSlave.destinationFloor) {
+            newSlave.direction = 'UP';
+            newSlave.currentFloor++;
             } else {
-            newElevator.direction = 'DOWN';
-            newElevator.currentFloor--;
+            newSlave.direction = 'DOWN';
+            newSlave.currentFloor--;
             }
         } else {
-            if(newElevator.status === 'MOVING') {
-                newElevator.status = 'IDLE';
-                newElevator.direction = 'IDLE';
-                newElevator.doorState = 'OPENING';
+            if(newSlave.status === 'MOVING') {
+                newSlave.status = 'IDLE';
+                newSlave.direction = 'IDLE';
+                newSlave.doorState = 'OPENING';
             }
         }
 
-        if (newElevator.status === 'IDLE' && newElevator.doorState === 'CLOSED') {
+        if (newSlave.status === 'IDLE' && newSlave.doorState === 'CLOSED') {
             if(Math.random() < 0.05) {
-                const newDestination = Math.floor(Math.random() * newElevator.totalFloors) + 1;
-                if(newDestination !== newElevator.currentFloor) {
-                    newElevator.destinationFloor = newDestination;
+                const newDestination = Math.floor(Math.random() * newSlave.totalFloors) + 1;
+                if(newDestination !== newSlave.currentFloor) {
+                    newSlave.destinationFloor = newDestination;
                 }
             }
         }
 
         if (Math.random() < 0.001) {
-            newElevator.status = 'ERROR';
-            newElevator.errorCode = Math.floor(Math.random() * 5) + 101;
+            newSlave.status = 'ERROR';
+            newSlave.errorCode = Math.floor(Math.random() * 5) + 101;
             newAlerts.push({
-                id: newElevator.id,
-                title: `Elevator ${newElevator.id} Alert!`,
-                description: `A critical error (Code: ${newElevator.errorCode}) has been detected.`,
+                id: newSlave.id,
+                title: `Device ${newSlave.deviceIp} - Slave ${newSlave.slaveId} Alert!`,
+                description: `A critical error (Code: ${newSlave.errorCode}) has been detected.`,
             });
         }
 
         if (Math.random() < 0.0005) {
-            newElevator.emergencyStop = true;
-            newElevator.status = 'ERROR';
+            newSlave.emergencyStop = true;
+            newSlave.status = 'ERROR';
             newAlerts.push({
-                id: newElevator.id,
-                title: `Elevator ${newElevator.id} Emergency Stop!`,
+                id: newSlave.id,
+                title: `Device ${newSlave.deviceIp} - Slave ${newSlave.slaveId} Emergency Stop!`,
                 description: `The emergency stop has been activated.`,
             });
         }
         
-        return newElevator;
+        return newSlave;
     });
 
-    return { updatedElevators, newAlerts };
+    return { updatedSlaves, newAlerts };
 };

@@ -1,6 +1,6 @@
 
-import ElevatorDashboard from '@/components/elevator-dashboard';
-import { Building, Pencil, Wrench } from 'lucide-react';
+import SlaveDashboard from '@/components/slave-dashboard';
+import { Building, Pencil, Wrench, Router, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -19,10 +19,10 @@ export default function Home() {
             </div>
             <nav className="flex items-center gap-2">
                 <Button asChild variant="outline" size="sm" className="shrink-0">
-                    <Link href="/blocks">View Blocks</Link>
+                    <Link href="/devices"><Router className="w-4 h-4 mr-2"/>View Devices</Link>
                 </Button>
                 <Button asChild variant="outline" size="sm" className="shrink-0">
-                    <Link href="/elevators">View Elevators</Link>
+                    <Link href="/slaves"><SlidersHorizontal className="w-4 h-4 mr-2"/>View Slaves</Link>
                 </Button>
                  <Button asChild variant="ghost" size="icon" className="shrink-0">
                     <Link href="/maintenance" aria-label="View Maintenance">
@@ -38,7 +38,7 @@ export default function Home() {
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
-        <ElevatorDashboard />
+        <SlaveDashboard />
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">

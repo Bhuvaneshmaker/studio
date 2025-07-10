@@ -4,13 +4,13 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { ElevatorData } from "@/types/elevator";
+import type { SlaveData } from "@/types/elevator";
 import { ArrowUp, ArrowDown, Minus, ShieldAlert, Wrench, CircleDot, Power, PowerOff, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useNaming } from "@/hooks/use-naming";
 
-const DirectionIcon = ({ direction }: { direction: ElevatorData['direction'] }) => {
+const DirectionIcon = ({ direction }: { direction: SlaveData['direction'] }) => {
   switch (direction) {
     case 'UP':
       return <ArrowUp className="w-5 h-5 text-green-500" />;
@@ -21,7 +21,7 @@ const DirectionIcon = ({ direction }: { direction: ElevatorData['direction'] }) 
   }
 };
 
-const StatusBadge = ({ status, mainPower, emergencyStop }: { status: ElevatorData['status'], mainPower: boolean, emergencyStop: boolean }) => {
+const StatusBadge = ({ status, mainPower, emergencyStop }: { status: SlaveData['status'], mainPower: boolean, emergencyStop: boolean }) => {
   if (!mainPower) {
     return <Badge variant="destructive" className="bg-gray-700 text-gray-200 border-gray-600"><PowerOff className="w-3 h-3 mr-1" />Offline</Badge>;
   }
@@ -42,18 +42,17 @@ const StatusBadge = ({ status, mainPower, emergencyStop }: { status: ElevatorDat
   }
 };
 
-export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
-  const { id, currentFloor, direction, status, errorCode, destinationFloor, mainPower, emergencyStop } = elevator;
-  const block = id.split('-')[0];
-  const { getElevatorName, getBlockName } = useNaming();
-  const elevatorName = getElevatorName(id);
-  const blockName = getBlockName(block);
+export function SlaveCard({ slave }: { slave: SlaveData }) {
+  const { id, currentFloor, direction, status, errorCode, destinationFloor, mainPower, emergencyStop, deviceIp } = slave;
+  const { getSlaveName, getDeviceName } = useNaming();
+  const slaveName = getSlaveName(id);
+  const deviceName = getDeviceName(deviceIp);
 
   const isOperational = mainPower && !emergencyStop;
   const hasFault = status === 'ERROR' || emergencyStop;
 
   return (
-    <Link href={`/elevators/${id}`} className="block">
+    <Link href={`/slaves/${id}`} className="block">
         <Card className={cn(
             "shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col h-full", 
             !isOperational && "opacity-60 bg-muted/30",
@@ -61,10 +60,10 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
             )}>
         <CardHeader className="p-4">
             <CardTitle className="flex items-center justify-between text-base">
-            <span className="truncate">{elevatorName}</span>
+            <span className="truncate">{slaveName}</span>
             <StatusBadge status={status} mainPower={mainPower} emergencyStop={emergencyStop} />
             </CardTitle>
-            <CardDescription className="text-xs truncate">{blockName}</CardDescription>
+            <CardDescription className="text-xs truncate">{deviceName}</CardDescription>
         </CardHeader>
         <CardContent className="flex-grow p-4 pt-0 flex items-center justify-around gap-4">
             <div className="flex flex-col justify-center text-center bg-muted/50 p-2 rounded-lg w-1/2 h-full">
