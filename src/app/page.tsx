@@ -22,7 +22,7 @@ export default function Home() {
                     <Link href="/blocks">View Blocks</Link>
                 </Button>
                 <Button asChild variant="outline" size="sm" className="shrink-0">
-                    <Link href="/elevators">View All Elevators</Link>
+                    <Link href="/elevators">View Elevators</Link>
                 </Button>
             </nav>
         </div>
