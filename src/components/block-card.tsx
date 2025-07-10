@@ -44,7 +44,7 @@ export function BlockCard({ blockId, elevators }: { blockId: string, elevators: 
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full" variant="outline">
-          <Link href={`/elevators#block-${blockId}`}>
+          <Link href={`/elevators?block=${blockId}`}>
             View Elevators <ArrowRight className="ml-2 w-4 h-4" />
           </Link>
         </Button>

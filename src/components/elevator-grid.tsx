@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -8,7 +9,7 @@ import { Separator } from './ui/separator';
 import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
 import { SearchX } from 'lucide-react';
 
-export function ElevatorGrid({ searchQuery }: { searchQuery: string }) {
+export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string, blockFilter: string | null }) {
   const [elevators, setElevators] = useState<ElevatorData[]>(generateInitialElevators);
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
@@ -37,13 +38,25 @@ export function ElevatorGrid({ searchQuery }: { searchQuery: string }) {
   }, [toast]);
 
   const filteredElevators = elevators.filter(elevator => {
+    const block = elevator.id.split('-')[0];
+
+    // Filter by block if blockFilter is provided
+    if (blockFilter && block !== blockFilter) {
+        return false;
+    }
+
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
 
-    const block = elevator.id.split('-')[0];
-    const blockMatch = `block ${block}`.includes(query) || block.includes(query);
+    // Further filter by search query
     const idMatch = elevator.id.toLowerCase().includes(query);
     const floorMatch = elevator.currentFloor.toString().includes(query);
+    const blockMatch = `block ${block}`.includes(query) || block.includes(query);
+    
+    // if block is already filtered, don't need to check blockMatch from search again
+    if (blockFilter) {
+      return idMatch || floorMatch;
+    }
 
     return blockMatch || idMatch || floorMatch;
   });
@@ -63,7 +76,9 @@ export function ElevatorGrid({ searchQuery }: { searchQuery: string }) {
       <div className="flex flex-col items-center justify-center text-center gap-4 py-16">
         <SearchX className="w-16 h-16 text-muted-foreground" />
         <h3 className="text-2xl font-bold">No Elevators Found</h3>
-        <p className="text-muted-foreground">Your search for "{searchQuery}" did not match any elevators.</p>
+        <p className="text-muted-foreground">
+          {searchQuery ? `Your search for "${searchQuery}" did not match any elevators.` : "No elevators match the current filter."}
+        </p>
       </div>
     );
   }
