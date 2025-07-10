@@ -25,7 +25,11 @@ export default function ElevatorsPage() {
               </h1>
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-            <h2 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
+            <Link href="/blocks" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
+                Blocks
+            </Link>
+            <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
+            <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
               All Elevators
             </h2>
           </div>

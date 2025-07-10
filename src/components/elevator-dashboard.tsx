@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { useToast } from "@/hooks/use-toast";
-import { Building, Wrench, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Building, Wrench, ShieldAlert, CheckCircle2, List } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { generateInitialElevators, updateElevatorState, TOTAL_ELEVATORS, NUM_BLOCKS } from '@/lib/elevator-simulation';
@@ -50,18 +50,20 @@ export default function ElevatorDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-            <Link href="/elevators" className="block hover:scale-105 transition-transform duration-200">
+            <Link href="/blocks" className="block hover:scale-105 transition-transform duration-200">
               <div className="bg-muted/50 p-4 rounded-lg h-full flex flex-col justify-center">
                 <Building className="w-8 h-8 mx-auto text-primary mb-2"/>
                 <p className="text-2xl sm:text-3xl font-bold">{NUM_BLOCKS}</p>
                 <p className="text-sm text-muted-foreground">Blocks</p>
               </div>
             </Link>
-             <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center">
-                <CheckCircle2 className="w-8 h-8 mx-auto text-green-500 mb-2"/>
-                <p className="text-2xl sm:text-3xl font-bold">{activeCount}/{TOTAL_ELEVATORS}</p>
-                <p className="text-sm text-muted-foreground">Elevators Active</p>
-            </div>
+             <Link href="/elevators" className="block hover:scale-105 transition-transform duration-200">
+               <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center">
+                  <CheckCircle2 className="w-8 h-8 mx-auto text-green-500 mb-2"/>
+                  <p className="text-2xl sm:text-3xl font-bold">{activeCount}/{TOTAL_ELEVATORS}</p>
+                  <p className="text-sm text-muted-foreground">Elevators Active</p>
+              </div>
+            </Link>
             <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center">
               <Wrench className="w-8 h-8 mx-auto text-yellow-500 mb-2"/>
               <p className="text-2xl sm:text-3xl font-bold">{maintenanceCount}</p>
@@ -78,5 +80,3 @@ export default function ElevatorDashboard() {
     </>
   );
 }
-
-    

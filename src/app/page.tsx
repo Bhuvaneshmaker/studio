@@ -17,7 +17,10 @@ export default function Home() {
                     ElevateView
                 </h1>
             </div>
-            <nav>
+            <nav className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                    <Link href="/blocks">View Blocks</Link>
+                </Button>
                 <Button asChild variant="outline" size="sm" className="shrink-0">
                     <Link href="/elevators">View All Elevators</Link>
                 </Button>
@@ -35,5 +38,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
