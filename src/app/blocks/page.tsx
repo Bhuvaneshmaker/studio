@@ -12,12 +12,18 @@ import { Button } from '@/components/ui/button';
 import { BlockCard } from '@/components/block-card';
 
 export default function BlocksPage() {
-  const [elevators, setElevators] = useState<ElevatorData[]>(generateInitialElevators);
+  const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const { getBlockName } = useNaming();
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    setElevators(generateInitialElevators());
+  }, []);
+
+  useEffect(() => {
+    if (elevators.length === 0) return;
+
     const interval = setInterval(() => {
        setElevators(prevElevators => {
         const { updatedElevators, newAlerts } = updateElevatorState(prevElevators, notifiedErrors.current);
@@ -38,7 +44,7 @@ export default function BlocksPage() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [toast]);
+  }, [toast, elevators.length]);
   
   const elevatorsByBlock = Array.from({ length: NUM_BLOCKS }, (_, i) => i + 1).map(blockNum => {
     return {

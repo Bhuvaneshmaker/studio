@@ -11,12 +11,18 @@ import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-si
 import { SearchX } from 'lucide-react';
 
 export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string, blockFilter: string | null }) {
-  const [elevators, setElevators] = useState<ElevatorData[]>(generateInitialElevators);
+  const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
   const { getBlockName, getElevatorName } = useNaming();
 
   useEffect(() => {
+    setElevators(generateInitialElevators());
+  }, []);
+
+  useEffect(() => {
+    if (elevators.length === 0) return;
+
     const interval = setInterval(() => {
        setElevators(prevElevators => {
         const { updatedElevators, newAlerts } = updateElevatorState(prevElevators, notifiedErrors.current);
@@ -37,7 +43,7 @@ export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [toast]);
+  }, [toast, elevators.length]);
 
   const filteredElevators = elevators.filter(elevator => {
     const block = elevator.id.split('-')[0];
@@ -74,7 +80,7 @@ export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string
   }, {} as Record<string, ElevatorData[]>);
 
 
-  if (filteredElevators.length === 0) {
+  if (elevators.length > 0 && filteredElevators.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center gap-4 py-16">
         <SearchX className="w-16 h-16 text-muted-foreground" />

@@ -30,14 +30,20 @@ export default function ElevatorDetailPage() {
     const id = params.id as string;
     
     const [elevator, setElevator] = useState<ElevatorData | null>(null);
-    const [allElevators, setAllElevators] = useState<ElevatorData[]>(generateInitialElevators);
+    const [allElevators, setAllElevators] = useState<ElevatorData[]>([]);
     const { getElevatorName, getFloorName } = useNaming();
     const elevatorName = getElevatorName(id);
 
     const { toast } = useToast();
     const notifiedErrors = useRef<Set<string>>(new Set());
 
+     useEffect(() => {
+        setAllElevators(generateInitialElevators());
+    }, []);
+
     useEffect(() => {
+        if (allElevators.length === 0) return;
+
         const interval = setInterval(() => {
            setAllElevators(prevElevators => {
                 const { updatedElevators, newAlerts } = updateElevatorState(prevElevators, notifiedErrors.current);
@@ -62,10 +68,10 @@ export default function ElevatorDetailPage() {
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [id, toast]);
+    }, [id, toast, allElevators.length]);
     
     useEffect(() => {
-        if (!elevator) {
+        if (!elevator && allElevators.length > 0) {
             const initialElevator = allElevators.find(e => e.id === id);
             setElevator(initialElevator || null);
         }
@@ -75,11 +81,8 @@ export default function ElevatorDetailPage() {
         return (
             <div className="min-h-screen flex items-center justify-center p-4">
                 <div className="text-center">
-                    <p className="text-2xl font-semibold">Elevator not found.</p>
-                    <p className="text-muted-foreground">The requested elevator does not exist or could not be loaded.</p>
-                    <Button asChild variant="link" className="mt-4">
-                        <Link href="/elevators">Back to All Elevators</Link>
-                    </Button>
+                    <p className="text-2xl font-semibold">Loading Elevator Data...</p>
+                    <p className="text-muted-foreground">Please wait a moment.</p>
                 </div>
             </div>
         );

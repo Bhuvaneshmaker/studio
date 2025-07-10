@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { generateInitialElevators, updateElevatorState, TOTAL_ELEVATORS, NUM_BLOCKS } from '@/lib/elevator-simulation';
 
 export default function ElevatorDashboard() {
-  const [elevators, setElevators] = useState<ElevatorData[]>(generateInitialElevators);
+  const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
 
@@ -19,6 +19,12 @@ export default function ElevatorDashboard() {
   const activeCount = TOTAL_ELEVATORS - maintenanceCount - errorCount;
 
   useEffect(() => {
+    setElevators(generateInitialElevators());
+  }, []);
+
+  useEffect(() => {
+    if (elevators.length === 0) return;
+
     const interval = setInterval(() => {
       setElevators(prevElevators => {
         const { updatedElevators, newAlerts } = updateElevatorState(prevElevators, notifiedErrors.current);
@@ -39,7 +45,7 @@ export default function ElevatorDashboard() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [toast]);
+  }, [toast, elevators.length]);
 
   return (
     <>
