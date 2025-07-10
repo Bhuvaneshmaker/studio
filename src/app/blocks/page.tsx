@@ -3,18 +3,21 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { ElevatorData } from '@/types/elevator';
-import { generateInitialElevators, updateElevatorState, NUM_BLOCKS } from '@/lib/elevator-simulation';
+import { generateInitialElevators, updateElevatorState, createBlock } from '@/lib/elevator-simulation';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
-import { Building, Router } from 'lucide-react';
+import { Building, SlidersHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BlockCard } from '@/components/block-card';
-import { SlidersHorizontal } from 'lucide-react';
+import { AddBlockForm } from '@/components/add-block-form';
+import { useNaming } from '@/hooks/use-naming';
 
 export default function BlocksPage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
+  const [isAddBlockOpen, setIsAddBlockOpen] = useState(false);
+  const { setBlockName } = useNaming();
 
   useEffect(() => {
     setElevators(generateInitialElevators());
@@ -51,6 +54,14 @@ export default function BlocksPage() {
     return acc;
   }, {} as Record<string, ElevatorData[]>);
 
+  const handleAddBlock = (blockName: string, numElevators: number) => {
+    const existingBlockIds = Object.keys(elevatorsByBlock).map(id => parseInt(id, 10));
+    const newBlockId = existingBlockIds.length > 0 ? Math.max(...existingBlockIds) + 1 : 1;
+    
+    const newBlock = createBlock(newBlockId.toString(), numElevators);
+    setBlockName(newBlockId.toString(), blockName);
+    setElevators(prev => [...prev, ...newBlock]);
+  };
 
   return (
     <div className="min-h-screen">
@@ -80,6 +91,16 @@ export default function BlocksPage() {
           {Object.entries(elevatorsByBlock).map(([blockId, elevators]) => (
             <BlockCard key={blockId} blockId={blockId} elevators={elevators} />
           ))}
+           <AddBlockForm open={isAddBlockOpen} onOpenChange={setIsAddBlockOpen} onAddBlock={handleAddBlock}>
+             <div 
+              className="border-2 border-dashed border-muted-foreground/50 rounded-lg flex flex-col items-center justify-center text-center p-6 hover:bg-muted/50 hover:border-primary/50 transition-all duration-300 cursor-pointer h-full min-h-[250px]"
+              onClick={() => setIsAddBlockOpen(true)}
+              >
+                <PlusCircle className="w-12 h-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-bold">Add New Block</h3>
+                <p className="text-sm text-muted-foreground">Click to configure a new block and its elevators.</p>
+              </div>
+          </AddBlockForm>
         </div>
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">

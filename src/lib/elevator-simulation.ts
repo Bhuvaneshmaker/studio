@@ -16,12 +16,37 @@ const maintenanceReasons = [
   "Emergency brake system check.",
 ];
 
-export const generateInitialElevators = (): ElevatorData[] => {
-  const elevators: ElevatorData[] = [];
+export const createBlock = (blockId: string, numElevators: number): ElevatorData[] => {
+    const elevators: ElevatorData[] = [];
+    for (let i = 1; i <= numElevators; i++) {
+        const elevatorNum = i;
+        const compositeId = `${blockId}-${elevatorNum}`;
+        const currentFloor = 1;
+        
+        elevators.push({
+          id: compositeId,
+          blockId,
+          elevatorNum,
+          currentFloor,
+          direction: 'IDLE',
+          status: 'IDLE',
+          doorState: 'CLOSED',
+          errorCode: 0,
+          totalFloors: MAX_FLOORS,
+          destinationFloor: 1,
+          mainPower: true,
+          emergencyStop: false,
+        });
+    }
+    return elevators;
+}
+
+export const generateInitialElevators = (numBlocks = NUM_BLOCKS, elevatorsPerBlock = NUM_ELEVATORS_PER_BLOCK): ElevatorData[] => {
+  let elevators: ElevatorData[] = [];
   
-  for (let blockNum = 1; blockNum <= NUM_BLOCKS; blockNum++) {
+  for (let blockNum = 1; blockNum <= numBlocks; blockNum++) {
     const blockId = blockNum.toString();
-    for (let i = 1; i <= NUM_ELEVATORS_PER_BLOCK; i++) {
+    for (let i = 1; i <= elevatorsPerBlock; i++) {
         const elevatorNum = i;
         const compositeId = `${blockId}-${elevatorNum}`;
         const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
