@@ -1,0 +1,244 @@
+
+"use client";
+
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import type { ElevatorData } from '@/types/elevator';
+import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
+import { useToast } from "@/hooks/use-toast";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, DoorOpen, DoorClosed, CircleDot } from 'lucide-react';
+import { cn } from "@/lib/utils";
+
+const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
+    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-3">
+            {icon}
+            <span className="text-muted-foreground">{label}</span>
+        </div>
+        <span className={cn("font-bold text-lg", valueClassName)}>{value}</span>
+    </div>
+);
+
+export default function ElevatorDetailPage() {
+    const params = useParams();
+    const id = params.id as string;
+    
+    const [elevator, setElevator] = useState<ElevatorData | null>(null);
+    const [allElevators, setAllElevators] = useState<ElevatorData[]>(generateInitialElevators);
+
+    const { toast } = useToast();
+    const notifiedErrors = useRef<Set<string>>(new Set());
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+           setAllElevators(prevElevators => {
+                const { updatedElevators, newAlerts } = updateElevatorState(prevElevators, notifiedErrors.current);
+                const currentElevator = updatedElevators.find(e => e.id === id);
+                if (currentElevator) {
+                    setElevator(currentElevator);
+                }
+                
+                newAlerts.forEach(alert => {
+                if (!notifiedErrors.current.has(alert.id)) {
+                    toast({
+                    variant: "destructive",
+                    title: alert.title,
+                    description: alert.description,
+                    });
+                    notifiedErrors.current.add(alert.id);
+                }
+                });
+
+                return updatedElevators;
+            });
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, [id, toast]);
+    
+    useEffect(() => {
+        if (!elevator) {
+            const initialElevator = allElevators.find(e => e.id === id);
+            setElevator(initialElevator || null);
+        }
+    }, [id, allElevators, elevator]);
+
+    if (!elevator) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-2xl font-semibold">Elevator not found.</p>
+                    <p className="text-muted-foreground">The requested elevator does not exist or could not be loaded.</p>
+                    <Button asChild variant="link" className="mt-4">
+                        <Link href="/elevators">Back to All Elevators</Link>
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+    
+    const { currentFloor, direction, status, doorState, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
+    const block = id.split('-')[0];
+    const isOperational = mainPower && !emergencyStop;
+
+    const getStatusInfo = () => {
+        if (!mainPower) return { text: "Offline", icon: <PowerOff className="w-6 h-6 text-gray-500" />, color: "text-gray-500" };
+        if (emergencyStop) return { text: "Emergency Stop", icon: <TriangleAlert className="w-6 h-6 text-red-500" />, color: "text-red-500" };
+        switch(status) {
+            case 'MOVING': return { text: "Moving", icon: <CircleDot className="w-6 h-6 text-blue-500 animate-pulse" />, color: "text-blue-500" };
+            case 'IDLE': return { text: "Idle", icon: <Minus className="w-6 h-6 text-green-500" />, color: "text-green-500" };
+            case 'MAINTENANCE': return { text: "Maintenance", icon: <Wrench className="w-6 h-6 text-yellow-500" />, color: "text-yellow-500" };
+            case 'ERROR': return { text: "Fault Detected", icon: <ShieldAlert className="w-6 h-6 text-red-500" />, color: "text-red-500" };
+            default: return { text: "Unknown", icon: <Minus className="w-6 h-6 text-muted-foreground" />, color: "text-muted-foreground" };
+        }
+    };
+    const statusInfo = getStatusInfo();
+
+    const getDirectionIcon = () => {
+        if (!isOperational) return <Minus className="w-6 h-6 text-muted-foreground" />;
+        switch(direction) {
+            case 'UP': return <ArrowUp className="w-6 h-6 text-green-500" />;
+            case 'DOWN': return <ArrowDown className="w-6 h-6 text-orange-500" />;
+            default: return <Minus className="w-6 h-6 text-muted-foreground" />;
+        }
+    };
+    
+    const getDoorIcon = () => {
+        if (!isOperational) return <DoorClosed className="w-6 h-6 text-muted-foreground" />;
+        switch(doorState) {
+            case 'OPEN':
+            case 'OPENING':
+                return <DoorOpen className="w-6 h-6 text-blue-500" />;
+            default:
+                return <DoorClosed className="w-6 h-6 text-muted-foreground" />;
+        }
+    };
+
+    return (
+        <div className="min-h-screen">
+             <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+                <div className="container mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                         <Link href="/" className="flex items-center gap-3">
+                            <div className="bg-primary text-primary-foreground p-2 rounded-lg">
+                                <Building className="w-6 h-6" />
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
+                                ElevateView
+                            </h1>
+                        </Link>
+                        <span className="text-2xl text-muted-foreground">/</span>
+                         <Link href="/elevators" className="text-2xl font-semibold text-foreground hover:underline">
+                            All Elevators
+                        </Link>
+                         <span className="text-2xl text-muted-foreground">/</span>
+                         <h2 className="text-2xl font-semibold text-primary">
+                            Elevator {id}
+                        </h2>
+                    </div>
+                    <Button asChild variant="outline">
+                        <Link href="/elevators"><ArrowLeft/> Back to List</Link>
+                    </Button>
+                </div>
+            </header>
+            <main className="container mx-auto p-4 sm:p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                   <div className="lg:col-span-1">
+                        <Card className="shadow-lg h-full">
+                            <CardHeader>
+                                <CardTitle>Current Status</CardTitle>
+                                <CardDescription>Real-time elevator overview</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex flex-col items-center justify-center text-center gap-4">
+                               <div className="flex items-center justify-center text-center bg-muted/50 p-6 rounded-lg w-full">
+                                    <div>
+                                        <p className="text-lg text-muted-foreground">Floor</p>
+                                        <p className="text-9xl font-bold text-primary relative">
+                                            {isOperational ? currentFloor : '-'}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">of {totalFloors}</p>
+                                    </div>
+                                </div>
+                                <div className={cn("flex items-center gap-3 p-4 rounded-lg w-full justify-center", statusInfo.color)}>
+                                    {statusInfo.icon}
+                                    <span className="text-2xl font-bold">{statusInfo.text}</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                   </div>
+                   <div className="lg:col-span-2">
+                        <Card className="shadow-lg">
+                            <CardHeader>
+                                <CardTitle>System Details</CardTitle>
+                                <CardDescription>In-depth system and sensor information.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <DetailItem 
+                                    icon={mainPower ? <Power className="w-6 h-6 text-green-500" /> : <PowerOff className="w-6 h-6 text-red-500" />}
+                                    label="Main Power"
+                                    value={mainPower ? 'ON' : 'OFF'}
+                                    valueClassName={mainPower ? 'text-green-500' : 'text-red-500'}
+                                />
+                                <DetailItem 
+                                    icon={<TriangleAlert className={cn("w-6 h-6", emergencyStop ? 'text-red-500' : 'text-green-500')} />}
+                                    label="Emergency Stop"
+                                    value={emergencyStop ? 'ACTIVE' : 'INACTIVE'}
+                                    valueClassName={emergencyStop ? 'text-red-500' : 'text-green-500'}
+                                />
+                                <Separator/>
+                                 <DetailItem 
+                                    icon={getDirectionIcon()}
+                                    label="Direction"
+                                    value={isOperational ? direction : "N/A"}
+                                />
+                                <DetailItem 
+                                    icon={<CircleDot className={cn("w-6 h-6", status === 'MOVING' ? 'text-blue-500' : 'text-muted-foreground')} />}
+                                    label="Destination"
+                                    value={isOperational ? (destinationFloor === currentFloor ? "Holding" : destinationFloor) : "N/A"}
+                                />
+                                 <DetailItem 
+                                    icon={getDoorIcon()}
+                                    label="Door Status"
+                                    value={isOperational ? doorState : "N/A"}
+                                />
+                                 <Separator/>
+                                 {status === 'ERROR' && isOperational && (
+                                    <Alert variant="destructive" className="border-2">
+                                        <ShieldAlert className="h-4 w-4" />
+                                        <AlertTitle className="font-bold">Fault Detected!</AlertTitle>
+                                        <AlertDescription>
+                                        An issue has been automatically detected. Error code: <strong>{errorCode}</strong>. Maintenance may be required.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                {status === 'MAINTENANCE' && (
+                                    <Alert className="border-yellow-500/50 text-yellow-600 dark:text-yellow-500">
+                                        <Wrench className="h-4 w-4 !text-yellow-500" />
+                                        <AlertTitle className="font-bold">Under Maintenance</AlertTitle>
+                                        <AlertDescription>
+                                            This elevator is currently undergoing scheduled maintenance.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                 {isOperational && status !== 'ERROR' && status !== 'MAINTENANCE' && (
+                                    <Alert>
+                                        <ShieldAlert className="h-4 w-4" />
+                                        <AlertTitle>System Nominal</AlertTitle>
+                                        <AlertDescription>
+                                        All systems are operating correctly. No faults detected.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </CardContent>
+                        </Card>
+                   </div>
+                </div>
+            </main>
+        </div>
+    );
+}

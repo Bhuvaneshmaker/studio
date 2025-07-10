@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { ElevatorData } from "@/types/elevator";
 import { ArrowUp, ArrowDown, Minus, DoorOpen, DoorClosed, ShieldAlert, Wrench, CircleDot, Power, PowerOff, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const DirectionIcon = ({ direction }: { direction: ElevatorData['direction'] }) => {
   switch (direction) {
@@ -50,70 +51,72 @@ const StatusBadge = ({ status, mainPower, emergencyStop }: { status: ElevatorDat
 };
 
 export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
-  const { id, currentFloor, direction, status, doorState, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
+  const { id, currentFloor, direction, status, doorState, errorCode, destinationFloor, mainPower, emergencyStop } = elevator;
   const block = id.split('-')[0];
 
   const isOperational = mainPower && !emergencyStop;
 
   return (
-    <Card className={cn("shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col", !isOperational && "opacity-60 bg-muted/30")}>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Elevator {id}</span>
-          <StatusBadge status={status} mainPower={mainPower} emergencyStop={emergencyStop} />
-        </CardTitle>
-        <CardDescription>Block {block}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow grid grid-cols-2 gap-4">
-        <div className="col-span-1 flex flex-col justify-center text-center bg-muted/50 p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground">Current Floor</p>
-            <p className="text-7xl font-bold text-primary relative">
-                {isOperational ? currentFloor : '-'}
-                 {destinationFloor !== currentFloor && status === 'MOVING' && isOperational && 
-                    <span className="text-lg absolute bottom-1 -right-2 text-blue-500 animate-pulse">
-                        <CircleDot className="w-4 h-4"/>
-                    </span>
-                 }
-            </p>
-        </div>
-        <div className="col-span-1 space-y-4">
-            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md h-full">
-                <DirectionIcon direction={isOperational ? direction : 'IDLE'} />
-                <div>
-                    <p className="font-semibold">{isOperational ? direction : 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground">Direction</p>
+    <Link href={`/elevators/${id}`} className="block">
+        <Card className={cn("shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col h-full", !isOperational && "opacity-60 bg-muted/30")}>
+        <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+            <span>Elevator {id}</span>
+            <StatusBadge status={status} mainPower={mainPower} emergencyStop={emergencyStop} />
+            </CardTitle>
+            <CardDescription>Block {block}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-grow grid grid-cols-2 gap-4">
+            <div className="col-span-1 flex flex-col justify-center text-center bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">Current Floor</p>
+                <p className="text-7xl font-bold text-primary relative">
+                    {isOperational ? currentFloor : '-'}
+                    {destinationFloor !== currentFloor && status === 'MOVING' && isOperational && 
+                        <span className="text-lg absolute bottom-1 -right-2 text-blue-500 animate-pulse">
+                            <CircleDot className="w-4 h-4"/>
+                        </span>
+                    }
+                </p>
+            </div>
+            <div className="col-span-1 space-y-4">
+                <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md h-full">
+                    <DirectionIcon direction={isOperational ? direction : 'IDLE'} />
+                    <div>
+                        <p className="font-semibold">{isOperational ? direction : 'N/A'}</p>
+                        <p className="text-xs text-muted-foreground">Direction</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md h-full">
+                    <DoorIcon state={isOperational ? doorState : 'CLOSED'} />
+                    <div>
+                        <p className="font-semibold">{isOperational ? doorState : 'N/A'}</p>
+                        <p className="text-xs text-muted-foreground">Door</p>
+                    </div>
                 </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md h-full">
-                <DoorIcon state={isOperational ? doorState : 'CLOSED'} />
-                <div>
-                    <p className="font-semibold">{isOperational ? doorState : 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground">Door</p>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2 pt-0 p-4">
+            {(status === 'ERROR' && isOperational) && (
+                <Alert variant="destructive" className="border-2 w-full text-xs p-2">
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle className="font-bold">Fault Detected!</AlertTitle>
+                    <AlertDescription>
+                    Error code: {errorCode}.
+                    </AlertDescription>
+                </Alert>
+            )}
+            <div className="grid grid-cols-2 gap-2 w-full text-xs">
+                <div className={cn("flex items-center gap-2 p-2 rounded-md", mainPower ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500")}>
+                    {mainPower ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+                    <span className="font-semibold">Main Power: {mainPower ? 'ON' : 'OFF'}</span>
+                </div>
+                <div className={cn("flex items-center gap-2 p-2 rounded-md", emergencyStop ? "bg-red-500/10 text-red-500" : "bg-green-500/10 text-green-500")}>
+                    <TriangleAlert className="w-4 h-4" />
+                    <span className="font-semibold">E-Stop: {emergencyStop ? 'ON' : 'OFF'}</span>
                 </div>
             </div>
-        </div>
-      </CardContent>
-       <CardFooter className="flex flex-col gap-2 pt-0 p-4">
-        {(status === 'ERROR' && isOperational) && (
-            <Alert variant="destructive" className="border-2 w-full text-xs p-2">
-                <ShieldAlert className="h-4 w-4" />
-                <AlertTitle className="font-bold">Fault Detected!</AlertTitle>
-                <AlertDescription>
-                Error code: {errorCode}.
-                </AlertDescription>
-            </Alert>
-        )}
-         <div className="grid grid-cols-2 gap-2 w-full text-xs">
-            <div className={cn("flex items-center gap-2 p-2 rounded-md", mainPower ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500")}>
-                {mainPower ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
-                <span className="font-semibold">Main Power: {mainPower ? 'ON' : 'OFF'}</span>
-            </div>
-             <div className={cn("flex items-center gap-2 p-2 rounded-md", emergencyStop ? "bg-red-500/10 text-red-500" : "bg-green-500/10 text-green-500")}>
-                <TriangleAlert className="w-4 h-4" />
-                <span className="font-semibold">E-Stop: {emergencyStop ? 'ON' : 'OFF'}</span>
-            </div>
-         </div>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+        </Card>
+    </Link>
   );
 }
