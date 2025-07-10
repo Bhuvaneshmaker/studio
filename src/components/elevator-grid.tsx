@@ -6,8 +6,9 @@ import { ElevatorCard } from '@/components/elevator-card';
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from './ui/separator';
 import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
+import { SearchX } from 'lucide-react';
 
-export function ElevatorGrid() {
+export function ElevatorGrid({ searchQuery }: { searchQuery: string }) {
   const [elevators, setElevators] = useState<ElevatorData[]>(generateInitialElevators);
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
@@ -35,7 +36,19 @@ export function ElevatorGrid() {
     return () => clearInterval(interval);
   }, [toast]);
 
-  const elevatorsByBlock = elevators.reduce((acc, elevator) => {
+  const filteredElevators = elevators.filter(elevator => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+
+    const block = elevator.id.split('-')[0];
+    const blockMatch = `block ${block}`.includes(query) || block.includes(query);
+    const idMatch = elevator.id.toLowerCase().includes(query);
+    const floorMatch = elevator.currentFloor.toString().includes(query);
+
+    return blockMatch || idMatch || floorMatch;
+  });
+
+  const elevatorsByBlock = filteredElevators.reduce((acc, elevator) => {
     const block = elevator.id.split('-')[0];
     if (!acc[block]) {
       acc[block] = [];
@@ -44,6 +57,16 @@ export function ElevatorGrid() {
     return acc;
   }, {} as Record<string, ElevatorData[]>);
 
+
+  if (filteredElevators.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center gap-4 py-16">
+        <SearchX className="w-16 h-16 text-muted-foreground" />
+        <h3 className="text-2xl font-bold">No Elevators Found</h3>
+        <p className="text-muted-foreground">Your search for "{searchQuery}" did not match any elevators.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

@@ -1,10 +1,16 @@
 
+"use client";
+
+import { useState } from 'react';
 import { ElevatorGrid } from '@/components/elevator-grid';
-import { Building } from 'lucide-react';
+import { Building, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
 
 export default function ElevatorsPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <div className="min-h-screen">
       <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
@@ -29,7 +35,16 @@ export default function ElevatorsPage() {
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
-        <ElevatorGrid />
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input 
+            placeholder="Search by block, elevator ID, or floor..." 
+            className="pl-10 w-full max-w-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <ElevatorGrid searchQuery={searchQuery} />
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">
@@ -39,5 +54,3 @@ export default function ElevatorsPage() {
     </div>
   );
 }
-
-    
