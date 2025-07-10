@@ -40,16 +40,16 @@ export default function Home() {
                   <Button asChild variant="outline" size="sm" className="shrink-0">
                       <Link href="/elevators"><SlidersHorizontal className="w-4 h-4 mr-2"/>View Elevators</Link>
                   </Button>
+                  <Button asChild variant="ghost" size="icon" className="shrink-0">
+                      <Link href="/naming" aria-label="Manage Naming">
+                          <Pencil className="w-5 h-5"/>
+                      </Link>
+                  </Button>
                   {user?.role === 'Admin' && (
                     <>
                       <Button asChild variant="ghost" size="icon" className="shrink-0">
                           <Link href="/maintenance" aria-label="View Maintenance">
                               <Wrench className="w-5 h-5"/>
-                          </Link>
-                      </Button>
-                      <Button asChild variant="ghost" size="icon" className="shrink-0">
-                          <Link href="/naming" aria-label="Manage Naming">
-                              <Pencil className="w-5 h-5"/>
                           </Link>
                       </Button>
                       <Button asChild variant="ghost" size="icon" className="shrink-0">

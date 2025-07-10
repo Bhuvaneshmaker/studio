@@ -12,6 +12,7 @@ import { BlockCard } from '@/components/block-card';
 import { AddBlockForm } from '@/components/add-block-form';
 import { useNaming } from '@/hooks/use-naming';
 import { BackButton } from '@/components/back-button';
+import { useAuth } from '@/context/auth-context';
 
 export default function BlocksPage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
@@ -20,6 +21,7 @@ export default function BlocksPage() {
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false);
   const { setBlockName } = useNaming();
   const [initialLoad, setInitialLoad] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     setElevators(generateInitialElevators());
@@ -93,16 +95,18 @@ export default function BlocksPage() {
           {Object.entries(elevatorsByBlock).map(([blockId, elevators]) => (
             <BlockCard key={blockId} blockId={blockId} elevators={elevators} />
           ))}
-           <AddBlockForm open={isAddBlockOpen} onOpenChange={setIsAddBlockOpen} onAddBlock={handleAddBlock}>
-             <div 
-              className="border-2 border-dashed border-muted-foreground/50 rounded-lg flex flex-col items-center justify-center text-center p-6 hover:bg-muted/50 hover:border-primary/50 transition-all duration-300 cursor-pointer h-full min-h-[250px]"
-              onClick={() => setIsAddBlockOpen(true)}
-              >
-                <PlusCircle className="w-12 h-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-bold">Add New Block</h3>
-                <p className="text-sm text-muted-foreground">Click to configure a new block and its elevators.</p>
-              </div>
-          </AddBlockForm>
+          {user?.role === 'Admin' && (
+            <AddBlockForm open={isAddBlockOpen} onOpenChange={setIsAddBlockOpen} onAddBlock={handleAddBlock}>
+              <div 
+                className="border-2 border-dashed border-muted-foreground/50 rounded-lg flex flex-col items-center justify-center text-center p-6 hover:bg-muted/50 hover:border-primary/50 transition-all duration-300 cursor-pointer h-full min-h-[250px]"
+                onClick={() => setIsAddBlockOpen(true)}
+                >
+                  <PlusCircle className="w-12 h-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-bold">Add New Block</h3>
+                  <p className="text-sm text-muted-foreground">Click to configure a new block and its elevators.</p>
+                </div>
+            </AddBlockForm>
+          )}
         </div>
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">

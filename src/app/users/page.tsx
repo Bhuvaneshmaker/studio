@@ -1,4 +1,9 @@
 
+"use client";
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserManagementCard } from '@/components/user-management-card';
@@ -6,6 +11,25 @@ import { Building, Users, Home } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 
 export default function UsersPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect if user is not an Admin
+    if (user && user.role !== 'Admin') {
+      router.push('/');
+    }
+  }, [user, router]);
+  
+  // Render nothing or a loading state while redirecting
+  if (!user || user.role !== 'Admin') {
+    return (
+       <div className="min-h-screen flex items-center justify-center">
+            <p>Access Denied. Redirecting...</p>
+        </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
        <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">

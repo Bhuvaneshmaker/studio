@@ -2,6 +2,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +22,15 @@ export default function MaintenancePage() {
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
   const [initialLoad, setInitialLoad] = useState(true);
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect if user is not an Admin
+    if (user && user.role !== 'Admin') {
+      router.push('/');
+    }
+  }, [user, router]);
 
   useEffect(() => {
     setElevators(generateInitialElevators());
@@ -49,6 +60,14 @@ export default function MaintenancePage() {
   }, [elevators, toast, initialLoad]);
 
   const maintenanceElevators = elevators.filter(e => e.status === 'MAINTENANCE');
+
+  if (!user || user.role !== 'Admin') {
+    return (
+       <div className="min-h-screen flex items-center justify-center">
+            <p>Access Denied. Redirecting...</p>
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
