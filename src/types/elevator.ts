@@ -11,4 +11,6 @@ export interface ElevatorData {
   errorCode: number;
   destinationFloor: number;
   totalFloors: number;
+  mainPower: boolean;
+  emergencyStop: boolean;
 }

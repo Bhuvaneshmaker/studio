@@ -46,6 +46,8 @@ const generateInitialElevators = (): ElevatorData[] => {
           errorCode: 0,
           totalFloors: MAX_FLOORS,
           destinationFloor,
+          mainPower: Math.random() > 0.05,
+          emergencyStop: false,
         });
     }
   }
@@ -66,6 +68,10 @@ export default function ElevatorDashboard() {
       setElevators(prevElevators =>
         prevElevators.map(elevator => {
           let newElevator = { ...elevator };
+
+          if (!newElevator.mainPower || newElevator.emergencyStop) {
+            return newElevator;
+          }
 
           if (newElevator.status === 'ERROR') {
             if (Math.random() < 0.1) {
@@ -129,6 +135,16 @@ export default function ElevatorDashboard() {
               });
               notifiedErrors.current.add(newElevator.id);
             }
+          }
+
+          if (Math.random() < 0.0005) {
+            newElevator.emergencyStop = true;
+            newElevator.status = 'ERROR';
+             toast({
+                variant: "destructive",
+                title: `Elevator ${newElevator.id} Emergency Stop!`,
+                description: `The emergency stop has been activated.`,
+              });
           }
           
           return newElevator;
