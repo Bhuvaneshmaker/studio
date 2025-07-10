@@ -64,44 +64,31 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
         </CardTitle>
         <CardDescription>Block {block}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow grid grid-cols-3 gap-4">
-        <div className="col-span-1 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-2 space-y-2">
-            <p className="text-xs text-muted-foreground">Floors</p>
-            <div className="flex flex-col-reverse items-center gap-1">
-            {Array.from({ length: totalFloors }, (_, i) => totalFloors - i).map((floor) => (
-                <div
-                key={floor}
-                className={cn(
-                    "w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold transition-all duration-300 relative",
-                    currentFloor === floor ? "bg-primary text-primary-foreground" : "bg-background",
-                    destinationFloor === floor && status === 'MOVING' && isOperational && "ring-2 ring-blue-500"
-                )}
-                >
-                {floor}
-                {destinationFloor === floor && status === 'MOVING' && isOperational && <CircleDot className="absolute w-3 h-3 -right-1 -top-1 text-blue-500 bg-white rounded-full"/>}
-                </div>
-            ))}
-            </div>
+      <CardContent className="flex-grow grid grid-cols-2 gap-4">
+        <div className="col-span-1 flex flex-col justify-center text-center bg-muted/50 p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground">Current Floor</p>
+            <p className="text-7xl font-bold text-primary relative">
+                {isOperational ? currentFloor : '-'}
+                 {destinationFloor !== currentFloor && status === 'MOVING' && isOperational && 
+                    <span className="text-lg absolute bottom-1 -right-2 text-blue-500 animate-pulse">
+                        <CircleDot className="w-4 h-4"/>
+                    </span>
+                 }
+            </p>
         </div>
-        <div className="col-span-2 space-y-4">
-            <div className="text-center bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Floor Count</p>
-                <p className="text-6xl font-bold text-primary">{isOperational ? currentFloor : '-'}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                    <DirectionIcon direction={isOperational ? direction : 'IDLE'} />
-                    <div>
-                        <p className="font-semibold">{isOperational ? direction : 'N/A'}</p>
-                        <p className="text-xs text-muted-foreground">Direction</p>
-                    </div>
+        <div className="col-span-1 space-y-4">
+            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md h-full">
+                <DirectionIcon direction={isOperational ? direction : 'IDLE'} />
+                <div>
+                    <p className="font-semibold">{isOperational ? direction : 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">Direction</p>
                 </div>
-                <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                    <DoorIcon state={isOperational ? doorState : 'CLOSED'} />
-                    <div>
-                        <p className="font-semibold">{isOperational ? doorState : 'N/A'}</p>
-                        <p className="text-xs text-muted-foreground">Door</p>
-                    </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md h-full">
+                <DoorIcon state={isOperational ? doorState : 'CLOSED'} />
+                <div>
+                    <p className="font-semibold">{isOperational ? doorState : 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">Door</p>
                 </div>
             </div>
         </div>
