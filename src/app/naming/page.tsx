@@ -8,9 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Pencil, Trash2, Building, Save, X, Home } from 'lucide-react';
+import { Building, Home, Save, Trash2, ListTree, Info } from 'lucide-react';
 import Link from 'next/link';
 import { NUM_BLOCKS, NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS } from '@/lib/elevator-simulation';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const allBlockIds = Array.from({ length: NUM_BLOCKS }, (_, i) => (i + 1).toString());
 const allElevatorIds = Array.from({ length: NUM_BLOCKS }, (_, i) => {
@@ -19,23 +21,87 @@ const allElevatorIds = Array.from({ length: NUM_BLOCKS }, (_, i) => {
 }).flat();
 const allFloorIds = Array.from({ length: MAX_FLOORS }, (_, i) => (i + 1).toString());
 
+type NamingType = 'block' | 'elevator' | 'floor';
 
-const NamingForm = ({ id, currentName, onSave, onCancel, placeholder }: { id: string, currentName: string, onSave: (name: string) => void, onCancel: () => void, placeholder: string }) => {
-    const [name, setName] = useState(currentName);
+const NamingEditor = ({ 
+    selectedId, 
+    selectedType, 
+    customName,
+    onSave,
+    onDelete,
+}: { 
+    selectedId: string | null; 
+    selectedType: NamingType | null;
+    customName: string;
+    onSave: (name: string) => void;
+    onDelete: () => void;
+}) => {
+    const [name, setName] = useState(customName);
+
+    React.useEffect(() => {
+        setName(customName);
+    }, [customName]);
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         onSave(name);
+    };
+
+    if (!selectedId || !selectedType) {
+        return (
+            <Card className="sticky top-24">
+                <CardContent className="pt-6 flex flex-col items-center justify-center text-center h-48">
+                    <Info className="w-12 h-12 text-muted-foreground mb-4" />
+                    <p className="font-semibold">Select an item</p>
+                    <p className="text-sm text-muted-foreground">Click an item from the list on the left to edit its name.</p>
+                </CardContent>
+            </Card>
+        );
     }
 
+    const typeLabels = {
+        block: { title: "Block", idLabel: "Block ID", nameLabel: "Custom Block Name" },
+        elevator: { title: "Elevator", idLabel: "Elevator ID", nameLabel: "Custom Elevator Name" },
+        floor: { title: "Floor", idLabel: "Floor Number", nameLabel: "Custom Floor Name" },
+    }
+    const labels = typeLabels[selectedType];
+
     return (
-        <form onSubmit={handleSave} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg mt-2">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={placeholder} className="bg-background"/>
-            <Button type="submit" size="icon" variant="ghost" className="text-green-500 hover:text-green-600"><Save className="w-5 h-5"/></Button>
-            <Button type="button" size="icon" variant="ghost" onClick={onCancel} className="text-red-500 hover:text-red-600"><X className="w-5 h-5"/></Button>
-        </form>
+        <Card className="sticky top-24">
+             <CardHeader>
+                <CardTitle>Edit {labels.title} Name</CardTitle>
+                <CardDescription>Set a custom name for this item.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSave} className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="itemId">{labels.idLabel}</Label>
+                        <Input id="itemId" value={selectedId} disabled />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="customName">{labels.nameLabel}</Label>
+                        <Input 
+                            id="customName" 
+                            value={name} 
+                            onChange={(e) => setName(e.target.value)} 
+                            placeholder={`e.g. Lobby, Main Elevator...`}
+                        />
+                    </div>
+                    <div className="flex justify-between items-center gap-2 pt-2">
+                        <Button type="submit">
+                            <Save className="w-4 h-4 mr-2" />
+                            Save Name
+                        </Button>
+                        <Button type="button" variant="ghost" className="text-red-500 hover:text-red-600" onClick={onDelete} disabled={!customName}>
+                           <Trash2 className="w-4 h-4 mr-2" />
+                            Reset to Default
+                        </Button>
+                    </div>
+                </form>
+            </CardContent>
+        </Card>
     );
-};
+}
 
 export default function NamingPage() {
     const { 
@@ -45,57 +111,59 @@ export default function NamingPage() {
         deleteBlockName, deleteElevatorName, deleteFloorName
     } = useNaming();
 
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editingType, setEditingType] = useState<'block' | 'elevator' | 'floor' | null>(null);
-    
-    const handleEditClick = (id: string, type: 'block' | 'elevator' | 'floor') => {
-        setEditingId(id);
-        setEditingType(type);
-    }
-    
-    const handleCancel = () => {
-        setEditingId(null);
-        setEditingType(null);
-    }
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedType, setSelectedType] = useState<NamingType | null>(null);
+
+    const handleSelect = (id: string, type: NamingType) => {
+        setSelectedId(id);
+        setSelectedType(type);
+    };
+
+    const nameGetters: Record<NamingType, (id: string) => string> = {
+        block: getBlockName,
+        elevator: getElevatorName,
+        floor: getFloorName,
+    };
+    const nameSetters: Record<NamingType, (id: string, name: string) => void> = {
+        block: setBlockName,
+        elevator: setElevatorName,
+        floor: setFloorName,
+    };
+    const nameDeleters: Record<NamingType, (id: string) => void> = {
+        block: deleteBlockName,
+        elevator: deleteElevatorName,
+        floor: deleteFloorName,
+    };
+     const customNameMaps: Record<NamingType, Record<string, string>> = {
+        block: customNames.blocks,
+        elevator: customNames.elevators,
+        floor: customNames.floors,
+    };
 
     const renderNamingList = (
         itemIds: string[], 
-        type: 'block' | 'elevator' | 'floor',
-        getName: (id: string) => string,
-        setName: (id: string, name: string) => void,
-        deleteName: (id: string) => void,
-        customNameMap: Record<string, string>,
-        placeholderPrefix: string
+        type: NamingType
     ) => (
-        <CardContent className="space-y-2 max-h-[60vh] overflow-y-auto">
-            {itemIds.map(id => (
-                <div key={id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-center">
-                        <div className="font-medium">{getName(id)}</div>
-                        <div className="flex items-center gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => handleEditClick(id, type)}>
-                                <Pencil className="w-4 h-4"/>
-                            </Button>
-                            <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => deleteName(id)} disabled={!customNameMap[id]}>
-                                <Trash2 className="w-4 h-4"/>
-                            </Button>
+        <ScrollArea className="h-[65vh]">
+            <div className="space-y-2 pr-4">
+                {itemIds.map(id => (
+                    <button 
+                        key={id} 
+                        onClick={() => handleSelect(id, type)}
+                        className={cn(
+                            "w-full text-left p-3 border rounded-lg transition-colors",
+                            "hover:bg-muted/80",
+                            selectedId === id && selectedType === type ? "bg-muted border-primary" : "bg-muted/40"
+                        )}
+                    >
+                         <div className="flex justify-between items-center">
+                            <span className="font-medium">{nameGetters[type](id)}</span>
+                            <span className="text-xs text-muted-foreground">{id}</span>
                         </div>
-                    </div>
-                    {editingId === id && editingType === type && (
-                        <NamingForm
-                            id={id}
-                            currentName={customNameMap[id] || ''}
-                            onSave={(name) => {
-                                setName(id, name);
-                                handleCancel();
-                            }}
-                            onCancel={handleCancel}
-                            placeholder={`Enter name for ${placeholderPrefix} ${id}`}
-                        />
-                    )}
-                </div>
-            ))}
-        </CardContent>
+                    </button>
+                ))}
+            </div>
+        </ScrollArea>
     );
 
     return (
@@ -124,41 +192,52 @@ export default function NamingPage() {
                     </Button>
                 </div>
             </header>
-            <main className="container mx-auto p-4 sm:p-6 space-y-8">
-                 <Tabs defaultValue="blocks" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="blocks">Block Names</TabsTrigger>
-                        <TabsTrigger value="elevators">Elevator Names</TabsTrigger>
-                        <TabsTrigger value="floors">Floor Names</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="blocks">
-                        <Card>
-                             <CardHeader>
-                                <CardTitle>Block Names</CardTitle>
-                                <CardDescription>Assign custom names to building blocks. These names appear across the application.</CardDescription>
-                            </CardHeader>
-                            {renderNamingList(allBlockIds, 'block', getBlockName, setBlockName, deleteBlockName, customNames.blocks, "Block")}
-                        </Card>
-                    </TabsContent>
-                    <TabsContent value="elevators">
-                         <Card>
-                             <CardHeader>
-                                <CardTitle>Elevator Names</CardTitle>
-                                <CardDescription>Assign custom names to individual elevators.</CardDescription>
-                            </CardHeader>
-                           {renderNamingList(allElevatorIds, 'elevator', getElevatorName, setElevatorName, deleteElevatorName, customNames.elevators, "Elevator")}
-                        </Card>
-                    </TabsContent>
-                     <TabsContent value="floors">
-                         <Card>
-                             <CardHeader>
-                                <CardTitle>Floor Names</CardTitle>
-                                <CardDescription>Assign custom names to floor numbers (e.g., "G" for Ground, "L" for Lobby).</CardDescription>
-                            </CardHeader>
-                           {renderNamingList(allFloorIds, 'floor', getFloorName, setFloorName, deleteFloorName, customNames.floors, "Floor")}
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+            <main className="container mx-auto p-4 sm:p-6">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1">
+                        <Tabs defaultValue="blocks" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
+                                <TabsTrigger value="blocks">Blocks</TabsTrigger>
+                                <TabsTrigger value="elevators">Elevators</TabsTrigger>
+                                <TabsTrigger value="floors">Floors</TabsTrigger>
+                            </TabsList>
+                            <Card className="mt-4">
+                                <TabsContent value="blocks" className="m-0">
+                                    <CardContent className="pt-6">
+                                        {renderNamingList(allBlockIds, 'block')}
+                                    </CardContent>
+                                </TabsContent>
+                                <TabsContent value="elevators" className="m-0">
+                                     <CardContent className="pt-6">
+                                        {renderNamingList(allElevatorIds, 'elevator')}
+                                    </CardContent>
+                                </TabsContent>
+                                <TabsContent value="floors" className="m-0">
+                                     <CardContent className="pt-6">
+                                        {renderNamingList(allFloorIds, 'floor')}
+                                    </CardContent>
+                                </TabsContent>
+                            </Card>
+                        </Tabs>
+                    </div>
+                     <div className="md:col-span-2">
+                        <NamingEditor 
+                            selectedId={selectedId}
+                            selectedType={selectedType}
+                            customName={selectedId && selectedType ? customNameMaps[selectedType][selectedId] || '' : ''}
+                            onSave={(name) => {
+                                if (selectedId && selectedType) {
+                                    nameSetters[selectedType](selectedId, name);
+                                }
+                            }}
+                            onDelete={() => {
+                                 if (selectedId && selectedType) {
+                                    nameDeleters[selectedType](selectedId);
+                                }
+                            }}
+                        />
+                    </div>
+                 </div>
             </main>
         </div>
     );
