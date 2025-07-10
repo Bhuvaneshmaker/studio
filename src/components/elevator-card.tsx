@@ -45,6 +45,7 @@ const StatusBadge = ({ status }: { status: ElevatorData['status'] }) => {
 
 export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
   const { id, currentFloor, direction, status, doorState, errorCode, totalFloors, destinationFloor } = elevator;
+  const block = id.split('-')[0];
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -53,7 +54,7 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
           <span>Elevator {id}</span>
           <StatusBadge status={status} />
         </CardTitle>
-        <CardDescription>Building 1, Section {id.split('-')[0]}</CardDescription>
+        <CardDescription>Block {block}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow grid grid-cols-3 gap-4">
         <div className="col-span-1 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-2 space-y-2">

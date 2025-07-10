@@ -4,24 +4,65 @@ import { useState, useEffect, useRef } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { ElevatorCard } from '@/components/elevator-card';
 import { useToast } from "@/hooks/use-toast";
+import { Building, Wrench, ShieldAlert } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
-const NUM_ELEVATORS = 4;
-const MAX_FLOORS_A = 12;
-const MAX_FLOORS_B = 16;
+const NUM_ELEVATORS = 10;
+const NUM_BLOCKS = 15;
+const MAX_FLOORS = 15;
 
-const initialElevators: ElevatorData[] = [
-  { id: 'A-1', currentFloor: 1, direction: 'IDLE', status: 'IDLE', doorState: 'CLOSED', errorCode: 0, totalFloors: MAX_FLOORS_A, destinationFloor: 1 },
-  { id: 'A-2', currentFloor: MAX_FLOORS_A, direction: 'IDLE', status: 'IDLE', doorState: 'CLOSED', errorCode: 0, totalFloors: MAX_FLOORS_A, destinationFloor: MAX_FLOORS_A },
-  { id: 'B-1', currentFloor: 5, direction: 'IDLE', status: 'MAINTENANCE', doorState: 'CLOSED', errorCode: 0, totalFloors: MAX_FLOORS_B, destinationFloor: 5 },
-  { id: 'B-2', currentFloor: 8, direction: 'UP', status: 'MOVING', doorState: 'CLOSED', errorCode: 0, totalFloors: MAX_FLOORS_B, destinationFloor: 15 },
-];
+// Generate more diverse initial elevator data
+const generateInitialElevators = (): ElevatorData[] => {
+  const elevators: ElevatorData[] = [];
+  const blockLetters = Array.from({ length: NUM_BLOCKS }, (_, i) => String.fromCharCode(65 + i));
+  
+  for (let i = 1; i <= NUM_ELEVATORS; i++) {
+    const block = blockLetters[Math.floor(Math.random() * NUM_BLOCKS)];
+    const id = `${block}-${i}`;
+    const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
+    
+    // Make some elevators start in different states
+    let status: ElevatorData['status'] = 'IDLE';
+    let direction: ElevatorData['direction'] = 'IDLE';
+    let doorState: ElevatorData['doorState'] = 'CLOSED';
+    let destinationFloor = currentFloor;
+
+    const rand = Math.random();
+    if (rand < 0.1) {
+      status = 'MAINTENANCE';
+    } else if (rand < 0.3) {
+      status = 'MOVING';
+      destinationFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
+      if (destinationFloor === currentFloor) destinationFloor = (currentFloor % MAX_FLOORS) + 1; // Ensure it's different
+      direction = destinationFloor > currentFloor ? 'UP' : 'DOWN';
+    }
+
+    elevators.push({
+      id,
+      currentFloor,
+      direction,
+      status,
+      doorState,
+      errorCode: 0,
+      totalFloors: MAX_FLOORS,
+      destinationFloor,
+    });
+  }
+  return elevators;
+};
+
 
 // In a real application, this data would come from a WebSocket or long-polling API
-// connected to a Raspberry Pi. We simulate it here for demonstration purposes.
+// We simulate it here for demonstration purposes.
 export default function ElevatorDashboard() {
-  const [elevators, setElevators] = useState<ElevatorData[]>(initialElevators);
+  const [elevators, setElevators] = useState<ElevatorData[]>(generateInitialElevators);
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
+
+  const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
+  const errorCount = elevators.filter(e => e.status === 'ERROR').length;
+  const activeCount = NUM_ELEVATORS - maintenanceCount - errorCount;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -88,7 +129,7 @@ export default function ElevatorDashboard() {
           }
 
           // Small chance of a random error
-          if (Math.random() < 0.01) {
+          if (Math.random() < 0.01 && !notifiedErrors.current.has(newElevator.id)) {
             newElevator.status = 'ERROR';
             newElevator.errorCode = Math.floor(Math.random() * 5) + 101; // e.g., 101-105
             if (!notifiedErrors.current.has(newElevator.id)) {
@@ -110,10 +151,42 @@ export default function ElevatorDashboard() {
   }, [toast]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4 gap-6">
-      {elevators.map(elevator => (
-        <ElevatorCard key={elevator.id} elevator={elevator} />
-      ))}
-    </div>
+    <>
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl">Control Room Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <Building className="w-8 h-8 mx-auto text-primary mb-2"/>
+              <p className="text-3xl font-bold">{NUM_BLOCKS}</p>
+              <p className="text-sm text-muted-foreground">Blocks</p>
+            </div>
+            <div className="bg-muted/50 p-4 rounded-lg">
+                <div className="w-8 h-8 mx-auto text-green-500 mb-2 font-bold text-3xl flex items-center justify-center">{activeCount}</div>
+                <p className="text-3xl font-bold">{NUM_ELEVATORS}</p>
+                <p className="text-sm text-muted-foreground">Total Elevators</p>
+            </div>
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <Wrench className="w-8 h-8 mx-auto text-yellow-500 mb-2"/>
+              <p className="text-3xl font-bold">{maintenanceCount}</p>
+              <p className="text-sm text-muted-foreground">In Maintenance</p>
+            </div>
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <ShieldAlert className="w-8 h-8 mx-auto text-red-500 mb-2"/>
+              <p className="text-3xl font-bold">{errorCount}</p>
+              <p className="text-sm text-muted-foreground">System Alerts</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Separator />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+        {elevators.map(elevator => (
+          <ElevatorCard key={elevator.id} elevator={elevator} />
+        ))}
+      </div>
+    </>
   );
 }

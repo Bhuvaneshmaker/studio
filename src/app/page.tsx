@@ -14,7 +14,7 @@ export default function Home() {
           </h1>
         </div>
       </header>
-      <main className="container mx-auto p-4 sm:p-6">
+      <main className="container mx-auto p-4 sm:p-6 space-y-8">
         <ElevatorDashboard />
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
