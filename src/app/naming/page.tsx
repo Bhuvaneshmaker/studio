@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Building, Home, Save, Trash2, ListTree, Info } from 'lucide-react';
+import { Building, Home, Save, Trash2, Info } from 'lucide-react';
 import Link from 'next/link';
 import { NUM_BLOCKS, NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS } from '@/lib/elevator-simulation';
 import { cn } from '@/lib/utils';
@@ -26,13 +26,15 @@ type NamingType = 'block' | 'elevator' | 'floor';
 
 const NamingEditor = ({ 
     selectedId, 
-    selectedType, 
+    selectedType,
+    currentName,
     customName,
     onSave,
     onDelete,
 }: { 
     selectedId: string | null; 
     selectedType: NamingType | null;
+    currentName: string;
     customName: string;
     onSave: (name: string) => void;
     onDelete: () => void;
@@ -61,9 +63,9 @@ const NamingEditor = ({
     }
 
     const typeLabels = {
-        block: { title: "Block", idLabel: "Block ID", nameLabel: "Custom Block Name" },
-        elevator: { title: "Elevator", idLabel: "Elevator ID", nameLabel: "Custom Elevator Name" },
-        floor: { title: "Floor", idLabel: "Floor Number", nameLabel: "Custom Floor Name" },
+        block: { title: "Block", idLabel: "Current Block Name", nameLabel: "Custom Block Name" },
+        elevator: { title: "Elevator", idLabel: "Current Elevator Name", nameLabel: "Custom Elevator Name" },
+        floor: { title: "Floor", idLabel: "Current Floor Name", nameLabel: "Custom Floor Name" },
     }
     const labels = typeLabels[selectedType];
 
@@ -77,7 +79,7 @@ const NamingEditor = ({
                 <form onSubmit={handleSave} className="space-y-6">
                     <div className="space-y-2">
                         <Label htmlFor="itemId">{labels.idLabel}</Label>
-                        <Input id="itemId" value={selectedId} disabled />
+                        <Input id="itemId" value={currentName} disabled />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="customName">{labels.nameLabel}</Label>
@@ -225,6 +227,7 @@ export default function NamingPage() {
                         <NamingEditor 
                             selectedId={selectedId}
                             selectedType={selectedType}
+                            currentName={selectedId && selectedType ? nameGetters[selectedType](selectedId) : ''}
                             customName={selectedId && selectedType ? customNameMaps[selectedType][selectedId] || '' : ''}
                             onSave={(name) => {
                                 if (selectedId && selectedType) {
@@ -234,6 +237,7 @@ export default function NamingPage() {
                             onDelete={() => {
                                  if (selectedId && selectedType) {
                                     nameDeleters[selectedType](selectedId);
+                                    handleSelect(selectedId, selectedType); // Reselect to refresh editor
                                 }
                             }}
                         />
