@@ -1,6 +1,6 @@
 
 import SlaveDashboard from '@/components/slave-dashboard';
-import { Building, Pencil, Wrench, Router, SlidersHorizontal } from 'lucide-react';
+import { Building, Pencil, Wrench, Router, SlidersHorizontal, Users } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -32,6 +32,11 @@ export default function Home() {
                  <Button asChild variant="ghost" size="icon" className="shrink-0">
                     <Link href="/naming" aria-label="Manage Naming">
                         <Pencil className="w-5 h-5"/>
+                    </Link>
+                </Button>
+                <Button asChild variant="ghost" size="icon" className="shrink-0">
+                    <Link href="/users" aria-label="Manage Users">
+                        <Users className="w-5 h-5"/>
                     </Link>
                 </Button>
             </nav>
