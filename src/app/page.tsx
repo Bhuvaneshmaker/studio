@@ -64,7 +64,6 @@ export default function Home() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar>
-                      <AvatarImage src={`https://i.pravatar.cc/150?u=${user?.email}`} alt="User Avatar" />
                       <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </Button>
