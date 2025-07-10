@@ -7,17 +7,23 @@ import { Button } from "@/components/ui/button";
 import type { ElevatorData } from "@/types/elevator";
 import { useNaming } from '@/hooks/use-naming';
 import { Wrench, ShieldAlert, CheckCircle2, ArrowRight } from "lucide-react";
+import { cn } from '@/lib/utils';
 
 export function BlockCard({ blockId, elevators }: { blockId: string, elevators: ElevatorData[] }) {
   const { getBlockName } = useNaming();
   const blockName = getBlockName(blockId);
 
   const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
-  const errorCount = elevators.filter(e => e.status === 'ERROR').length;
+  const errorCount = elevators.filter(e => e.status === 'ERROR' || e.emergencyStop).length;
   const activeCount = elevators.length - maintenanceCount - errorCount;
 
+  const hasFault = errorCount > 0;
+
   return (
-    <Card className="shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col h-full">
+    <Card className={cn(
+        "shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col h-full",
+        hasFault && "border-red-500/80 shadow-red-500/20"
+      )}>
       <CardHeader className="p-4">
         <CardTitle>{blockName}</CardTitle>
         <CardDescription>{elevators.length} Elevators</CardDescription>

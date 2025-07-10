@@ -50,10 +50,15 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
   const blockName = getBlockName(block);
 
   const isOperational = mainPower && !emergencyStop;
+  const hasFault = status === 'ERROR' || emergencyStop;
 
   return (
     <Link href={`/elevators/${id}`} className="block">
-        <Card className={cn("shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col h-full", !isOperational && "opacity-60 bg-muted/30")}>
+        <Card className={cn(
+            "shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col h-full", 
+            !isOperational && "opacity-60 bg-muted/30",
+            hasFault && "border-red-500/80 shadow-red-500/20"
+            )}>
         <CardHeader className="p-4">
             <CardTitle className="flex items-center justify-between text-base">
             <span className="truncate">{elevatorName}</span>
