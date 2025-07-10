@@ -35,14 +35,16 @@ export default function ElevatorsPage() {
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input 
-            placeholder="Search by block, elevator ID, or floor..." 
-            className="pl-10 w-full max-w-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex justify-end">
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input 
+                    placeholder="Search by block, elevator ID, or floor..." 
+                    className="pl-10 w-full max-w-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
         </div>
         <ElevatorGrid searchQuery={searchQuery} />
       </main>
