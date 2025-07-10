@@ -8,6 +8,7 @@ import type { ElevatorData } from "@/types/elevator";
 import { ArrowUp, ArrowDown, Minus, ShieldAlert, Wrench, CircleDot, Power, PowerOff, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useNaming } from "@/hooks/use-naming";
 
 const DirectionIcon = ({ direction }: { direction: ElevatorData['direction'] }) => {
   switch (direction) {
@@ -44,6 +45,9 @@ const StatusBadge = ({ status, mainPower, emergencyStop }: { status: ElevatorDat
 export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
   const { id, currentFloor, direction, status, errorCode, destinationFloor, mainPower, emergencyStop } = elevator;
   const block = id.split('-')[0];
+  const { getElevatorName, getBlockName } = useNaming();
+  const elevatorName = getElevatorName(id);
+  const blockName = getBlockName(block);
 
   const isOperational = mainPower && !emergencyStop;
 
@@ -52,10 +56,10 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
         <Card className={cn("shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col h-full", !isOperational && "opacity-60 bg-muted/30")}>
         <CardHeader className="p-4">
             <CardTitle className="flex items-center justify-between text-base">
-            <span>Elevator {id}</span>
+            <span className="truncate">{elevatorName}</span>
             <StatusBadge status={status} mainPower={mainPower} emergencyStop={emergencyStop} />
             </CardTitle>
-            <CardDescription className="text-xs">Block {block}</CardDescription>
+            <CardDescription className="text-xs truncate">{blockName}</CardDescription>
         </CardHeader>
         <CardContent className="flex-grow p-4 pt-0 flex items-center justify-around gap-4">
             <div className="flex flex-col justify-center text-center bg-muted/50 p-2 rounded-lg w-1/2 h-full">

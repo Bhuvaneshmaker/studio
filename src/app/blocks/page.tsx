@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { generateInitialElevators, updateElevatorState, NUM_BLOCKS } from '@/lib/elevator-simulation';
 import { useToast } from "@/hooks/use-toast";
+import { useNaming } from "@/hooks/use-naming";
 import Link from 'next/link';
 import { Building, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { BlockCard } from '@/components/block-card';
 
 export default function BlocksPage() {
   const [elevators, setElevators] = useState<ElevatorData[]>(generateInitialElevators);
+  const { getBlockName } = useNaming();
   const { toast } = useToast();
   const notifiedErrors = useRef<Set<string>>(new Set());
 

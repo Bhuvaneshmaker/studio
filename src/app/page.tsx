@@ -1,6 +1,6 @@
 
 import ElevatorDashboard from '@/components/elevator-dashboard';
-import { Building } from 'lucide-react';
+import { Building, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +23,11 @@ export default function Home() {
                 </Button>
                 <Button asChild variant="outline" size="sm" className="shrink-0">
                     <Link href="/elevators">View Elevators</Link>
+                </Button>
+                 <Button asChild variant="ghost" size="icon" className="shrink-0">
+                    <Link href="/naming" aria-label="Manage Naming">
+                        <Pencil className="w-5 h-5"/>
+                    </Link>
                 </Button>
             </nav>
         </div>

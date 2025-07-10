@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type { ElevatorData } from '@/types/elevator';
 import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
 import { useToast } from "@/hooks/use-toast";
+import { useNaming } from "@/hooks/use-naming";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -30,6 +31,8 @@ export default function ElevatorDetailPage() {
     
     const [elevator, setElevator] = useState<ElevatorData | null>(null);
     const [allElevators, setAllElevators] = useState<ElevatorData[]>(generateInitialElevators);
+    const { getElevatorName } = useNaming();
+    const elevatorName = getElevatorName(id);
 
     const { toast } = useToast();
     const notifiedErrors = useRef<Set<string>>(new Set());
@@ -126,7 +129,7 @@ export default function ElevatorDetailPage() {
                         </Link>
                          <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
                          <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
-                            Elevator {id}
+                            {elevatorName}
                         </h2>
                     </div>
                     <Button asChild variant="outline" size="sm" className="shrink-0">

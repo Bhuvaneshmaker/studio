@@ -8,11 +8,17 @@ import { Building, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { useNaming } from '@/hooks/use-naming';
 
 export default function ElevatorsPage() {
   const searchParams = useSearchParams();
   const blockFilter = searchParams.get('block');
   const [searchQuery, setSearchQuery] = useState("");
+  const { getBlockName } = useNaming();
+
+  const pageTitle = blockFilter 
+    ? `${getBlockName(blockFilter)} Elevators`
+    : 'All Elevators';
 
   return (
     <div className="min-h-screen">
@@ -33,7 +39,7 @@ export default function ElevatorsPage() {
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
             <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
-              {blockFilter ? `Block ${blockFilter} Elevators` : 'All Elevators'}
+              {pageTitle}
             </h2>
           </div>
           <Button asChild variant="outline" size="sm" className="shrink-0">
@@ -56,7 +62,7 @@ export default function ElevatorsPage() {
             <div className="relative w-full sm:w-auto sm:ml-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
-                    placeholder="Search by elevator ID or floor..." 
+                    placeholder="Search by name, ID or floor..." 
                     className="pl-10 w-full sm:w-64 max-w-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
