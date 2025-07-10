@@ -1,17 +1,26 @@
 import ElevatorDashboard from '@/components/elevator-dashboard';
 import { Building } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   return (
     <div className="min-h-screen">
       <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto flex items-center gap-3">
-          <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-            <Building className="w-6 h-6" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary font-headline">
-            ElevateView
-          </h1>
+        <div className="container mx-auto flex items-center justify-between">
+            <div className='flex items-center gap-3'>
+                <div className="bg-primary text-primary-foreground p-2 rounded-lg">
+                    <Building className="w-6 h-6" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-primary font-headline">
+                    ElevateView
+                </h1>
+            </div>
+            <nav>
+                <Button asChild variant="outline">
+                    <Link href="/elevators">View All Elevators</Link>
+                </Button>
+            </nav>
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
