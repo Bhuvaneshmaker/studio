@@ -62,7 +62,7 @@ export default function MaintenancePage() {
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
             <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
-              Maintenance Bay
+              Maintenance Day
             </h2>
           </div>
           <Button asChild variant="outline" size="sm" className="shrink-0">
