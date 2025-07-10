@@ -163,14 +163,12 @@ export default function NamingPage() {
                             key={id} 
                             onClick={() => handleSelect(id, type)}
                             className={cn(
-                                "w-full text-left p-3 border rounded-lg transition-colors",
+                                "w-full text-center p-3 border rounded-lg transition-colors",
                                 "hover:bg-muted/80",
                                 selectedId === id && selectedType === type ? "bg-muted border-primary" : "bg-muted/40"
                             )}
                         >
-                             <div className="flex justify-between items-center">
-                                <span className="font-medium truncate">{nameGetters[type](id)}</span>
-                            </div>
+                            <span className="font-medium truncate">{nameGetters[type](id)}</span>
                         </button>
                     ))}
                 </div>
