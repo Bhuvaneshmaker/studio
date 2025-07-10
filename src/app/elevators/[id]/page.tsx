@@ -70,7 +70,7 @@ export default function ElevatorDetailPage() {
 
     if (!elevator) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center p-4">
                 <div className="text-center">
                     <p className="text-2xl font-semibold">Elevator not found.</p>
                     <p className="text-muted-foreground">The requested elevator does not exist or could not be loaded.</p>
@@ -83,7 +83,6 @@ export default function ElevatorDetailPage() {
     }
     
     const { currentFloor, direction, status, doorState, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
-    const block = id.split('-')[0];
     const isOperational = mainPower && !emergencyStop;
 
     const getStatusInfo = () => {
@@ -123,31 +122,31 @@ export default function ElevatorDetailPage() {
         <div className="min-h-screen">
              <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
                 <div className="container mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                         <Link href="/" className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 truncate">
+                         <Link href="/" className="flex items-center gap-2 sm:gap-3">
                             <div className="bg-primary text-primary-foreground p-2 rounded-lg">
                                 <Building className="w-6 h-6" />
                             </div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
+                            <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
                                 ElevateView
                             </h1>
                         </Link>
-                        <span className="text-2xl text-muted-foreground">/</span>
-                         <Link href="/elevators" className="text-2xl font-semibold text-foreground hover:underline">
+                        <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
+                         <Link href="/elevators" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
                             All Elevators
                         </Link>
-                         <span className="text-2xl text-muted-foreground">/</span>
-                         <h2 className="text-2xl font-semibold text-primary">
+                         <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
+                         <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
                             Elevator {id}
                         </h2>
                     </div>
-                    <Button asChild variant="outline">
-                        <Link href="/elevators"><ArrowLeft/> Back to List</Link>
+                    <Button asChild variant="outline" size="sm" className="shrink-0">
+                        <Link href="/elevators"><ArrowLeft/> Back</Link>
                     </Button>
                 </div>
             </header>
             <main className="container mx-auto p-4 sm:p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                    <div className="lg:col-span-1">
                         <Card className="shadow-lg h-full">
                             <CardHeader>
@@ -158,7 +157,7 @@ export default function ElevatorDetailPage() {
                                <div className="flex items-center justify-center text-center bg-muted/50 p-6 rounded-lg w-full">
                                     <div>
                                         <p className="text-lg text-muted-foreground">Floor</p>
-                                        <p className="text-9xl font-bold text-primary relative">
+                                        <p className="text-8xl sm:text-9xl font-bold text-primary relative">
                                             {isOperational ? currentFloor : '-'}
                                         </p>
                                         <p className="text-sm text-muted-foreground">of {totalFloors}</p>
@@ -241,4 +240,5 @@ export default function ElevatorDetailPage() {
             </main>
         </div>
     );
-}
+
+    

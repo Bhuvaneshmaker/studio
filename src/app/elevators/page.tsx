@@ -1,3 +1,4 @@
+
 import { ElevatorGrid } from '@/components/elevator-grid';
 import { Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,22 +9,22 @@ export default function ElevatorsPage() {
     <div className="min-h-screen">
       <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 truncate">
+            <Link href="/" className="flex items-center gap-2 sm:gap-3">
               <div className="bg-primary text-primary-foreground p-2 rounded-lg">
                 <Building className="w-6 h-6" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-primary font-headline">
+              <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
                 ElevateView
               </h1>
             </Link>
-            <span className="text-2xl text-muted-foreground">/</span>
-            <h2 className="text-2xl font-semibold text-foreground">
+            <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
               All Elevators
             </h2>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/">Back to Dashboard</Link>
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link href="/">Dashboard</Link>
           </Button>
         </div>
       </header>
@@ -38,3 +39,5 @@ export default function ElevatorsPage() {
     </div>
   );
 }
+
+    

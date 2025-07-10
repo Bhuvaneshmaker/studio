@@ -1,3 +1,4 @@
+
 import ElevatorDashboard from '@/components/elevator-dashboard';
 import { Building } from 'lucide-react';
 import Link from 'next/link';
@@ -17,7 +18,7 @@ export default function Home() {
                 </h1>
             </div>
             <nav>
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" size="sm" className="shrink-0">
                     <Link href="/elevators">View All Elevators</Link>
                 </Button>
             </nav>
@@ -34,3 +35,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
