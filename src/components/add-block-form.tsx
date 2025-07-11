@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { PlusCircle, Landmark, SlidersHorizontal } from 'lucide-react';
-import { useFormStatus } from 'react-dom';
+import type { ElevatorData } from '@/types/elevator';
 
 const addBlockSchema = z.object({
   blockName: z.string().min(1, { message: "Block name is required." }),
@@ -20,21 +20,12 @@ const addBlockSchema = z.object({
 type AddBlockFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  formAction: (payload: FormData) => void;
+  onBlockAdded: (newElevators: ElevatorData[]) => void;
   children: React.ReactNode;
 };
 
-function SubmitButton() {
-    const { pending } = useFormStatus();
-    return (
-        <Button type="submit" disabled={pending}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            {pending ? 'Creating...' : 'Create Block'}
-        </Button>
-    )
-}
-
-export function AddBlockForm({ open, onOpenChange, formAction, children }: AddBlockFormProps) {
+export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: AddBlockFormProps) {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const form = useForm<z.infer<typeof addBlockSchema>>({
     resolver: zodResolver(addBlockSchema),
     defaultValues: {
@@ -42,6 +33,30 @@ export function AddBlockForm({ open, onOpenChange, formAction, children }: AddBl
       numElevators: 5,
     },
   });
+
+  const onSubmit = async (values: z.infer<typeof addBlockSchema>) => {
+    setIsSubmitting(true);
+    try {
+        const response = await fetch('/api/elevators', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(values),
+        });
+        if (response.ok) {
+            const result = await response.json();
+            onBlockAdded(result.elevators);
+            onOpenChange(false);
+            form.reset();
+        } else {
+            // Handle error
+            console.error("Failed to add block");
+        }
+    } catch (error) {
+        console.error("Error submitting form", error);
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -56,21 +71,7 @@ export function AddBlockForm({ open, onOpenChange, formAction, children }: AddBl
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form 
-            action={formAction}
-            onSubmit={form.handleSubmit(() => {
-                const newName = form.getValues('blockName');
-                const newNumElevators = form.getValues('numElevators');
-                const formData = new FormData();
-                formData.append('blockName', newName);
-                formData.append('numElevators', newNumElevators.toString());
-                
-                formAction(formData);
-                onOpenChange(false);
-                form.reset();
-            })} 
-            className="space-y-6"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="blockName"
@@ -99,9 +100,12 @@ export function AddBlockForm({ open, onOpenChange, formAction, children }: AddBl
             />
              <DialogFooter>
                 <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancel</Button>
+                    <Button type="button" variant="secondary" disabled={isSubmitting}>Cancel</Button>
                 </DialogClose>
-                <SubmitButton />
+                 <Button type="submit" disabled={isSubmitting}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    {isSubmitting ? 'Creating...' : 'Create Block'}
+                </Button>
             </DialogFooter>
           </form>
         </Form>

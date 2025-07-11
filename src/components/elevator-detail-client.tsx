@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from "@/hooks/use-naming";
 import { useAuth } from '@/context/auth-context';
@@ -12,7 +13,6 @@ import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp,
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
 import Link from 'next/link';
-import { triggerElevatorFaultAction, resolveElevatorFaultAction } from '@/services/elevator-actions';
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
     <div className="flex items-start sm:items-center justify-between p-3 sm:p-4 bg-muted/50 rounded-lg flex-col sm:flex-row gap-2 sm:gap-4">
@@ -24,14 +24,26 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
-const AdminFaultControls = ({ elevator }: { elevator: ElevatorData }) => {
-    const handleTriggerFault = async () => {
-        // Using a generic "Manual Override" error code
-        await triggerElevatorFaultAction(elevator.id, 999);
-    };
+const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleResolveFault = async () => {
-        await resolveElevatorFaultAction(elevator.id);
+    const handleFaultAction = async (action: 'triggerFault' | 'resolveFault', errorCode?: number) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/elevators/${elevator.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, errorCode }),
+            });
+            if(response.ok) {
+                const updatedElevator = await response.json();
+                onUpdate(updatedElevator);
+            }
+        } catch (error) {
+            console.error(`Failed to ${action}`, error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -44,12 +56,12 @@ const AdminFaultControls = ({ elevator }: { elevator: ElevatorData }) => {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4">
                 {elevator.status !== 'ERROR' ? (
-                    <Button onClick={handleTriggerFault} variant="destructive" className="w-full">
-                        <TriangleAlert className="mr-2" /> Trigger Manual Fault
+                    <Button onClick={() => handleFaultAction('triggerFault', 999)} variant="destructive" className="w-full" disabled={isLoading}>
+                        <TriangleAlert className="mr-2" /> {isLoading ? 'Triggering...' : 'Trigger Manual Fault'}
                     </Button>
                 ) : (
-                    <Button onClick={handleResolveFault} variant="secondary" className="w-full bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 border">
-                        <ShieldCheck className="mr-2" /> Resolve Fault
+                    <Button onClick={() => handleFaultAction('resolveFault')} variant="secondary" className="w-full bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 border" disabled={isLoading}>
+                        <ShieldCheck className="mr-2" /> {isLoading ? 'Resolving...' : 'Resolve Fault'}
                     </Button>
                 )}
             </CardContent>
@@ -58,9 +70,27 @@ const AdminFaultControls = ({ elevator }: { elevator: ElevatorData }) => {
 };
 
 
-export function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
+export function ElevatorDetailClient({ initialElevator }: { initialElevator: ElevatorData }) {
+    const [elevator, setElevator] = useState(initialElevator);
     const { getElevatorName, getBlockName, getFloorName } = useNaming();
     const { user } = useAuth();
+
+    // Set up polling to get "real-time" updates
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            const response = await fetch(`/api/elevators/${elevator.id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setElevator(data);
+            }
+        }, 2000); // Poll every 2 seconds
+
+        return () => clearInterval(interval);
+    }, [elevator.id]);
+
+    const handleUpdate = (updatedElevator: ElevatorData) => {
+        setElevator(updatedElevator);
+    };
     
     const elevatorName = getElevatorName(elevator.id);
     const blockName = getBlockName(elevator.blockId);
@@ -211,7 +241,7 @@ export function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
                                 )}
                             </CardContent>
                         </Card>
-                        {user?.role === 'Admin' && <AdminFaultControls elevator={elevator} />}
+                        {user?.role === 'Admin' && <AdminFaultControls elevator={elevator} onUpdate={handleUpdate} />}
                    </div>
                 </div>
             </main>

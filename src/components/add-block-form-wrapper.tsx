@@ -4,9 +4,9 @@
 import { useAuth } from "@/context/auth-context";
 import { useState } from "react";
 import { AddBlockForm } from "./add-block-form";
-import { createBlockAction } from "@/services/elevator-actions";
+import type { ElevatorData } from "@/types/elevator";
 
-export function AddBlockFormWrapper({ children }: { children: React.ReactNode }) {
+export function AddBlockFormWrapper({ children, onBlockAdded }: { children: React.ReactNode, onBlockAdded: (newElevators: ElevatorData[]) => void }) {
     const { user } = useAuth();
     const [isAddBlockOpen, setIsAddBlockOpen] = useState(false);
 
@@ -18,7 +18,7 @@ export function AddBlockFormWrapper({ children }: { children: React.ReactNode })
         <AddBlockForm
             open={isAddBlockOpen}
             onOpenChange={setIsAddBlockOpen}
-            formAction={createBlockAction}
+            onBlockAdded={onBlockAdded}
         >
            <div onClick={() => setIsAddBlockOpen(true)}>{children}</div>
         </AddBlockForm>

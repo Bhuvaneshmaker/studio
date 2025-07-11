@@ -7,7 +7,6 @@ import { ElevatorCard } from '@/components/elevator-card';
 import { useNaming } from "@/hooks/use-naming";
 import { Separator } from './ui/separator';
 import { SearchX } from 'lucide-react';
-import { getElevatorData } from '@/services/elevator-actions';
 import { Skeleton } from './ui/skeleton';
 
 const ElevatorGridSkeleton = () => (
@@ -38,11 +37,15 @@ export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string
   useEffect(() => {
     async function fetchData() {
         setLoading(true);
-        const data = await getElevatorData();
+        const res = await fetch('/api/elevators');
+        const data = await res.json();
         setElevators(data);
         setLoading(false);
     }
     fetchData();
+
+    const interval = setInterval(fetchData, 5000); // Poll for updates every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const filteredElevators = elevators.filter(elevator => {

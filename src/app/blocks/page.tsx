@@ -1,17 +1,44 @@
 
+"use client";
+
 import Link from 'next/link';
 import { Building, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BlockCard } from '@/components/block-card';
 import { AddBlockFormWrapper } from '@/components/add-block-form-wrapper';
 import { BackButton } from '@/components/back-button';
-import { getElevatorData } from '@/services/elevator-service';
 import type { ElevatorData } from '@/types/elevator';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export const dynamic = 'force-dynamic';
+const BlocksPageSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+             <div key={i} className="space-y-3">
+              <Skeleton className="h-56 w-full rounded-lg" />
+            </div>
+        ))}
+    </div>
+);
 
-export default async function BlocksPage() {
-  const elevators = await getElevatorData();
+export default function BlocksPage() {
+  const [elevators, setElevators] = useState<ElevatorData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+        setLoading(true);
+        const res = await fetch('/api/elevators');
+        const data = await res.json();
+        setElevators(data);
+        setLoading(false);
+    }
+    fetchData();
+  }, []);
+  
+  const handleBlockAdded = (newElevators: ElevatorData[]) => {
+    setElevators(newElevators);
+  };
 
   const elevatorsByBlock = elevators.reduce((acc, elevator) => {
     const blockId = elevator.blockId;
@@ -41,7 +68,7 @@ export default async function BlocksPage() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <AddBlockFormWrapper>
+            <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
                <Button size="sm">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add New Block
@@ -52,11 +79,15 @@ export default async function BlocksPage() {
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Object.entries(elevatorsByBlock).map(([blockId, blockElevators]) => (
-            <BlockCard key={blockId} blockId={blockId} elevators={blockElevators} />
-          ))}
-        </div>
+        {loading ? (
+          <BlocksPageSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([blockId, blockElevators]) => (
+              <BlockCard key={blockId} blockId={blockId} elevators={blockElevators} />
+            ))}
+          </div>
+        )}
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">

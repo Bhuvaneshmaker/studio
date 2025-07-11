@@ -1,13 +1,21 @@
 
 import type { ElevatorData } from '@/types/elevator';
-import { getElevatorById } from '@/services/elevator-actions';
 import { ElevatorDetailClient } from '@/components/elevator-detail-client';
 import { BackButton } from '@/components/back-button';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ElevatorDetailPage({ params: { id } }: { params: { id: string } }) {
-    const elevator = await getElevatorById(id);
+async function getElevator(id: string): Promise<ElevatorData | null> {
+    // In a real app, you would have a base URL in an env var
+    const res = await fetch(`http://localhost:9002/api/elevators/${id}`, { cache: 'no-store' });
+    if (!res.ok) {
+        return null;
+    }
+    return res.json();
+}
+
+export default async function ElevatorDetailPage({ params }: { params: { id: string } }) {
+    const elevator = await getElevator(params.id);
 
     if (!elevator) {
         return (
@@ -23,5 +31,5 @@ export default async function ElevatorDetailPage({ params: { id } }: { params: {
         );
     }
 
-    return <ElevatorDetailClient elevator={elevator} />;
+    return <ElevatorDetailClient initialElevator={elevator} />;
 }

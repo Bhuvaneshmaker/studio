@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/back-button';
-import { getElevatorData } from '@/services/elevator-actions';
 
 
 export default function MaintenancePage() {
@@ -31,7 +30,8 @@ export default function MaintenancePage() {
   
   useEffect(() => {
     async function fetchData() {
-        const data = await getElevatorData();
+        const res = await fetch('/api/elevators');
+        const data = await res.json();
         setElevators(data);
     }
     fetchData();

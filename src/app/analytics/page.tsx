@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/back-button';
 import type { AnalyticsData } from '@/types/analytics';
-import { getAnalyticsData } from '@/services/analytics-service';
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart as RechartsBarChart } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -64,7 +63,8 @@ export default function AnalyticsPage() {
     useEffect(() => {
         async function fetchData() {
             setLoading(true);
-            const data = await getAnalyticsData();
+            const response = await fetch('/api/analytics');
+            const data = await response.json();
             setAnalytics(data);
             setLoading(false);
         }
@@ -237,5 +237,3 @@ export default function AnalyticsPage() {
         </div>
     );
 }
-
-    
