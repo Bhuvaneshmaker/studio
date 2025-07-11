@@ -4,7 +4,7 @@
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Pencil, Wrench, Users, LogOut } from 'lucide-react';
+import { Pencil, Wrench, Users, LogOut, AreaChart } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,11 @@ export function AuthWidget() {
     return (
         <div className="flex items-center gap-4">
             <nav className="hidden sm:flex items-center gap-2">
+                <Button asChild variant="ghost" size="icon" className="shrink-0">
+                    <Link href="/analytics" aria-label="View Analytics">
+                        <AreaChart className="w-5 h-5"/>
+                    </Link>
+                </Button>
                 <Button asChild variant="ghost" size="icon" className="shrink-0">
                     <Link href="/naming" aria-label="Manage Naming">
                         <Pencil className="w-5 h-5"/>
