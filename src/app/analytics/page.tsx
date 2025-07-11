@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Building, AreaChart, BarChart, AlertTriangle, Clock, TrendingUp } from 'lucide-react';
+import { Building, AreaChart, BarChart, AlertTriangle, Clock, TrendingUp, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/back-button';
 import type { AnalyticsData } from '@/types/analytics';
 import { getAnalyticsData } from '@/services/analytics-service';
@@ -70,6 +71,50 @@ export default function AnalyticsPage() {
         fetchData();
     }, []);
 
+    const handleDownloadLog = () => {
+        if (!analytics) return;
+
+        const { kpis, usageByBlock, faultsByDay } = analytics;
+        const today = new Date();
+        const timestamp = today.toISOString();
+        const dateString = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        let logContent = `ElevateView - Daily Activity Log\n`;
+        logContent += `==================================\n\n`;
+        logContent += `Date Generated: ${dateString}\n`;
+        logContent += `Timestamp: ${timestamp}\n\n`;
+
+        logContent += `--- Key Performance Indicators (KPIs) ---\n`;
+        logContent += `Overall Uptime: ${kpis.uptimePercentage}%\n`;
+        logContent += `Average Wait Time: ${kpis.averageWaitTime}s\n`;
+        logContent += `Total Faults (Last 30 days): ${kpis.totalFaults}\n`;
+        logContent += `Peak Usage Hour: ${kpis.peakUsageHour}\n\n`;
+
+        logContent += `--- Usage by Block (Last 24 hours) ---\n`;
+        usageByBlock.forEach(block => {
+            logContent += `${block.name}: ${block.trips} trips\n`;
+        });
+        logContent += `\n`;
+
+        logContent += `--- Monthly Fault Trend (Last 30 days) ---\n`;
+        faultsByDay.forEach(day => {
+            logContent += `${day.name}: ${day.faults} faults\n`;
+        });
+        logContent += `\n`;
+
+        logContent += `--- End of Report ---\n`;
+        
+        const blob = new Blob([logContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ElevateView_Log_${today.toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="min-h-screen">
             <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
@@ -89,7 +134,13 @@ export default function AnalyticsPage() {
                         Analytics
                     </h2>
                 </div>
-                <BackButton />
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handleDownloadLog} disabled={loading || !analytics}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Log
+                    </Button>
+                    <BackButton />
+                </div>
                 </div>
             </header>
             <main className="container mx-auto p-4 sm:p-6 space-y-8">
@@ -186,3 +237,5 @@ export default function AnalyticsPage() {
         </div>
     );
 }
+
+    
