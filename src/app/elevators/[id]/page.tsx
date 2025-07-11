@@ -1,4 +1,6 @@
 
+"use client";
+
 import type { ElevatorData } from '@/types/elevator';
 import { getElevatorById } from '@/services/elevator-actions';
 import { useNaming } from "@/hooks/use-naming";
@@ -9,6 +11,7 @@ import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp,
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
     <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
@@ -20,9 +23,31 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
-function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
+export default function ElevatorDetailPage({ params: { id } }: { params: { id: string } }) {
+    const [elevator, setElevator] = useState<ElevatorData | null>(null);
     const { getElevatorName, getFloorName } = useNaming();
-    
+
+    useEffect(() => {
+        const fetchElevator = async () => {
+            const data = await getElevatorById(id);
+            if (data) {
+                setElevator(data);
+            }
+        };
+        fetchElevator();
+    }, [id]);
+
+    if (!elevator) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-4">
+                <div className="text-center">
+                    <p className="text-2xl font-semibold">Loading Elevator Data...</p>
+                    <p className="text-muted-foreground">Or the requested elevator does not exist.</p>
+                </div>
+            </div>
+        );
+    }
+
     const elevatorName = getElevatorName(elevator.id);
     
     const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
@@ -177,22 +202,4 @@ function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
             </footer>
         </div>
     )
-}
-
-
-export default async function ElevatorDetailPage({ params: { id } }: { params: { id: string } }) {
-    const elevator = await getElevatorById(id);
-
-    if (!elevator) {
-        return (
-            <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="text-center">
-                    <p className="text-2xl font-semibold">Elevator Not Found</p>
-                    <p className="text-muted-foreground">The requested elevator does not exist.</p>
-                </div>
-            </div>
-        );
-    }
-
-    return <ElevatorDetailClient elevator={elevator} />;
 }
