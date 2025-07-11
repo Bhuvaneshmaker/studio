@@ -20,7 +20,7 @@ export function AddBlockFormWrapper({ children }: { children: React.ReactNode })
             onOpenChange={setIsAddBlockOpen}
             formAction={createBlockAction}
         >
-           {children}
+           <div onClick={() => setIsAddBlockOpen(true)}>{children}</div>
         </AddBlockForm>
     );
 }

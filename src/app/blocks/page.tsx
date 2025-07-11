@@ -40,7 +40,15 @@ export default async function BlocksPage() {
               Blocks
             </h2>
           </div>
-          <BackButton />
+          <div className="flex items-center gap-2">
+            <AddBlockFormWrapper>
+               <Button size="sm">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Block
+                </Button>
+            </AddBlockFormWrapper>
+            <BackButton />
+          </div>
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
@@ -48,15 +56,6 @@ export default async function BlocksPage() {
           {Object.entries(elevatorsByBlock).map(([blockId, blockElevators]) => (
             <BlockCard key={blockId} blockId={blockId} elevators={blockElevators} />
           ))}
-          <AddBlockFormWrapper>
-            <div 
-              className="border-2 border-dashed border-muted-foreground/50 rounded-lg flex flex-col items-center justify-center text-center p-6 hover:bg-muted/50 hover:border-primary/50 transition-all duration-300 cursor-pointer h-full min-h-[250px]"
-              >
-                <PlusCircle className="w-12 h-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-bold">Add New Block</h3>
-                <p className="text-sm text-muted-foreground">Click to configure a new block and its elevators.</p>
-              </div>
-          </AddBlockFormWrapper>
         </div>
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">

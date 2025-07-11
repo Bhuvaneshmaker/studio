@@ -43,18 +43,9 @@ export function AddBlockForm({ open, onOpenChange, formAction, children }: AddBl
     },
   });
 
-  const [isClient, setIsClient] = React.useState(false);
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return <>{children}</>;
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <div onClick={() => onOpenChange(true)}>{children}</div>
+      {children}
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -68,6 +59,13 @@ export function AddBlockForm({ open, onOpenChange, formAction, children }: AddBl
           <form 
             action={formAction}
             onSubmit={form.handleSubmit(() => {
+                const newName = form.getValues('blockName');
+                const newNumElevators = form.getValues('numElevators');
+                const formData = new FormData();
+                formData.append('blockName', newName);
+                formData.append('numElevators', newNumElevators.toString());
+                
+                formAction(formData);
                 onOpenChange(false);
                 form.reset();
             })} 
