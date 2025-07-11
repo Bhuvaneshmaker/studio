@@ -24,9 +24,7 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
-export default function ElevatorDetailPage({ params }: { params: { id: string } }) {
-    const { id } = params;
-    
+export default function ElevatorDetailPage({ params: { id } }: { params: { id: string } }) {
     const [elevator, setElevator] = useState<ElevatorData | null>(null);
     const { getElevatorName, getFloorName } = useNaming();
 
@@ -131,7 +129,7 @@ export default function ElevatorDetailPage({ params }: { params: { id: string } 
                             <CardHeader>
                                 <CardTitle>System Details</CardTitle>
                                 <CardDescription>In-depth system and sensor information.</CardDescription>
-                            </CardHeader>
+                            </Header>
                             <CardContent className="space-y-3">
                                 <DetailItem 
                                     icon={<Landmark className="w-6 h-6 text-muted-foreground" />}
