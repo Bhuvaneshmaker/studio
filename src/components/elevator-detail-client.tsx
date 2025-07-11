@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal, AlertCircle } from 'lucide-react';
+import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal, AlertCircle, ShieldCheck } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
 import Link from 'next/link';
