@@ -178,6 +178,11 @@ export default function NamingPage() {
                             <span className="font-medium truncate">{nameGetters[type](id)}</span>
                         </button>
                     ))}
+                     {filteredIds.length === 0 && (
+                        <div className="text-center py-10 text-muted-foreground">
+                            <p>No items found for "{searchQuery}".</p>
+                        </div>
+                    )}
                 </div>
             </ScrollArea>
         );
