@@ -3,13 +3,16 @@
 
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from "@/hooks/use-naming";
+import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
-import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
 import Link from 'next/link';
+import { triggerElevatorFaultAction, resolveElevatorFaultAction } from '@/services/elevator-actions';
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
     <div className="flex items-start sm:items-center justify-between p-3 sm:p-4 bg-muted/50 rounded-lg flex-col sm:flex-row gap-2 sm:gap-4">
@@ -21,9 +24,43 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
+const AdminFaultControls = ({ elevator }: { elevator: ElevatorData }) => {
+    const handleTriggerFault = async () => {
+        // Using a generic "Manual Override" error code
+        await triggerElevatorFaultAction(elevator.id, 999);
+    };
+
+    const handleResolveFault = async () => {
+        await resolveElevatorFaultAction(elevator.id);
+    };
+
+    return (
+        <Card className="shadow-lg mt-6 border-yellow-500/50">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-yellow-600">
+                    <AlertCircle /> Admin Fault Controls
+                </CardTitle>
+                <CardDescription>Manually trigger or resolve a fault status for this elevator.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-4">
+                {elevator.status !== 'ERROR' ? (
+                    <Button onClick={handleTriggerFault} variant="destructive" className="w-full">
+                        <TriangleAlert className="mr-2" /> Trigger Manual Fault
+                    </Button>
+                ) : (
+                    <Button onClick={handleResolveFault} variant="secondary" className="w-full bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 border">
+                        <ShieldCheck className="mr-2" /> Resolve Fault
+                    </Button>
+                )}
+            </CardContent>
+        </Card>
+    );
+};
+
 
 export function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
     const { getElevatorName, getBlockName, getFloorName } = useNaming();
+    const { user } = useAuth();
     
     const elevatorName = getElevatorName(elevator.id);
     const blockName = getBlockName(elevator.blockId);
@@ -174,6 +211,7 @@ export function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
                                 )}
                             </CardContent>
                         </Card>
+                        {user?.role === 'Admin' && <AdminFaultControls elevator={elevator} />}
                    </div>
                 </div>
             </main>

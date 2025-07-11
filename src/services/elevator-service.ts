@@ -56,5 +56,32 @@ export function addBlock(numElevators: number): string {
     return newBlockIdStr;
 }
 
+export function setElevatorFault(id: string, errorCode: number): boolean {
+    const elevatorIndex = elevators.findIndex(e => e.id === id);
+    if (elevatorIndex > -1) {
+        elevators[elevatorIndex] = {
+            ...elevators[elevatorIndex],
+            status: 'ERROR',
+            errorCode: errorCode,
+            direction: 'IDLE',
+        };
+        return true;
+    }
+    return false;
+}
+
+export function resolveElevatorFault(id: string): boolean {
+    const elevatorIndex = elevators.findIndex(e => e.id === id);
+    if (elevatorIndex > -1) {
+        elevators[elevatorIndex] = {
+            ...elevators[elevatorIndex],
+            status: 'IDLE',
+            errorCode: 0,
+        };
+        return true;
+    }
+    return false;
+}
+
 // Automatically start the simulation when the server starts.
 startSimulation();
