@@ -126,7 +126,7 @@ export default function ElevatorDetailPage({ params }: { params: { id: string } 
                             <CardHeader>
                                 <CardTitle>System Details</CardTitle>
                                 <CardDescription>In-depth system and sensor information.</CardDescription>
-                            </Header>
+                            </CardHeader>
                             <CardContent className="space-y-3">
                                 <DetailItem 
                                     icon={<Landmark className="w-6 h-6 text-muted-foreground" />}
