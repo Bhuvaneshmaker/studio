@@ -43,7 +43,7 @@ const NamingEditor = ({
 
     React.useEffect(() => {
         setName(customName);
-    }, [customName]);
+    }, [customName, selectedId]);
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,7 +52,7 @@ const NamingEditor = ({
 
     if (!selectedId || !selectedType) {
         return (
-            <Card className="sticky top-24">
+            <Card className="sticky top-24 shadow-lg">
                 <CardContent className="pt-6 flex flex-col items-center justify-center text-center h-48">
                     <Info className="w-12 h-12 text-muted-foreground mb-4" />
                     <p className="font-semibold">Select an item</p>
@@ -70,16 +70,16 @@ const NamingEditor = ({
     const labels = typeLabels[selectedType];
 
     return (
-        <Card className="sticky top-24">
+        <Card className="sticky top-24 shadow-lg">
              <CardHeader>
                 <CardTitle>Edit {labels.title} Name</CardTitle>
-                <CardDescription>Set a custom name for this item.</CardDescription>
+                <CardDescription>Set a friendly, custom name for this item.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSave} className="space-y-6">
                     <div className="space-y-2">
                         <Label htmlFor="itemId">{labels.idLabel}</Label>
-                        <Input id="itemId" value={currentName} disabled />
+                        <Input id="itemId" value={currentName} disabled className="bg-muted/50" />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="customName">{labels.nameLabel}</Label>
@@ -87,17 +87,17 @@ const NamingEditor = ({
                             id="customName" 
                             value={name} 
                             onChange={(e) => setName(e.target.value)} 
-                            placeholder={`e.g. Lobby, Main Elevator, Block A...`}
+                            placeholder={`e.g. Lobby, Main Elevator...`}
                         />
                     </div>
-                    <div className="flex justify-between items-center gap-2 pt-2">
-                        <Button type="submit">
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-2">
+                        <Button type="submit" className="w-full sm:w-auto">
                             <Save className="w-4 h-4 mr-2" />
                             Save Name
                         </Button>
-                        <Button type="button" variant="ghost" className="text-red-500 hover:text-red-600" onClick={onDelete} disabled={!customName}>
+                        <Button type="button" variant="ghost" className="text-red-500 hover:text-red-600 w-full sm:w-auto" onClick={onDelete} disabled={!customName}>
                            <Trash2 className="w-4 h-4 mr-2" />
-                            Reset to Default
+                            Reset Name
                         </Button>
                     </div>
                 </form>
@@ -114,7 +114,7 @@ export default function NamingPage() {
         deleteBlockName, deleteElevatorName, deleteFloorName
     } = useNaming();
 
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedId, setSelectedId] = useState<string | null>(allBlockIds[0]);
     const [selectedType, setSelectedType] = useState<NamingType>('block');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -124,9 +124,14 @@ export default function NamingPage() {
     };
 
     const handleTabChange = (value: string) => {
-        setSelectedId(null);
-        setSelectedType(value as NamingType);
+        const newType = value as NamingType;
+        setSelectedType(newType);
         setSearchQuery('');
+        // Select the first item of the new type
+        if (newType === 'block') setSelectedId(allBlockIds[0]);
+        else if (newType === 'elevator') setSelectedId(allElevatorIds[0]);
+        else if (newType === 'floor') setSelectedId(allFloorIds[0]);
+        else setSelectedId(null);
     }
 
     const nameGetters: Record<NamingType, (id: string) => string> = {
@@ -163,19 +168,22 @@ export default function NamingPage() {
         });
 
         return (
-            <ScrollArea className="h-[calc(100vh-280px)]">
+            <ScrollArea className="h-[calc(100vh-340px)]">
                 <div className="space-y-2 pr-4">
                     {filteredIds.map(id => (
                         <button 
                             key={id} 
                             onClick={() => handleSelect(id, type)}
                             className={cn(
-                                "w-full text-center p-3 border rounded-lg transition-colors",
-                                "hover:bg-muted/80",
-                                selectedId === id && selectedType === type ? "bg-muted border-primary" : "bg-muted/40"
+                                "w-full text-left p-3 border rounded-lg transition-colors text-sm",
+                                "hover:bg-muted/80 hover:border-primary/30",
+                                selectedId === id && selectedType === type ? "bg-muted border-primary ring-2 ring-primary/20" : "bg-muted/40"
                             )}
                         >
-                            <span className="font-medium truncate">{nameGetters[type](id)}</span>
+                            <span className="font-medium truncate block">{nameGetters[type](id)}</span>
+                            {nameGetters[type](id).toLowerCase() !== id.toLowerCase() && (
+                                <span className="text-xs text-muted-foreground">ID: {id}</span>
+                            )}
                         </button>
                     ))}
                      {filteredIds.length === 0 && (
@@ -195,14 +203,14 @@ export default function NamingPage() {
                     <div className="flex items-center gap-2 sm:gap-3 truncate">
                         <Link href="/" className="flex items-center gap-2 sm:gap-3">
                             <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                                <Building className="w-6 h-6" />
+                                <Building className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
                                 ElevateView
                             </h1>
                         </Link>
                         <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-                        <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
+                        <h2 className="text-lg sm:text-2xl font-semibold text-primary truncate">
                             Manage Naming
                         </h2>
                     </div>
@@ -219,7 +227,7 @@ export default function NamingPage() {
                 </Tabs>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-1">
-                       <Card>
+                       <Card className="shadow-lg">
                            <CardContent className="pt-6 space-y-4">
                                <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -250,7 +258,8 @@ export default function NamingPage() {
                             onDelete={() => {
                                  if (selectedId && selectedType) {
                                     nameDeleters[selectedType](selectedId);
-                                    handleSelect(selectedId, selectedType); // Reselect to refresh editor
+                                    // re-select to refresh editor state
+                                    handleSelect(selectedId, selectedType); 
                                 }
                             }}
                         />

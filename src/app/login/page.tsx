@@ -44,7 +44,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center text-center">
             <div className="bg-primary text-primary-foreground p-3 rounded-lg mb-4">
@@ -55,10 +55,10 @@ export default function LoginPage() {
             </h1>
             <p className="text-muted-foreground mt-2">Sign in to access the control room</p>
         </div>
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Login</CardTitle>
-            <CardDescription>Use `admin@example.com` or `user@example.com` to sign in. Any password will work.</CardDescription>
+            <CardDescription>Use `admin@example.com` or `user@example.com`. Any password will work.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -105,7 +105,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
          <p className="text-center text-sm text-muted-foreground">
-          ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline">support@bhuvitech.com</a>.
+          ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
         </p>
       </div>
     </div>

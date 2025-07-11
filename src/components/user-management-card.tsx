@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUsers } from '@/hooks/use-users';
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Trash2, User, Admin, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Trash2, User, ShieldCheck } from 'lucide-react';
 
 const userFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -38,9 +38,9 @@ export function UserManagementCard() {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <div className="lg:col-span-1">
-                <Card>
+                <Card className="shadow-lg">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                            <PlusCircle /> Add New User
@@ -96,7 +96,7 @@ export function UserManagementCard() {
                 </Card>
             </div>
             <div className="lg:col-span-2">
-                <Card>
+                <Card className="shadow-lg">
                     <CardHeader>
                         <CardTitle>Existing Users</CardTitle>
                         <CardDescription>
@@ -104,7 +104,7 @@ export function UserManagementCard() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="border rounded-lg">
+                        <div className="border rounded-lg overflow-x-auto">
                            <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -116,9 +116,9 @@ export function UserManagementCard() {
                                 <TableBody>
                                     {users.map((user) => (
                                         <TableRow key={user.id}>
-                                            <TableCell className="font-medium">{user.email}</TableCell>
+                                            <TableCell className="font-medium truncate max-w-xs">{user.email}</TableCell>
                                             <TableCell>
-                                                <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
+                                                <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'} className="whitespace-nowrap">
                                                      {user.role === 'Admin' ? <ShieldCheck className="mr-1.5 h-3 w-3" /> : <User className="mr-1.5 h-3 w-3" />}
                                                     {user.role}
                                                 </Badge>
@@ -126,7 +126,7 @@ export function UserManagementCard() {
                                             <TableCell className="text-right">
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
-                                                         <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                                                         <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </AlertDialogTrigger>

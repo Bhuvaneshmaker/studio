@@ -5,12 +5,6 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/auth-context';
 
-// No metadata export from client component
-// export const metadata: Metadata = {
-//   title: 'ElevateView',
-//   description: 'Real-time Elevator Management System',
-// };
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,6 +15,7 @@ export default function RootLayout({
       <head>
         <title>ElevateView</title>
         <meta name="description" content="Real-time Elevator Management System" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />

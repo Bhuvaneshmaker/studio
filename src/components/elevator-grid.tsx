@@ -8,15 +8,39 @@ import { useNaming } from "@/hooks/use-naming";
 import { Separator } from './ui/separator';
 import { SearchX } from 'lucide-react';
 import { getElevatorData } from '@/services/elevator-actions';
+import { Skeleton } from './ui/skeleton';
+
+const ElevatorGridSkeleton = () => (
+  <div className="space-y-8">
+    {[1, 2].map(i => (
+      <section key={i}>
+        <Skeleton className="h-8 w-48 mb-4" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {Array.from({ length: 5 }).map((_, j) => (
+            <div key={j} className="space-y-3">
+              <Skeleton className="h-40 w-full rounded-lg" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+);
+
 
 export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string, blockFilter: string | null }) {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
+  const [loading, setLoading] = useState(true);
   const { getBlockName, getElevatorName } = useNaming();
 
   useEffect(() => {
     async function fetchData() {
+        setLoading(true);
         const data = await getElevatorData();
         setElevators(data);
+        setLoading(false);
     }
     fetchData();
   }, []);
@@ -32,18 +56,15 @@ export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string
     const blockName = getBlockName(elevator.blockId).toLowerCase();
     const elevatorName = getElevatorName(elevator.id).toLowerCase();
     
-    const idMatch = elevator.id.toLowerCase().includes(query);
-    const elevatorNumMatch = elevator.elevatorNum.toString().includes(query);
-    const blockIdMatch = elevator.blockId.toLowerCase().includes(query);
-    const floorMatch = elevator.currentFloor.toString().includes(query);
-    const blockNameMatch = blockName.includes(query);
-    const elevatorNameMatch = elevatorName.includes(query);
-
-    if (blockFilter) {
-      return elevatorNameMatch || idMatch || floorMatch || elevatorNumMatch;
-    }
-
-    return blockNameMatch || elevatorNameMatch || idMatch || floorMatch || blockIdMatch || elevatorNumMatch;
+    return [
+      elevator.id.toLowerCase(),
+      elevator.elevatorNum.toString(),
+      elevator.blockId.toLowerCase(),
+      elevator.currentFloor.toString(),
+      blockName,
+      elevatorName,
+      elevator.status.toLowerCase(),
+    ].some(field => field.includes(query));
   });
 
   const elevatorsByBlock = filteredElevators.reduce((acc, elevator) => {
@@ -55,13 +76,16 @@ export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string
     return acc;
   }, {} as Record<string, ElevatorData[]>);
 
+  if (loading) {
+    return <ElevatorGridSkeleton />;
+  }
 
   if (elevators.length > 0 && filteredElevators.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center gap-4 py-16">
         <SearchX className="w-16 h-16 text-muted-foreground" />
         <h3 className="text-2xl font-bold">No Elevators Found</h3>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground max-w-sm">
           {searchQuery ? `Your search for "${searchQuery}" did not match any elevators.` : "No elevators match the current filter."}
         </p>
       </div>

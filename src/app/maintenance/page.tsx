@@ -42,7 +42,7 @@ export default function MaintenancePage() {
 
   if (!user || user.role !== 'Admin') {
     return (
-       <div className="min-h-screen flex items-center justify-center">
+       <div className="min-h-screen flex items-center justify-center p-4 text-center">
             <p>Access Denied. Redirecting...</p>
         </div>
     );
@@ -55,14 +55,14 @@ export default function MaintenancePage() {
           <div className="flex items-center gap-2 sm:gap-3 truncate">
             <Link href="/" className="flex items-center gap-2 sm:gap-3">
               <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                <Building className="w-6 h-6" />
+                <Building className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
                 ElevateView
               </h1>
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-            <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
+            <h2 className="text-lg sm:text-2xl font-semibold text-primary truncate">
               Maintenance Day
             </h2>
           </div>
@@ -70,7 +70,7 @@ export default function MaintenancePage() {
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wrench className="w-6 h-6 text-yellow-500" />
@@ -82,7 +82,7 @@ export default function MaintenancePage() {
           </CardHeader>
           <CardContent>
             {maintenanceElevators.length > 0 ? (
-              <div className="border rounded-lg">
+              <div className="border rounded-lg overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -99,7 +99,7 @@ export default function MaintenancePage() {
                         <TableCell>{getBlockName(elevator.blockId)}</TableCell>
                         <TableCell className="text-muted-foreground">{elevator.maintenanceDetails || "No details provided."}</TableCell>
                         <TableCell className="text-right">
-                          <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+                          <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 whitespace-nowrap">
                             <Wrench className="w-3 h-3 mr-1.5" />
                             In Progress
                           </Badge>
@@ -113,8 +113,8 @@ export default function MaintenancePage() {
               <div className="flex flex-col items-center justify-center text-center gap-4 py-16 border-2 border-dashed rounded-lg">
                 <ShieldCheck className="w-16 h-16 text-green-500" />
                 <h3 className="text-2xl font-bold">All Systems Operational</h3>
-                <p className="text-muted-foreground">
-                  There are currently no elevators under maintenance.
+                <p className="text-muted-foreground max-w-sm">
+                  There are currently no elevators under maintenance. All systems are running smoothly.
                 </p>
                 <Button asChild>
                     <Link href="/elevators">
@@ -129,7 +129,7 @@ export default function MaintenancePage() {
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">
-          ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline">support@bhuvitech.com</a>.
+          ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
         </p>
       </footer>
     </div>

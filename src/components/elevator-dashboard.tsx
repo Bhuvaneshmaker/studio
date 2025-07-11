@@ -34,29 +34,29 @@ export default function ElevatorDashboard({ elevators }: { elevators: ElevatorDa
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-            <Link href="/blocks" className="block hover:scale-105 transition-transform duration-200">
-              <div className="bg-muted/50 p-4 rounded-lg h-full flex flex-col justify-center">
-                <Landmark className="w-8 h-8 mx-auto text-primary mb-2"/>
+            <Link href="/blocks" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
+              <div className="flex flex-col justify-center h-full">
+                <Landmark className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-primary mb-2"/>
                 <p className="text-2xl sm:text-3xl font-bold">{numBlocks}</p>
                 <p className="text-sm text-muted-foreground">Blocks</p>
               </div>
             </Link>
-             <Link href="/elevators" className="block hover:scale-105 transition-transform duration-200">
-               <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center">
-                  <CheckCircle2 className="w-8 h-8 mx-auto text-green-500 mb-2"/>
+             <Link href="/elevators" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
+               <div className="flex flex-col justify-center h-full">
+                  <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-green-500 mb-2"/>
                   <p className="text-2xl sm:text-3xl font-bold">{activeCount}/{totalElevators}</p>
                   <p className="text-sm text-muted-foreground">Elevators Active</p>
               </div>
             </Link>
-            <Link href="/maintenance" className="block hover:scale-105 transition-transform duration-200">
-                <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center h-full">
-                <Wrench className="w-8 h-8 mx-auto text-yellow-500 mb-2"/>
+            <Link href="/maintenance" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
+                <div className="flex flex-col justify-center h-full">
+                <Wrench className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-yellow-500 mb-2"/>
                 <p className="text-2xl sm:text-3xl font-bold">{maintenanceCount}</p>
                 <p className="text-sm text-muted-foreground">In Maintenance</p>
                 </div>
             </Link>
-            <div className="bg-muted/50 p-4 rounded-lg flex flex-col justify-center">
-              <ShieldAlert className="w-8 h-8 mx-auto text-red-500 mb-2"/>
+            <div className="p-4 rounded-lg bg-muted/50 flex flex-col justify-center h-full">
+              <ShieldAlert className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-red-500 mb-2"/>
               <p className="text-2xl sm:text-3xl font-bold">{errorCount}</p>
               <p className="text-sm text-muted-foreground">System Alerts</p>
             </div>

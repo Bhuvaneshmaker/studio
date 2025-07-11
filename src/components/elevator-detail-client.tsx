@@ -6,26 +6,27 @@ import { useNaming } from "@/hooks/use-naming";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
-import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal } from 'lucide-react';
+import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal, ArrowLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
 import Link from 'next/link';
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
-    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+    <div className="flex items-start sm:items-center justify-between p-3 sm:p-4 bg-muted/50 rounded-lg flex-col sm:flex-row gap-2 sm:gap-4">
         <div className="flex items-center gap-3">
             {icon}
             <span className="text-muted-foreground">{label}</span>
         </div>
-        <span className={cn("font-bold text-lg", valueClassName)}>{value}</span>
+        <span className={cn("font-bold text-base sm:text-lg text-right w-full sm:w-auto", valueClassName)}>{value}</span>
     </div>
 );
 
 
 export function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
-    const { getElevatorName, getFloorName } = useNaming();
+    const { getElevatorName, getBlockName, getFloorName } = useNaming();
     
     const elevatorName = getElevatorName(elevator.id);
+    const blockName = getBlockName(elevator.blockId);
     
     const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
     const isOperational = mainPower && !emergencyStop;
@@ -55,22 +56,22 @@ export function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
     return (
         <div className="min-h-screen flex flex-col">
              <header className="p-4 sm:p-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-                <div className="container mx-auto flex items-center justify-between">
+                <div className="container mx-auto flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2 sm:gap-3 truncate">
                          <Link href="/" className="flex items-center gap-2 sm:gap-3">
                             <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                                <Building className="w-6 h-6" />
+                                <Building className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
                                 ElevateView
                             </h1>
                         </Link>
                          <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-                         <Link href="/blocks" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
-                            Blocks
+                         <Link href={`/elevators?block=${elevator.blockId}`} className="text-lg sm:text-2xl font-semibold text-foreground hover:underline truncate">
+                            {blockName}
                          </Link>
                          <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-                         <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
+                         <h2 className="text-lg sm:text-2xl font-semibold text-primary truncate">
                             {elevatorName}
                          </h2>
                     </div>
@@ -178,10 +179,9 @@ export function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
             </main>
              <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
                 <p className="text-center text-sm text-muted-foreground">
-                    ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline">support@bhuvitech.com</a>.
+                    ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
                 </p>
             </footer>
         </div>
     );
 }
-
