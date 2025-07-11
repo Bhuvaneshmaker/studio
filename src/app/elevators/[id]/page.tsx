@@ -88,10 +88,6 @@ export default function ElevatorDetailPage({ params: { id } }: { params: { id: s
                             </h1>
                         </Link>
                          <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-                         <Link href="/elevators" className="text-xl sm:text-2xl font-semibold text-foreground hover:underline truncate">
-                            All Elevators
-                        </Link>
-                         <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
                          <h2 className="text-xl sm:text-2xl font-semibold text-primary truncate">
                             {elevatorName} (Block {elevator.blockId})
                          </h2>
