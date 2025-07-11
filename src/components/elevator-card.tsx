@@ -95,6 +95,15 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
                     </AlertDescription>
                 </Alert>
             )}
+             {(emergencyStop) && (
+                <Alert variant="destructive" className="border-2 w-full text-xs p-2">
+                    <TriangleAlert className="h-4 w-4" />
+                    <AlertTitle className="font-bold">Emergency Stop!</AlertTitle>
+                    <AlertDescription>
+                        System halted.
+                    </AlertDescription>
+                </Alert>
+            )}
             <div className="grid grid-cols-2 gap-2 w-full text-xs">
                 <div className={cn("flex items-center gap-1.5 p-2 rounded-md justify-center", mainPower ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500")}>
                     {mainPower ? <Power className="w-3 h-3" /> : <PowerOff className="w-3 h-3" />}

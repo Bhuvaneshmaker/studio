@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import type { ElevatorData } from "@/types/elevator";
 import { useNaming } from '@/hooks/use-naming';
-import { Wrench, ShieldAlert, CheckCircle2, ArrowRight } from "lucide-react";
+import { Wrench, ShieldAlert, CheckCircle2, ArrowRight, Landmark } from "lucide-react";
 import { cn } from '@/lib/utils';
 
 export function BlockCard({ blockId, elevators }: { blockId: string, elevators: ElevatorData[] }) {
@@ -25,7 +25,10 @@ export function BlockCard({ blockId, elevators }: { blockId: string, elevators: 
         hasFault && "border-red-500/80 shadow-red-500/20"
       )}>
       <CardHeader className="p-4">
-        <CardTitle className="truncate">{blockName}</CardTitle>
+        <CardTitle className="truncate flex items-center gap-2">
+          <Landmark className="w-6 h-6 text-muted-foreground" />
+          {blockName}
+        </CardTitle>
         <CardDescription>{elevators.length} Elevators</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow p-4 pt-0 space-y-3">
@@ -52,7 +55,7 @@ export function BlockCard({ blockId, elevators }: { blockId: string, elevators: 
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full" variant="outline">
+        <Button asChild className="w-full" variant={hasFault ? 'destructive' : 'outline'}>
           <Link href={`/elevators?block=${blockId}`}>
             View Elevators <ArrowRight className="ml-2 w-4 h-4" />
           </Link>
