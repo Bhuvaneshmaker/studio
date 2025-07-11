@@ -4,8 +4,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ElevatorGrid } from '@/components/elevator-grid';
-import { Building, Search, X, Landmark } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Building, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
@@ -50,12 +49,10 @@ export default function ElevatorsPage() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
            {blockFilter && (
                 <div className="flex items-center gap-2">
-                    <Button asChild variant="secondary">
-                        <Link href="/elevators">
-                            <X className="mr-2 h-4 w-4" />
-                            Clear block filter
-                        </Link>
-                    </Button>
+                    <Link href="/elevators" className="text-sm inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                        <X className="mr-2 h-4 w-4" />
+                        Clear block filter
+                    </Link>
                 </div>
             )}
             <div className="relative w-full sm:w-auto sm:ml-auto">

@@ -1,20 +1,18 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { ElevatorData } from '@/types/elevator';
-import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
-import { useToast } from "@/hooks/use-toast";
 import { useNaming } from "@/hooks/use-naming";
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal } from 'lucide-react';
+import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
+import { getElevatorById } from '@/services/elevator-actions';
+
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
     <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
@@ -26,57 +24,19 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
-export default function ElevatorDetailPage() {
-    const params = useParams();
-    const id = params.id as string;
+export default function ElevatorDetailPage({ params }: { params: { id: string } }) {
+    const { id } = params;
     
     const [elevator, setElevator] = useState<ElevatorData | null>(null);
-    const [allElevators, setAllElevators] = useState<ElevatorData[]>([]);
     const { getElevatorName, getFloorName } = useNaming();
-    const elevatorName = getElevatorName(id);
-
-    const { toast } = useToast();
-    const notifiedErrors = useRef<Set<string>>(new Set());
-    const [initialLoad, setInitialLoad] = useState(true);
-
-     useEffect(() => {
-        setAllElevators(generateInitialElevators());
-        setInitialLoad(false);
-    }, []);
 
     useEffect(() => {
-        if (initialLoad || allElevators.length === 0) return;
-
-        const interval = setInterval(() => {
-            const { updatedElevators, newAlerts } = updateElevatorState(allElevators, notifiedErrors.current);
-            setAllElevators(updatedElevators);
-            
-            const currentElevator = updatedElevators.find(e => e.id === id);
-            if (currentElevator) {
-                setElevator(currentElevator);
-            }
-            
-            newAlerts.forEach(alert => {
-                if (!notifiedErrors.current.has(alert.id)) {
-                    toast({
-                    variant: "destructive",
-                    title: alert.title,
-                    description: alert.description,
-                    });
-                    notifiedErrors.current.add(alert.id);
-                }
-            });
-        }, 2000);
-
-        return () => clearInterval(interval);
-    }, [id, toast, allElevators, initialLoad]);
-    
-    useEffect(() => {
-        if (!elevator && allElevators.length > 0) {
-            const initialElevator = allElevators.find(e => e.id === id);
-            setElevator(initialElevator || null);
+        const fetchElevator = async () => {
+            const data = await getElevatorById(id);
+            setElevator(data);
         }
-    }, [id, allElevators, elevator]);
+        fetchElevator();
+    }, [id]);
 
     if (!elevator) {
         return (
@@ -88,6 +48,8 @@ export default function ElevatorDetailPage() {
             </div>
         );
     }
+
+    const elevatorName = getElevatorName(id);
     
     const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
     const isOperational = mainPower && !emergencyStop;

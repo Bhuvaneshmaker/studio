@@ -1,13 +1,11 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
-import { useToast } from "@/hooks/use-toast";
-import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
 import Link from 'next/link';
 import { Building, Wrench, ShieldCheck, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,13 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/back-button';
+import { getElevatorData } from '@/services/elevator-actions';
+
 
 export default function MaintenancePage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const { getBlockName, getElevatorName } = useNaming();
-  const { toast } = useToast();
-  const notifiedErrors = useRef<Set<string>>(new Set());
-  const [initialLoad, setInitialLoad] = useState(true);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -31,33 +28,15 @@ export default function MaintenancePage() {
       router.push('/');
     }
   }, [user, router]);
-
+  
   useEffect(() => {
-    setElevators(generateInitialElevators());
-    setInitialLoad(false);
+    async function fetchData() {
+        const data = await getElevatorData();
+        setElevators(data);
+    }
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    if (initialLoad || elevators.length === 0) return;
-
-    const interval = setInterval(() => {
-      const { updatedElevators, newAlerts } = updateElevatorState(elevators, notifiedErrors.current);
-      setElevators(updatedElevators);
-      
-      newAlerts.forEach(alert => {
-        if (!notifiedErrors.current.has(alert.id)) {
-          toast({
-            variant: "destructive",
-            title: alert.title,
-            description: alert.description,
-          });
-          notifiedErrors.current.add(alert.id);
-        }
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [elevators, toast, initialLoad]);
 
   const maintenanceElevators = elevators.filter(e => e.status === 'MAINTENANCE');
 

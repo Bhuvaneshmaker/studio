@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { PlusCircle, Landmark, SlidersHorizontal } from 'lucide-react';
+import { useFormStatus } from 'react-dom';
 
 const addBlockSchema = z.object({
   blockName: z.string().min(1, { message: "Block name is required." }),
@@ -19,11 +20,21 @@ const addBlockSchema = z.object({
 type AddBlockFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddBlock: (blockName: string, numElevators: number) => void;
+  formAction: (payload: FormData) => void;
   children: React.ReactNode;
 };
 
-export function AddBlockForm({ open, onOpenChange, onAddBlock, children }: AddBlockFormProps) {
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            {pending ? 'Creating...' : 'Create Block'}
+        </Button>
+    )
+}
+
+export function AddBlockForm({ open, onOpenChange, formAction, children }: AddBlockFormProps) {
   const form = useForm<z.infer<typeof addBlockSchema>>({
     resolver: zodResolver(addBlockSchema),
     defaultValues: {
@@ -32,14 +43,15 @@ export function AddBlockForm({ open, onOpenChange, onAddBlock, children }: AddBl
     },
   });
 
-  const onSubmit = (data: z.infer<typeof addBlockSchema>) => {
-    onAddBlock(data.blockName, data.numElevators);
-    onOpenChange(false);
-    form.reset();
-  };
-  
-  // We need to use a portal for the dialog, but the trigger can be the children.
-  // We also need to control the open state from the parent.
+  const [isClient, setIsClient] = React.useState(false);
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <>{children}</>;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <div onClick={() => onOpenChange(true)}>{children}</div>
@@ -53,7 +65,14 @@ export function AddBlockForm({ open, onOpenChange, onAddBlock, children }: AddBl
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form 
+            action={formAction}
+            onSubmit={form.handleSubmit(() => {
+                onOpenChange(false);
+                form.reset();
+            })} 
+            className="space-y-6"
+          >
             <FormField
               control={form.control}
               name="blockName"
@@ -84,10 +103,7 @@ export function AddBlockForm({ open, onOpenChange, onAddBlock, children }: AddBl
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancel</Button>
                 </DialogClose>
-                <Button type="submit">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Block
-                </Button>
+                <SubmitButton />
             </DialogFooter>
           </form>
         </Form>

@@ -21,13 +21,12 @@ export const createBlock = (blockId: string, numElevators: number): ElevatorData
     for (let i = 1; i <= numElevators; i++) {
         const elevatorNum = i;
         const compositeId = `${blockId}-${elevatorNum}`;
-        const currentFloor = 1;
         
         elevators.push({
           id: compositeId,
           blockId,
           elevatorNum,
-          currentFloor,
+          currentFloor: 1,
           direction: 'IDLE',
           status: 'IDLE',
           doorState: 'CLOSED',
@@ -46,9 +45,10 @@ export const generateInitialElevators = (numBlocks = NUM_BLOCKS, elevatorsPerBlo
   
   for (let blockNum = 1; blockNum <= numBlocks; blockNum++) {
     const blockId = blockNum.toString();
-    for (let i = 1; i <= elevatorsPerBlock; i++) {
-        const elevatorNum = i;
-        const compositeId = `${blockId}-${elevatorNum}`;
+    const newBlock = createBlock(blockId, elevatorsPerBlock);
+    
+    // Randomize initial state for generated blocks
+    const randomizedBlock = newBlock.map(elevator => {
         const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
         
         let status: ElevatorData['status'] = 'IDLE';
@@ -68,22 +68,19 @@ export const generateInitialElevators = (numBlocks = NUM_BLOCKS, elevatorsPerBlo
           direction = destinationFloor > currentFloor ? 'UP' : 'DOWN';
         }
 
-        elevators.push({
-          id: compositeId,
-          blockId,
-          elevatorNum,
-          currentFloor,
-          direction,
-          status,
-          doorState,
-          errorCode: 0,
-          totalFloors: MAX_FLOORS,
-          destinationFloor,
-          mainPower: Math.random() > 0.05,
-          emergencyStop: false,
-          maintenanceDetails,
-        });
-    }
+        return {
+            ...elevator,
+            currentFloor,
+            direction,
+            status,
+            doorState,
+            destinationFloor,
+            mainPower: Math.random() > 0.05,
+            maintenanceDetails
+        };
+    });
+
+    elevators.push(...randomizedBlock);
   }
   return elevators;
 };
@@ -96,8 +93,7 @@ interface AlertInfo {
 }
 
 export const updateElevatorState = (
-    prevElevators: ElevatorData[], 
-    notifiedErrors: Set<string>
+    prevElevators: ElevatorData[]
 ): { updatedElevators: ElevatorData[], newAlerts: AlertInfo[] } => {
     const newAlerts: AlertInfo[] = [];
 
@@ -112,7 +108,6 @@ export const updateElevatorState = (
             if (Math.random() < 0.1) {
             newElevator.status = 'IDLE';
             newElevator.errorCode = 0;
-            notifiedErrors.delete(newElevator.id);
             }
             return newElevator;
         }

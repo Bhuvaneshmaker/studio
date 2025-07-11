@@ -1,46 +1,25 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { ElevatorCard } from '@/components/elevator-card';
-import { useToast } from "@/hooks/use-toast";
 import { useNaming } from "@/hooks/use-naming";
 import { Separator } from './ui/separator';
-import { generateInitialElevators, updateElevatorState } from '@/lib/elevator-simulation';
 import { SearchX } from 'lucide-react';
+import { getElevatorData } from '@/services/elevator-actions';
 
 export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string, blockFilter: string | null }) {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
-  const { toast } = useToast();
-  const notifiedErrors = useRef<Set<string>>(new Set());
   const { getBlockName, getElevatorName } = useNaming();
 
   useEffect(() => {
-    setElevators(generateInitialElevators());
+    async function fetchData() {
+        const data = await getElevatorData();
+        setElevators(data);
+    }
+    fetchData();
   }, []);
-
-  useEffect(() => {
-    if (elevators.length === 0) return;
-
-    const interval = setInterval(() => {
-      const { updatedElevators, newAlerts } = updateElevatorState(elevators, notifiedErrors.current);
-      setElevators(updatedElevators);
-
-      newAlerts.forEach(alert => {
-        if (!notifiedErrors.current.has(alert.id)) {
-          toast({
-            variant: "destructive",
-            title: alert.title,
-            description: alert.description,
-          });
-          notifiedErrors.current.add(alert.id);
-        }
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [elevators, toast]);
 
   const filteredElevators = elevators.filter(elevator => {
     if (blockFilter && elevator.blockId !== blockFilter) {
