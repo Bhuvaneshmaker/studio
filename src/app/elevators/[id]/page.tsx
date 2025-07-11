@@ -1,9 +1,6 @@
 
-"use client";
-
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import type { ElevatorData } from '@/types/elevator';
+import { getElevatorById } from '@/services/elevator-actions';
 import { useNaming } from "@/hooks/use-naming";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,8 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
-import { getElevatorById } from '@/services/elevator-actions';
-
+import Link from 'next/link';
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
     <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
@@ -24,30 +20,10 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
-export default function ElevatorDetailPage({ params: { id } }: { params: { id: string } }) {
-    const [elevator, setElevator] = useState<ElevatorData | null>(null);
+function ElevatorDetailClient({ elevator }: { elevator: ElevatorData }) {
     const { getElevatorName, getFloorName } = useNaming();
-
-    useEffect(() => {
-        const fetchElevator = async () => {
-            const data = await getElevatorById(id);
-            setElevator(data);
-        }
-        fetchElevator();
-    }, [id]);
-
-    if (!elevator) {
-        return (
-            <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="text-center">
-                    <p className="text-2xl font-semibold">Loading Elevator Data...</p>
-                    <p className="text-muted-foreground">Please wait a moment.</p>
-                </div>
-            </div>
-        );
-    }
-
-    const elevatorName = getElevatorName(id);
+    
+    const elevatorName = getElevatorName(elevator.id);
     
     const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
     const isOperational = mainPower && !emergencyStop;
@@ -200,5 +176,23 @@ export default function ElevatorDetailPage({ params: { id } }: { params: { id: s
                 </p>
             </footer>
         </div>
-    );
+    )
+}
+
+
+export default async function ElevatorDetailPage({ params: { id } }: { params: { id: string } }) {
+    const elevator = await getElevatorById(id);
+
+    if (!elevator) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-4">
+                <div className="text-center">
+                    <p className="text-2xl font-semibold">Elevator Not Found</p>
+                    <p className="text-muted-foreground">The requested elevator does not exist.</p>
+                </div>
+            </div>
+        );
+    }
+
+    return <ElevatorDetailClient elevator={elevator} />;
 }
