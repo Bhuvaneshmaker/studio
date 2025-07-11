@@ -24,8 +24,7 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
-export default function ElevatorDetailPage({ params }: { params: { id: string } }) {
-    const { id } = params;
+export default function ElevatorDetailPage({ params: { id } }: { params: { id: string } }) {
     const [elevator, setElevator] = useState<ElevatorData | null>(null);
     const { getElevatorName, getFloorName } = useNaming();
 
