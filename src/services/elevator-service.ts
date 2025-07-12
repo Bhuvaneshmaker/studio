@@ -121,6 +121,29 @@ export function toggleMaintenanceStatus(id: string, reason?: string): boolean {
     return false;
 }
 
+export function toggleEmergencyStopStatus(id: string, reason?: string): boolean {
+    const elevatorIndex = elevators.findIndex(e => e.id === id);
+    if (elevatorIndex > -1) {
+        const isCurrentlyStopped = elevators[elevatorIndex].emergencyStop;
+
+        elevators[elevatorIndex].emergencyStop = !isCurrentlyStopped;
+        
+        if (elevators[elevatorIndex].emergencyStop) {
+            elevators[elevatorIndex].status = 'ERROR';
+            elevators[elevatorIndex].maintenanceDetails = `E-Stop activated: ${reason || 'No reason provided.'}`;
+        } else {
+            elevators[elevatorIndex].status = 'IDLE';
+            elevators[elevatorIndex].maintenanceDetails = undefined;
+        }
+
+        elevators[elevatorIndex].direction = 'IDLE';
+        elevators[elevatorIndex].errorCode = 0;
+
+        return true;
+    }
+    return false;
+}
+
 interface UpdateResult {
     success: boolean;
     updatedCount: number;

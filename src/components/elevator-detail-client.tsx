@@ -34,7 +34,8 @@ const ActionConfirmationDialog = ({
     actionLabel,
     onConfirm,
     reasonLabel,
-    reasonPlaceholder
+    reasonPlaceholder,
+    isReasonRequired = true,
 }: {
     triggerButton: React.ReactNode;
     title: string;
@@ -43,6 +44,7 @@ const ActionConfirmationDialog = ({
     onConfirm: (reason: string) => void;
     reasonLabel: string;
     reasonPlaceholder: string;
+    isReasonRequired?: boolean;
 }) => {
     const [reason, setReason] = useState('');
     const [open, setOpen] = useState(false);
@@ -74,7 +76,7 @@ const ActionConfirmationDialog = ({
                 </div>
                 <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setReason('')}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleConfirm} disabled={!reason.trim()}>
+                    <AlertDialogAction onClick={handleConfirm} disabled={isReasonRequired && !reason.trim()}>
                         {actionLabel}
                     </AlertDialogAction>
                 </AlertDialogFooter>
@@ -106,9 +108,9 @@ const FaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdat
     };
 
     return (
-        <Card className="shadow-lg mt-6 border-red-500/50">
+        <Card className="shadow-lg border-orange-500/50">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-600">
+                <CardTitle className="flex items-center gap-2 text-orange-600">
                     <AlertCircle /> Fault Controls
                 </CardTitle>
                 <CardDescription>Manually trigger or resolve a fault status for this elevator.</CardDescription>
@@ -123,8 +125,8 @@ const FaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdat
                         reasonLabel="Reason for Fault"
                         reasonPlaceholder="e.g., Investigating panel issue."
                         triggerButton={
-                            <Button variant="destructive" className="w-full" disabled={isLoading}>
-                                <TriangleAlert className="mr-2" /> {isLoading ? 'Triggering...' : 'Trigger Manual Fault'}
+                            <Button variant="secondary" className="w-full" disabled={isLoading}>
+                                <AlertCircle className="mr-2" /> {isLoading ? 'Triggering...' : 'Trigger Manual Fault'}
                             </Button>
                         }
                     />
@@ -161,7 +163,7 @@ const MaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, o
     };
 
     return (
-        <Card className="shadow-lg mt-6 border-yellow-500/50">
+        <Card className="shadow-lg border-yellow-500/50">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-yellow-600">
                     <Wrench /> Maintenance Controls
@@ -186,6 +188,63 @@ const MaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, o
                              <Button variant="secondary" className="w-full" disabled={isLoading}>
                                 <Wrench className="mr-2" />
                                 {isLoading ? 'Updating...' : 'Enable Maintenance Mode'}
+                            </Button>
+                        }
+                    />
+                )}
+            </CardContent>
+        </Card>
+    );
+};
+
+const EmergencyStopControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleToggleEmergencyStop = async (reason?: string) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/elevators/${elevator.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'toggleEmergencyStop', reason }),
+            });
+            if(response.ok) {
+                const updatedElevator = await response.json();
+                onUpdate(updatedElevator);
+            }
+        } catch (error) {
+            console.error('Failed to toggle emergency stop', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <Card className="shadow-lg border-red-500/50">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                    <TriangleAlert /> Emergency Stop
+                </CardTitle>
+                <CardDescription>Activate or deactivate the emergency stop for this unit.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 {elevator.emergencyStop ? (
+                     <Button onClick={() => handleToggleEmergencyStop()} variant="destructive" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={isLoading}>
+                        <ShieldCheck className="mr-2" />
+                        {isLoading ? 'Deactivating...' : 'Deactivate Emergency Stop'}
+                    </Button>
+                ) : (
+                    <ActionConfirmationDialog
+                        title="Activate Emergency Stop"
+                        description="This is a critical action. Please provide a reason for activating the emergency stop."
+                        actionLabel="Confirm and Activate E-Stop"
+                        onConfirm={(reason) => handleToggleEmergencyStop(reason)}
+                        reasonLabel="Reason for Emergency Stop"
+                        reasonPlaceholder="e.g., Obstruction in doorway."
+                        triggerButton={
+                             <Button variant="destructive" className="w-full" disabled={isLoading}>
+                                <TriangleAlert className="mr-2" />
+                                {isLoading ? 'Activating...' : 'Activate Emergency Stop'}
                             </Button>
                         }
                     />
@@ -359,7 +418,7 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                 )}
                                  {isOperational && status !== 'ERROR' && status !== 'MAINTENANCE' && (
                                     <Alert>
-                                        <ShieldAlert className="h-4 w-4" />
+                                        <ShieldCheck className="h-4 w-4" />
                                         <AlertTitle>System Nominal</AlertTitle>
                                         <AlertDescription>
                                         All systems are operating correctly. No faults detected.
@@ -368,9 +427,10 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                 )}
                             </CardContent>
                         </Card>
-                        <div className="space-y-6">
+                        <div className="space-y-6 mt-6">
                             <MaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
                             <FaultControls elevator={elevator} onUpdate={handleUpdate} />
+                             <EmergencyStopControls elevator={elevator} onUpdate={handleUpdate} />
                         </div>
                    </div>
                 </div>
