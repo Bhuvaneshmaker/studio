@@ -7,7 +7,7 @@ import type { CustomNames } from '@/types/naming';
 const NAMING_STORAGE_KEY = 'elevateview-custom-names';
 
 const defaultNames: CustomNames = {
-  blocks: {},
+  devices: {},
   elevators: {},
   floors: {},
 };
@@ -63,27 +63,27 @@ export const useNaming = () => {
     };
   }, []);
 
-  const getBlockName = useCallback((blockId: string) => {
-    return customNames.blocks[blockId] || `Block ${blockId}`;
-  }, [customNames.blocks]);
+  const getDeviceName = useCallback((deviceId: string) => {
+    return customNames.devices[deviceId] || `Device ${deviceId}`;
+  }, [customNames.devices]);
 
   const getElevatorName = useCallback((elevatorId: string) => {
-    return customNames.elevators[elevatorId] || `Elevator ${elevatorId.split('-')[1]}`;
+    return customNames.elevators[elevatorId] || `Elevator ${elevatorId.split('-')[1]} (Slave)`;
   }, [customNames.elevators]);
   
   const getFloorName = useCallback((floorId: string) => {
     return customNames.floors[floorId] || `Floor ${floorId}`;
   }, [customNames.floors]);
 
-  const setBlockName = useCallback((blockId: string, name: string) => {
+  const setDeviceName = useCallback((deviceId: string, name: string) => {
     setCustomNames(prev => {
-        const newBlocks = {...prev.blocks};
+        const newDevices = {...prev.devices};
         if(name) {
-            newBlocks[blockId] = name;
+            newDevices[deviceId] = name;
         } else {
-            delete newBlocks[blockId];
+            delete newDevices[deviceId];
         }
-        return { ...prev, blocks: newBlocks };
+        return { ...prev, devices: newDevices };
     });
   }, []);
 
@@ -111,11 +111,11 @@ export const useNaming = () => {
     });
   }, []);
   
-  const deleteBlockName = useCallback((blockId: string) => {
+  const deleteDeviceName = useCallback((deviceId: string) => {
     setCustomNames(prev => {
-        const newBlocks = {...prev.blocks};
-        delete newBlocks[blockId];
-        return {...prev, blocks: newBlocks};
+        const newDevices = {...prev.devices};
+        delete newDevices[deviceId];
+        return {...prev, devices: newDevices};
     });
   }, []);
 
@@ -138,13 +138,13 @@ export const useNaming = () => {
 
   return {
     customNames,
-    getBlockName,
+    getDeviceName,
     getElevatorName,
     getFloorName,
-    setBlockName,
+    setDeviceName,
     setElevatorName,
     setFloorName,
-    deleteBlockName,
+    deleteDeviceName,
     deleteElevatorName,
     deleteFloorName,
   };

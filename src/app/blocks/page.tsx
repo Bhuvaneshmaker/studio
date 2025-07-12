@@ -2,16 +2,16 @@
 "use client";
 
 import Link from 'next/link';
-import { Building, PlusCircle } from 'lucide-react';
+import { Building, PlusCircle, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BlockCard } from '@/components/block-card';
-import { AddBlockFormWrapper } from '@/components/add-block-form-wrapper';
+import { DeviceCard } from '@/components/device-card';
+import { AddDeviceFormWrapper } from '@/components/add-device-form-wrapper';
 import { BackButton } from '@/components/back-button';
 import type { ElevatorData } from '@/types/elevator';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const BlocksPageSkeleton = () => (
+const DevicesPageSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, i) => (
              <div key={i} className="space-y-3">
@@ -21,7 +21,7 @@ const BlocksPageSkeleton = () => (
     </div>
 );
 
-export default function BlocksPage() {
+export default function DevicesPage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,16 +36,16 @@ export default function BlocksPage() {
     fetchData();
   }, []);
   
-  const handleBlockAdded = (newElevators: ElevatorData[]) => {
+  const handleDeviceAdded = (newElevators: ElevatorData[]) => {
     setElevators(newElevators);
   };
 
-  const elevatorsByBlock = elevators.reduce((acc, elevator) => {
-    const blockId = elevator.blockId;
-    if (!acc[blockId]) {
-      acc[blockId] = [];
+  const elevatorsByDevice = elevators.reduce((acc, elevator) => {
+    const deviceId = elevator.deviceId;
+    if (!acc[deviceId]) {
+      acc[deviceId] = [];
     }
-    acc[blockId].push(elevator);
+    acc[deviceId].push(elevator);
     return acc;
   }, {} as Record<string, ElevatorData[]>);
 
@@ -63,28 +63,28 @@ export default function BlocksPage() {
               </h1>
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-            <h2 className="text-lg sm:text-2xl font-semibold text-primary truncate">
-              Blocks
+            <h2 className="text-lg sm:text-2xl font-semibold text-primary truncate flex items-center gap-2">
+              <Server className="w-6 h-6" /> Devices
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
+            <AddDeviceFormWrapper onDeviceAdded={handleDeviceAdded}>
                <Button size="sm">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Add New Block
+                  Add New Device
                 </Button>
-            </AddBlockFormWrapper>
+            </AddDeviceFormWrapper>
             <BackButton />
           </div>
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
         {loading ? (
-          <BlocksPageSkeleton />
+          <DevicesPageSkeleton />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([blockId, blockElevators]) => (
-              <BlockCard key={blockId} blockId={blockId} elevators={blockElevators} />
+            {Object.entries(elevatorsByDevice).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([deviceId, deviceElevators]) => (
+              <DeviceCard key={deviceId} deviceId={deviceId} elevators={deviceElevators} />
             ))}
           </div>
         )}

@@ -8,7 +8,7 @@ import { useNaming } from '@/hooks/use-naming';
 
 // This is a server-side only hook for naming, we can't use the real hook.
 // In a real app, this logic would come from a database.
-const getBlockNameServer = (blockId: string) => `Block ${blockId}`;
+const getDeviceNameServer = (deviceId: string) => `Device ${deviceId}`;
 
 
 function generateAnalytics(): AnalyticsData {
@@ -26,7 +26,7 @@ function generateAnalytics(): AnalyticsData {
 
     // Chart Data
     const usageByBlock: ChartDataPoint[] = Array.from({ length: NUM_BLOCKS }, (_, i) => ({
-        name: getBlockNameServer((i + 1).toString()),
+        name: getDeviceNameServer((i + 1).toString()),
         trips: Math.floor(Math.random() * 400) + 100, // 100-500 trips
     }));
 

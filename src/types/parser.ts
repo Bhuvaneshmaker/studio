@@ -2,8 +2,8 @@
 import type { ElevatorDirection, DoorState } from "./elevator";
 
 export interface ParsedElevatorData {
-    blockId: string;
-    elevatorNum: number;
+    deviceId: string;
+    elevatorNum: number; // Slave ID
     responseStatus: 'Positive' | 'No Response' | 'Frame Error';
     currentFloor: number;
     direction: ElevatorDirection;

@@ -17,7 +17,7 @@ import { BackButton } from '@/components/back-button';
 
 export default function MaintenancePage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
-  const { getBlockName, getElevatorName } = useNaming();
+  const { getDeviceName, getElevatorName } = useNaming();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -74,10 +74,10 @@ export default function MaintenancePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wrench className="w-6 h-6 text-yellow-500" />
-              Elevators Under Maintenance
+              Elevators / Slaves Under Maintenance
             </CardTitle>
             <CardDescription>
-              The following elevators are currently offline for scheduled maintenance or repairs.
+              The following units are currently offline for scheduled maintenance or repairs.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -86,8 +86,8 @@ export default function MaintenancePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Elevator</TableHead>
-                      <TableHead>Block</TableHead>
+                      <TableHead>Elevator / Slave</TableHead>
+                      <TableHead>Device</TableHead>
                       <TableHead>Reason</TableHead>
                       <TableHead className="text-right">Status</TableHead>
                     </TableRow>
@@ -96,7 +96,7 @@ export default function MaintenancePage() {
                     {maintenanceElevators.map(elevator => (
                       <TableRow key={elevator.id}>
                         <TableCell className="font-medium">{getElevatorName(elevator.id)}</TableCell>
-                        <TableCell>{getBlockName(elevator.blockId)}</TableCell>
+                        <TableCell>{getDeviceName(elevator.deviceId)}</TableCell>
                         <TableCell className="text-muted-foreground">{elevator.maintenanceDetails || "No details provided."}</TableCell>
                         <TableCell className="text-right">
                           <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 whitespace-nowrap">

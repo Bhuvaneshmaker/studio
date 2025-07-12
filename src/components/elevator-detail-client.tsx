@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Server, SlidersHorizontal, AlertCircle, ShieldCheck } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
 import Link from 'next/link';
@@ -52,7 +52,7 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
                 <CardTitle className="flex items-center gap-2 text-yellow-600">
                     <AlertCircle /> Admin Fault Controls
                 </CardTitle>
-                <CardDescription>Manually trigger or resolve a fault status for this elevator.</CardDescription>
+                <CardDescription>Manually trigger or resolve a fault status for this elevator/slave.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4">
                 {elevator.status !== 'ERROR' ? (
@@ -72,7 +72,7 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
 
 export function ElevatorDetailClient({ initialElevator }: { initialElevator: ElevatorData }) {
     const [elevator, setElevator] = useState(initialElevator);
-    const { getElevatorName, getBlockName, getFloorName } = useNaming();
+    const { getElevatorName, getDeviceName, getFloorName } = useNaming();
     const { user } = useAuth();
 
     // Set up polling to get "real-time" updates
@@ -93,7 +93,7 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
     };
     
     const elevatorName = getElevatorName(elevator.id);
-    const blockName = getBlockName(elevator.blockId);
+    const deviceName = getDeviceName(elevator.deviceId);
     
     const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
     const isOperational = mainPower && !emergencyStop;
@@ -134,8 +134,8 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                             </h1>
                         </Link>
                          <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
-                         <Link href={`/elevators?block=${elevator.blockId}`} className="text-lg sm:text-2xl font-semibold text-foreground hover:underline truncate">
-                            {blockName}
+                         <Link href={`/elevators?device=${elevator.deviceId}`} className="text-lg sm:text-2xl font-semibold text-foreground hover:underline truncate">
+                            {deviceName}
                          </Link>
                          <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
                          <h2 className="text-lg sm:text-2xl font-semibold text-primary truncate">
@@ -151,7 +151,7 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                         <Card className="shadow-lg h-full">
                             <CardHeader>
                                 <CardTitle>Current Status</CardTitle>
-                                <CardDescription>Real-time elevator overview</CardDescription>
+                                <CardDescription>Real-time elevator/slave overview</CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center justify-center text-center gap-4">
                                <div className="flex items-center justify-center text-center bg-muted/50 p-6 rounded-lg w-full">
@@ -178,13 +178,13 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <DetailItem 
-                                    icon={<Landmark className="w-6 h-6 text-muted-foreground" />}
-                                    label="Block ID"
-                                    value={elevator.blockId}
+                                    icon={<Server className="w-6 h-6 text-muted-foreground" />}
+                                    label="Device ID"
+                                    value={elevator.deviceId}
                                 />
                                 <DetailItem 
                                     icon={<SlidersHorizontal className="w-6 h-6 text-muted-foreground" />}
-                                    label="Elevator ID"
+                                    label="Slave ID"
                                     value={elevator.elevatorNum.toString()}
                                 />
                                 <Separator/>
@@ -226,7 +226,7 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                         <Wrench className="h-4 w-4 !text-yellow-500" />
                                         <AlertTitle className="font-bold">Under Maintenance</AlertTitle>
                                         <AlertDescription>
-                                            This elevator is currently undergoing scheduled maintenance.
+                                            This unit is currently undergoing scheduled maintenance.
                                         </AlertDescription>
                                     </Alert>
                                 )}

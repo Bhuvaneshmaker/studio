@@ -16,15 +16,15 @@ const maintenanceReasons = [
   "Emergency brake system check.",
 ];
 
-export const createBlock = (blockId: string, numElevators: number): ElevatorData[] => {
+export const createDevice = (deviceId: string, numElevators: number): ElevatorData[] => {
     const elevators: ElevatorData[] = [];
     for (let i = 1; i <= numElevators; i++) {
-        const elevatorNum = i;
-        const compositeId = `${blockId}-${elevatorNum}`;
+        const elevatorNum = i; // This is the Slave ID
+        const compositeId = `${deviceId}-${elevatorNum}`;
         
         elevators.push({
           id: compositeId,
-          blockId,
+          deviceId,
           elevatorNum,
           currentFloor: 1,
           direction: 'IDLE',
@@ -40,15 +40,15 @@ export const createBlock = (blockId: string, numElevators: number): ElevatorData
     return elevators;
 }
 
-export const generateInitialElevators = (numBlocks = NUM_BLOCKS, elevatorsPerBlock = NUM_ELEVATORS_PER_BLOCK): ElevatorData[] => {
+export const generateInitialElevators = (numDevices = NUM_BLOCKS, elevatorsPerDevice = NUM_ELEVATORS_PER_BLOCK): ElevatorData[] => {
   let elevators: ElevatorData[] = [];
   
-  for (let blockNum = 1; blockNum <= numBlocks; blockNum++) {
-    const blockId = blockNum.toString();
-    const newBlock = createBlock(blockId, elevatorsPerBlock);
+  for (let deviceNum = 1; deviceNum <= numDevices; deviceNum++) {
+    const deviceId = deviceNum.toString();
+    const newDevice = createDevice(deviceId, elevatorsPerDevice);
     
-    // Randomize initial state for generated blocks
-    const randomizedBlock = newBlock.map(elevator => {
+    // Randomize initial state for generated devices
+    const randomizedBlock = newDevice.map(elevator => {
         const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
         
         let status: ElevatorData['status'] = 'IDLE';
@@ -164,7 +164,7 @@ export const updateElevatorState = (
             newElevator.errorCode = Math.floor(Math.random() * 5) + 101;
             newAlerts.push({
                 id: newElevator.id,
-                title: `Block ${newElevator.blockId} - Elevator ${newElevator.elevatorNum} Alert!`,
+                title: `Device ${newElevator.deviceId} - Elevator ${newElevator.elevatorNum} Alert!`,
                 description: `A critical error (Code: ${newElevator.errorCode}) has been detected.`,
             });
         }
@@ -174,7 +174,7 @@ export const updateElevatorState = (
             newElevator.status = 'ERROR';
             newAlerts.push({
                 id: newElevator.id,
-                title: `Block ${newElevator.blockId} - Elevator ${newElevator.elevatorNum} Emergency Stop!`,
+                title: `Device ${newElevator.deviceId} - Elevator ${newElevator.elevatorNum} Emergency Stop!`,
                 description: `The emergency stop has been activated.`,
             });
         }

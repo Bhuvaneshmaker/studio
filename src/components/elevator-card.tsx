@@ -43,10 +43,10 @@ const StatusBadge = ({ status, mainPower, emergencyStop }: { status: ElevatorDat
 };
 
 export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
-  const { id, currentFloor, direction, status, errorCode, destinationFloor, mainPower, emergencyStop, blockId } = elevator;
-  const { getElevatorName, getBlockName } = useNaming();
+  const { id, currentFloor, direction, status, errorCode, destinationFloor, mainPower, emergencyStop, deviceId } = elevator;
+  const { getElevatorName, getDeviceName } = useNaming();
   const elevatorName = getElevatorName(id);
-  const blockName = getBlockName(blockId);
+  const deviceName = getDeviceName(deviceId);
 
   const isOperational = mainPower && !emergencyStop;
   const hasFault = status === 'ERROR' || emergencyStop;
@@ -63,7 +63,7 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
             <span className="truncate">{elevatorName}</span>
             <StatusBadge status={status} mainPower={mainPower} emergencyStop={emergencyStop} />
             </CardTitle>
-            <CardDescription className="text-xs truncate">{blockName}</CardDescription>
+            <CardDescription className="text-xs truncate">{deviceName}</CardDescription>
         </CardHeader>
         <CardContent className="flex-grow p-4 pt-0 flex items-center justify-around gap-4">
             <div className="flex flex-col justify-center text-center bg-muted/50 p-2 rounded-lg w-1/2 h-full">

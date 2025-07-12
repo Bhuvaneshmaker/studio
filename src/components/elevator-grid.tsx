@@ -29,10 +29,10 @@ const ElevatorGridSkeleton = () => (
 );
 
 
-export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string, blockFilter: string | null }) {
+export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: string, deviceFilter: string | null }) {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const [loading, setLoading] = useState(true);
-  const { getBlockName, getElevatorName } = useNaming();
+  const { getDeviceName, getElevatorName } = useNaming();
 
   useEffect(() => {
     async function fetchData() {
@@ -49,33 +49,33 @@ export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string
   }, []);
 
   const filteredElevators = elevators.filter(elevator => {
-    if (blockFilter && elevator.blockId !== blockFilter) {
+    if (deviceFilter && elevator.deviceId !== deviceFilter) {
         return false;
     }
 
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
 
-    const blockName = getBlockName(elevator.blockId).toLowerCase();
+    const deviceName = getDeviceName(elevator.deviceId).toLowerCase();
     const elevatorName = getElevatorName(elevator.id).toLowerCase();
     
     return [
       elevator.id.toLowerCase(),
       elevator.elevatorNum.toString(),
-      elevator.blockId.toLowerCase(),
+      elevator.deviceId.toLowerCase(),
       elevator.currentFloor.toString(),
-      blockName,
+      deviceName,
       elevatorName,
       elevator.status.toLowerCase(),
     ].some(field => field.includes(query));
   });
 
-  const elevatorsByBlock = filteredElevators.reduce((acc, elevator) => {
-    const blockId = elevator.blockId;
-    if (!acc[blockId]) {
-      acc[blockId] = [];
+  const elevatorsByDevice = filteredElevators.reduce((acc, elevator) => {
+    const deviceId = elevator.deviceId;
+    if (!acc[deviceId]) {
+      acc[deviceId] = [];
     }
-    acc[blockId].push(elevator);
+    acc[deviceId].push(elevator);
     return acc;
   }, {} as Record<string, ElevatorData[]>);
 
@@ -97,15 +97,15 @@ export function ElevatorGrid({ searchQuery, blockFilter }: { searchQuery: string
 
   return (
     <div className="space-y-8">
-      {Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([blockId, blockElevators], index) => (
-        <section key={blockId} id={`block-${blockId}`}>
-            <h3 className="text-2xl font-bold text-primary mb-4">{getBlockName(blockId)}</h3>
+      {Object.entries(elevatorsByDevice).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([deviceId, deviceElevators], index) => (
+        <section key={deviceId} id={`device-${deviceId}`}>
+            <h3 className="text-2xl font-bold text-primary mb-4">{getDeviceName(deviceId)}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {blockElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).map(elevator => (
+                {deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).map(elevator => (
                     <ElevatorCard key={elevator.id} elevator={elevator} />
                 ))}
             </div>
-            {index < Object.keys(elevatorsByBlock).length - 1 && <Separator className="my-8" />}
+            {index < Object.keys(elevatorsByDevice).length - 1 && <Separator className="my-8" />}
         </section>
       ))}
     </div>

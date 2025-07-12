@@ -84,7 +84,7 @@ export function parseDataFrame(frame: string): FrameParseResult {
         const currentFloor = dataByte3;
         
         elevatorsData.push({
-            blockId: deviceId,
+            deviceId: deviceId,
             elevatorNum: slaveId,
             responseStatus,
             currentFloor,

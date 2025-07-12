@@ -10,7 +10,7 @@ import type { ParsedElevatorData } from '@/types/parser';
 import { 
     generateInitialElevators,
     updateElevatorState as updateState,
-    createBlock as createNewBlock
+    createDevice as createNewDevice
 } from '@/lib/elevator-simulation';
 
 let elevators: ElevatorData[] = generateInitialElevators();
@@ -46,15 +46,15 @@ export function getElevatorById(id: string): ElevatorData | undefined {
     return elevators.find(e => e.id === id);
 }
 
-export function addBlock(numElevators: number): string {
-    const existingBlockIds = [...new Set(elevators.map(e => parseInt(e.blockId, 10)))];
-    const newBlockId = existingBlockIds.length > 0 ? Math.max(...existingBlockIds) + 1 : 1;
-    const newBlockIdStr = newBlockId.toString();
+export function addDevice(numSlaves: number): string {
+    const existingDeviceIds = [...new Set(elevators.map(e => parseInt(e.deviceId, 10)))];
+    const newDeviceId = existingDeviceIds.length > 0 ? Math.max(...existingDeviceIds) + 1 : 1;
+    const newDeviceIdStr = newDeviceId.toString();
 
-    const newBlock = createNewBlock(newBlockIdStr, numElevators);
-    elevators = [...elevators, ...newBlock];
+    const newDevice = createNewDevice(newDeviceIdStr, numSlaves);
+    elevators = [...elevators, ...newDevice];
 
-    return newBlockIdStr;
+    return newDeviceIdStr;
 }
 
 export function setElevatorFault(id: string, errorCode: number): boolean {
@@ -96,7 +96,7 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
     const errors: { elevatorId: string; reason: string }[] = [];
 
     parsedData.forEach(data => {
-        const elevatorId = `${data.blockId}-${data.elevatorNum}`;
+        const elevatorId = `${data.deviceId}-${data.elevatorNum}`;
         const elevatorIndex = elevators.findIndex(e => e.id === elevatorId);
 
         if (elevatorIndex !== -1) {
@@ -131,7 +131,7 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
             };
             updatedCount++;
         } else {
-            errors.push({ elevatorId, reason: 'Elevator not found in system.' });
+            errors.push({ elevatorId, reason: 'Elevator/Slave not found in system.' });
         }
     });
 

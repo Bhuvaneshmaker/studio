@@ -16,9 +16,9 @@ export async function POST(request: Request) {
         const result = updateElevatorsFromParsedData(parsedData);
 
         if (result.success) {
-            return NextResponse.json({ message: `${result.updatedCount} elevators updated successfully.` });
+            return NextResponse.json({ message: `${result.updatedCount} elevators/slaves updated successfully.` });
         } else {
-            return NextResponse.json({ error: 'Some elevators could not be found or updated.', details: result.errors }, { status: 404 });
+            return NextResponse.json({ error: 'Some elevators/slaves could not be found or updated.', details: result.errors }, { status: 404 });
         }
 
     } catch (error) {

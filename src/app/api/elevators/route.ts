@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getElevatorData, addBlock } from '@/services/elevator-service';
+import { getElevatorData, addDevice } from '@/services/elevator-service';
 import { setBlockName } from '@/lib/naming-actions';
 
 export const dynamic = 'force-dynamic';
@@ -11,16 +11,16 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-    const { blockName, numElevators } = await request.json();
+    const { deviceName, numSlaves } = await request.json();
 
-    if (blockName && numElevators) {
-        const newBlockId = addBlock(numElevators);
+    if (deviceName && numSlaves) {
+        const newDeviceId = addDevice(numSlaves);
         // This would typically be a database operation.
-        // For now, it logs the action.
-        await setBlockName(newBlockId, blockName);
+        // For now, it logs the action and we use the client-side naming hook.
+        await setBlockName(newDeviceId, deviceName); // Keeps using old naming action for logging
         const elevators = getElevatorData();
-        return NextResponse.json({ success: true, newBlockId, elevators });
+        return NextResponse.json({ success: true, newDeviceId, elevators });
     }
 
-    return NextResponse.json({ error: 'Missing blockName or numElevators' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing deviceName or numSlaves' }, { status: 400 });
 }

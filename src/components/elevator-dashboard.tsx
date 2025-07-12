@@ -2,7 +2,7 @@
 "use client";
 
 import type { ElevatorData } from '@/types/elevator';
-import { Landmark, Wrench, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Server, Wrench, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { useMemo } from 'react';
@@ -14,14 +14,14 @@ export default function ElevatorDashboard({ elevators }: { elevators: ElevatorDa
     maintenanceCount,
     errorCount,
     totalElevators,
-    numBlocks
+    numDevices
   } = useMemo(() => {
     const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
     const errorCount = elevators.filter(e => e.status === 'ERROR' || e.emergencyStop).length;
     const totalElevators = elevators.length;
     const activeCount = totalElevators - maintenanceCount - errorCount;
-    const numBlocks = new Set(elevators.map(e => e.blockId)).size;
-    return { activeCount, maintenanceCount, errorCount, totalElevators, numBlocks };
+    const numDevices = new Set(elevators.map(e => e.deviceId)).size;
+    return { activeCount, maintenanceCount, errorCount, totalElevators, numDevices };
   }, [elevators]);
 
 
@@ -36,9 +36,9 @@ export default function ElevatorDashboard({ elevators }: { elevators: ElevatorDa
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
             <Link href="/blocks" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
               <div className="flex flex-col justify-center h-full">
-                <Landmark className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-primary mb-2"/>
-                <p className="text-2xl sm:text-3xl font-bold">{numBlocks}</p>
-                <p className="text-sm text-muted-foreground">Blocks</p>
+                <Server className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-primary mb-2"/>
+                <p className="text-2xl sm:text-3xl font-bold">{numDevices}</p>
+                <p className="text-sm text-muted-foreground">Devices</p>
               </div>
             </Link>
              <Link href="/elevators" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">

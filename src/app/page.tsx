@@ -1,24 +1,36 @@
 
-import ElevatorDashboard from '@/components/elevator-dashboard';
-import { Building } from 'lucide-react';
+"use client";
+
+import type { ElevatorData } from '@/types/elevator';
+import { Building, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { AuthWidget } from '@/components/auth-widget';
-import type { ElevatorData } from '@/types/elevator';
+import ElevatorDashboard from '@/components/elevator-dashboard';
+import { AddDeviceFormWrapper } from '@/components/add-device-form-wrapper';
+import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 
-export const dynamic = 'force-dynamic';
+export default function Home() {
+  const [elevators, setElevators] = useState<ElevatorData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-async function getElevators(): Promise<ElevatorData[]> {
-    // In a real app, you would have a base URL in an env var
-    const res = await fetch('http://localhost:9002/api/elevators', { cache: 'no-store' });
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error('Failed to fetch data');
+  const fetchData = async () => {
+    setLoading(true);
+    const res = await fetch('/api/elevators', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      setElevators(data);
     }
-    return res.json();
-}
+    setLoading(false);
+  };
 
-export default async function Home() {
-  const elevators = await getElevators();
+  useEffect(() => {
+    fetchData();
+  }, []);
+  
+  const handleDeviceAdded = (newElevators: ElevatorData[]) => {
+    setElevators(newElevators);
+  };
 
   return (
     <div className="min-h-screen">
@@ -34,7 +46,15 @@ export default async function Home() {
                     </h1>
                 </Link>
             </div>
-            <AuthWidget />
+            <div className="flex items-center gap-2">
+              <AddDeviceFormWrapper onDeviceAdded={handleDeviceAdded}>
+                 <Button size="sm">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Device
+                  </Button>
+              </AddDeviceFormWrapper>
+              <AuthWidget />
+            </div>
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
