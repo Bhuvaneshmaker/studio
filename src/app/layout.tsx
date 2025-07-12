@@ -7,15 +7,15 @@ import { AuthProvider } from '@/context/auth-context';
 import { useState, useEffect } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { TriangleAlert } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const EmergencyStopAlert = ({ elevators }: { elevators: ElevatorData[] }) => {
+const EmergencyStopAlert = ({ elevators, isOpen, onAcknowledge }: { elevators: ElevatorData[], isOpen: boolean, onAcknowledge: () => void }) => {
     const { getDeviceName, getElevatorName } = useNaming();
 
     return (
-        <AlertDialog open={elevators.length > 0}>
+        <AlertDialog open={isOpen}>
             <AlertDialogContent className="max-w-md">
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2 text-red-500">
@@ -36,6 +36,11 @@ const EmergencyStopAlert = ({ elevators }: { elevators: ElevatorData[] }) => {
                         ))}
                     </div>
                 </ScrollArea>
+                <AlertDialogFooter>
+                    <AlertDialogAction onClick={onAcknowledge} className="bg-primary hover:bg-primary/90">
+                        Acknowledge
+                    </AlertDialogAction>
+                </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
     );
@@ -48,6 +53,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+
+  const emergencyStopElevators = elevators.filter(e => e.emergencyStop);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,6 +65,10 @@ export default function RootLayout({
         if (res.ok) {
           const data = await res.json();
           setElevators(data);
+          // If there are E-Stops, show the alert.
+          if (data.some((e: ElevatorData) => e.emergencyStop)) {
+            setIsAlertOpen(true);
+          }
         }
       }
     };
@@ -65,8 +77,6 @@ export default function RootLayout({
     const interval = setInterval(fetchData, 3000); // Poll for E-Stop status
     return () => clearInterval(interval);
   }, []);
-
-  const emergencyStopElevators = elevators.filter(e => e.emergencyStop);
 
   return (
     <html lang="en" className="dark">
@@ -82,7 +92,11 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
-          <EmergencyStopAlert elevators={emergencyStopElevators} />
+          <EmergencyStopAlert 
+            elevators={emergencyStopElevators} 
+            isOpen={isAlertOpen && emergencyStopElevators.length > 0} 
+            onAcknowledge={() => setIsAlertOpen(false)}
+          />
         </AuthProvider>
       </body>
     </html>
