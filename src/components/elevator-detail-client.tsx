@@ -34,14 +34,16 @@ const ActionConfirmationDialog = ({
     description,
     actionLabel,
     onConfirm,
-    children
+    reasonLabel,
+    reasonPlaceholder
 }: {
     triggerButton: React.ReactNode;
     title: string;
     description: string;
     actionLabel: string;
     onConfirm: (reason: string) => void;
-    children: React.ReactNode;
+    reasonLabel: string;
+    reasonPlaceholder: string;
 }) => {
     const [reason, setReason] = useState('');
     const [open, setOpen] = useState(false);
@@ -50,10 +52,6 @@ const ActionConfirmationDialog = ({
         onConfirm(reason);
         setOpen(false);
         setReason('');
-    };
-    
-    const handleReasonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setReason(e.target.value);
     };
 
     return (
@@ -67,10 +65,13 @@ const ActionConfirmationDialog = ({
                     <AlertDialogDescription>{description}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="py-4 space-y-2">
-                    {React.cloneElement(children as React.ReactElement, {
-                        value: reason,
-                        onChange: handleReasonChange
-                    })}
+                    <Label htmlFor={`reason-${title.replace(/\s+/g, '-')}`}>{reasonLabel}</Label>
+                    <Textarea 
+                        id={`reason-${title.replace(/\s+/g, '-')}`} 
+                        placeholder={reasonPlaceholder}
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                    />
                 </div>
                 <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setReason('')}>Cancel</AlertDialogCancel>
@@ -120,17 +121,14 @@ const FaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdat
                         description="Please provide a reason for manually triggering a fault. This will be logged."
                         actionLabel="Confirm and Trigger Fault"
                         onConfirm={(reason) => handleFaultAction('triggerFault', 999, reason)}
+                        reasonLabel="Reason for Fault"
+                        reasonPlaceholder="e.g., Investigating panel issue."
                         triggerButton={
                             <Button variant="destructive" className="w-full" disabled={isLoading}>
                                 <TriangleAlert className="mr-2" /> {isLoading ? 'Triggering...' : 'Trigger Manual Fault'}
                             </Button>
                         }
-                    >
-                        <>
-                            <Label htmlFor="fault-reason">Reason for Fault</Label>
-                            <Textarea id="fault-reason" placeholder="e.g., Investigating panel issue." />
-                        </>
-                    </ActionConfirmationDialog>
+                    />
                 ) : (
                     <Button onClick={() => handleFaultAction('resolveFault')} variant="secondary" className="w-full bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 border" disabled={isLoading}>
                         <ShieldCheck className="mr-2" /> {isLoading ? 'Resolving...' : 'Resolve Fault'}
@@ -183,18 +181,15 @@ const MaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, o
                         description="Please provide a reason for placing this elevator into maintenance mode."
                         actionLabel="Confirm and Enable"
                         onConfirm={(reason) => handleToggleMaintenance(reason)}
+                        reasonLabel="Reason for Maintenance"
+                        reasonPlaceholder="e.g., Scheduled quarterly inspection."
                         triggerButton={
                              <Button variant="secondary" className="w-full" disabled={isLoading}>
                                 <Wrench className="mr-2" />
                                 {isLoading ? 'Updating...' : 'Enable Maintenance Mode'}
                             </Button>
                         }
-                    >
-                        <>
-                            <Label htmlFor="maintenance-reason">Reason for Maintenance</Label>
-                            <Textarea id="maintenance-reason" placeholder="e.g., Scheduled quarterly inspection." />
-                        </>
-                    </ActionConfirmationDialog>
+                    />
                 )}
             </CardContent>
         </Card>
