@@ -15,7 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Building, LogIn, ShieldAlert } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
+  identifier: z.string().min(1, { message: "Email or username is required." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
 
@@ -27,18 +27,18 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
 
   const onSubmit = (data: z.infer<typeof loginSchema>) => {
     setError(null);
-    const success = login(data.email, data.password);
+    const success = login(data.identifier, data.password);
     if (success) {
       router.push('/');
     } else {
-      setError("Invalid email or password. Please try again.");
+      setError("Invalid credentials. Please try again.");
       form.setValue('password', '');
     }
   };
@@ -58,7 +58,7 @@ export default function LoginPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Login</CardTitle>
-            <CardDescription>Use `admin@example.com` or `user@example.com`. Any password will work.</CardDescription>
+            <CardDescription>Use your assigned credentials. Any password will work for the default users (admin/user).</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -72,12 +72,12 @@ export default function LoginPage() {
                 )}
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="identifier"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>Email or Username</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="user@example.com" {...field} />
+                        <Input placeholder="user@example.com or jsmith" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

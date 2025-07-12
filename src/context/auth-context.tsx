@@ -8,7 +8,7 @@ import { useUsers } from '@/hooks/use-users';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password?: string) => boolean;
+  login: (identifier: string, password?: string) => boolean;
   logout: () => void;
   isLoading: boolean;
 }
@@ -47,8 +47,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, pathname, router, isLoading]);
 
-  const login = (email: string, password?: string): boolean => {
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  const login = (identifier: string, password?: string): boolean => {
+    const lowerIdentifier = identifier.toLowerCase();
+    const foundUser = users.find(u => 
+        u.email.toLowerCase() === lowerIdentifier || 
+        u.username.toLowerCase() === lowerIdentifier
+    );
     
     // In a real app, you'd check the password here
     if (foundUser) {

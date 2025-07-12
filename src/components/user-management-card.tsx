@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Trash2, User, ShieldCheck } from 'lucide-react';
 
 const userFormSchema = z.object({
+  username: z.string().min(3, { message: "Username must be at least 3 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   role: z.enum(['Admin', 'User'], { required_error: "You need to select a role." }),
 });
@@ -27,13 +28,14 @@ export function UserManagementCard() {
     const form = useForm<z.infer<typeof userFormSchema>>({
         resolver: zodResolver(userFormSchema),
         defaultValues: {
+            username: "",
             email: "",
             role: "User",
         },
     });
 
     function onSubmit(data: z.infer<typeof userFormSchema>) {
-        addUser(data.email, data.role);
+        addUser(data.username, data.email, data.role);
         form.reset();
     }
 
@@ -46,12 +48,25 @@ export function UserManagementCard() {
                            <PlusCircle /> Add New User
                         </CardTitle>
                         <CardDescription>
-                            Enter the user's email and assign a role.
+                            Enter the user's details and assign a role.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                <FormField
+                                    control={form.control}
+                                    name="username"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Username</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g., jsmith" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                 <FormField
                                     control={form.control}
                                     name="email"
@@ -108,6 +123,7 @@ export function UserManagementCard() {
                            <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead>Username</TableHead>
                                         <TableHead>Email</TableHead>
                                         <TableHead>Role</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
@@ -116,7 +132,8 @@ export function UserManagementCard() {
                                 <TableBody>
                                     {users.map((user) => (
                                         <TableRow key={user.id}>
-                                            <TableCell className="font-medium truncate max-w-xs">{user.email}</TableCell>
+                                            <TableCell className="font-medium">{user.username}</TableCell>
+                                            <TableCell className="text-muted-foreground truncate max-w-xs">{user.email}</TableCell>
                                             <TableCell>
                                                 <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'} className="whitespace-nowrap">
                                                      {user.role === 'Admin' ? <ShieldCheck className="mr-1.5 h-3 w-3" /> : <User className="mr-1.5 h-3 w-3" />}
@@ -134,7 +151,7 @@ export function UserManagementCard() {
                                                         <AlertDialogHeader>
                                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                             <AlertDialogDescription>
-                                                                This action cannot be undone. This will permanently delete the user account for <span className="font-bold">{user.email}</span>.
+                                                                This action cannot be undone. This will permanently delete the user account for <span className="font-bold">{user.username} ({user.email})</span>.
                                                             </AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>

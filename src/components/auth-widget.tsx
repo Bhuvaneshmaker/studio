@@ -22,6 +22,12 @@ export function AuthWidget() {
     if (!user) {
         return null;
     }
+    
+    const getInitials = (name: string, fallback: string) => {
+      if (!name) return fallback[0]?.toUpperCase() || '?';
+      const parts = name.split(' ').map(part => part[0]).slice(0, 2);
+      return parts.join('').toUpperCase();
+    }
 
     return (
         <div className="flex items-center gap-4">
@@ -55,14 +61,14 @@ export function AuthWidget() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar>
-                    <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{getInitials(user.username, user.email)}</AvatarFallback>
                 </Avatar>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none truncate">{user?.email}</p>
+                    <p className="text-sm font-medium leading-none truncate">{user?.username}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user?.role}</p>
                 </div>
                 </DropdownMenuLabel>
