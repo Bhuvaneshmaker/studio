@@ -2,16 +2,14 @@
 import type { ElevatorData } from '@/types/elevator';
 import { ElevatorDetailClient } from '@/components/elevator-detail-client';
 import { BackButton } from '@/components/back-button';
+import { getElevatorById } from '@/services/elevator-service';
 
 export const dynamic = 'force-dynamic';
 
+// Directly call the service function instead of using fetch with a hardcoded URL
 async function getElevator(id: string): Promise<ElevatorData | null> {
-    // In a real app, you would have a base URL in an env var
-    const res = await fetch(`http://localhost:9002/api/elevators/${id}`, { cache: 'no-store' });
-    if (!res.ok) {
-        return null;
-    }
-    return res.json();
+    const elevator = await getElevatorById(id);
+    return elevator || null;
 }
 
 export default async function ElevatorDetailPage({ params }: { params: { id: string } }) {
