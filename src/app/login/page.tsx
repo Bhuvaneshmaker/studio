@@ -126,8 +126,8 @@ export default function LoginPage() {
           <Info className="h-4 w-4" />
           <AlertTitle>Demo Credentials</AlertTitle>
           <AlertDescription>
-            <p><b>Admin:</b> admin / password</p>
-            <p><b>User:</b> user / password</p>
+            <p><b>Admin:</b> admin / admin123</p>
+            <p><b>User:</b> user / user123</p>
           </AlertDescription>
         </Alert>
          <p className="text-center text-sm text-muted-foreground">

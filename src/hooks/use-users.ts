@@ -7,8 +7,8 @@ import type { User, UserRole } from '@/types/user';
 const USERS_STORAGE_KEY = 'elevateview-users';
 
 const defaultUsers: User[] = [
-    { id: '1', username: 'admin', email: 'admin@example.com', password: 'password', role: 'Admin' },
-    { id: '2', username: 'user', email: 'user@example.com', password: 'password', role: 'User' },
+    { id: '1', username: 'admin', email: 'admin@example.com', password: 'admin123', role: 'Admin' },
+    { id: '2', username: 'user', email: 'user@example.com', password: 'user123', role: 'User' },
 ];
 
 const loadUsersFromStorage = (): User[] => {
