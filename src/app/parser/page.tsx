@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BackButton } from '@/components/back-button';
 import { parseDataFrame } from '@/lib/data-frame-parser';
-import type { ParsedElevatorData, FrameParseResult } from '@/types/parser';
+import type { FrameParseResult } from '@/types/parser';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -89,7 +89,7 @@ export default function ParserPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <Textarea
-                                placeholder="800501..."
+                                placeholder="e.g., 800501..."
                                 className="h-48 font-mono text-xs"
                                 value={frameInput}
                                 onChange={(e) => setFrameInput(e.target.value)}
@@ -119,7 +119,7 @@ export default function ParserPage() {
                                             <CheckCircle className="h-4 w-4 !text-green-500" />
                                             <AlertTitle>Parse Successful</AlertTitle>
                                             <AlertDescription>
-                                                Device ID: {lastResult.deviceId}. Found data for {lastResult.data.length} elevators.
+                                                Device ID: {lastResult.deviceId}. Found data for {lastResult.data?.length} elevators.
                                             </AlertDescription>
                                         </Alert>
                                     ) : (
@@ -147,7 +147,7 @@ export default function ParserPage() {
                                         </Alert>
                                     )}
 
-                                    {lastResult.success && (
+                                    {lastResult.success && lastResult.data && (
                                         <>
                                             <Separator />
                                             <h4 className="font-semibold flex items-center gap-2"><FileJson2 className="w-4 h-4" />Parsed Elevator Data</h4>

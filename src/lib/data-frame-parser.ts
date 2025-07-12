@@ -13,7 +13,7 @@ function getBit(byte: number, bitPosition: number): number {
 export function parseDataFrame(frame: string): FrameParseResult {
     const cleanedFrame = frame.replace(/\s+/g, '');
 
-    if (cleanedFrame.length < 110) { // Minimal frame length (Header+Info+1Slave+CRC+Footer)
+    if (cleanedFrame.length < 10) { // Minimal frame length (Header+Info+CRC+Footer)
         return { success: false, error: 'Frame is too short.' };
     }
     if (!/^[0-9a-fA-F]+$/.test(cleanedFrame)) {
@@ -39,10 +39,11 @@ export function parseDataFrame(frame: string): FrameParseResult {
 
     const deviceId = hexToDec(cleanedFrame.substring(4, 6)).toString();
     const elevatorsData: ParsedElevatorData[] = [];
+    // The data for all slaves is between the device ID (byte 2, index 4) and the CRC (last 4 chars)
     const slaveDataContent = cleanedFrame.substring(6, cleanedFrame.length - 4);
 
     if (slaveDataContent.length % 10 !== 0) {
-        return { success: false, error: 'Slave data section has incorrect length.' };
+        return { success: false, error: 'Slave data section has incorrect length. Each slave should have 5 bytes (10 hex chars).' };
     }
 
     for (let i = 0; i < slaveDataContent.length; i += 10) {
@@ -61,7 +62,7 @@ export function parseDataFrame(frame: string): FrameParseResult {
         if (responseCode === 1) responseStatus = 'No Response';
         else if (responseCode === 2) responseStatus = 'Frame Error';
         
-        // Byte 6: Data + Floor Direction
+        // Byte 6 (dataByte2): Contains multiple flags
         const doorStateBit = getBit(dataByte2, 7); // Bit 7 for door
         const doorState: DoorState = doorStateBit === 1 ? 'OPEN' : 'CLOSED';
 
@@ -80,7 +81,7 @@ export function parseDataFrame(frame: string): FrameParseResult {
         const emergencyStopBit = getBit(dataByte2, 3);
         const emergencyStop = emergencyStopBit === 1;
 
-        // Byte 7: Floor Count
+        // Byte 7 (dataByte3): Floor Count
         const currentFloor = dataByte3;
         
         elevatorsData.push({
