@@ -47,7 +47,7 @@ export function getElevatorById(id: string): ElevatorData | undefined {
 }
 
 export function addDevice(numSlaves: number): string {
-    const existingDeviceIds = [...new Set(elevators.map(e => parseInt(e.deviceId, 10)))];
+    const existingDeviceIds = [...new Set(elevators.map(e => parseInt(e.deviceId, 10)))].filter(id => !isNaN(id));
     const newDeviceId = existingDeviceIds.length > 0 ? Math.max(...existingDeviceIds) + 1 : 1;
     const newDeviceIdStr = newDeviceId.toString();
 

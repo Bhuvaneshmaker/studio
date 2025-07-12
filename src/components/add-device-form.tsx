@@ -14,8 +14,8 @@ import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 
 const addBlockSchema = z.object({
-  blockName: z.string().min(1, { message: "Block name is required." }),
-  numElevators: z.coerce.number().int().min(1, { message: "Must have at least one elevator." }).max(20, { message: "Cannot exceed 20 elevators per block." }),
+  deviceName: z.string().min(1, { message: "Block name is required." }),
+  numSlaves: z.coerce.number().int().min(1, { message: "Must have at least one elevator." }).max(20, { message: "Cannot exceed 20 elevators per block." }),
 });
 
 type AddBlockFormProps = {
@@ -31,8 +31,8 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
   const form = useForm<z.infer<typeof addBlockSchema>>({
     resolver: zodResolver(addBlockSchema),
     defaultValues: {
-      blockName: "",
-      numElevators: 5,
+      deviceName: "",
+      numSlaves: 5,
     },
   });
 
@@ -42,12 +42,12 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
         const response = await fetch('/api/elevators', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deviceName: values.blockName, numSlaves: values.numElevators }),
+            body: JSON.stringify(values),
         });
         if (response.ok) {
             const result = await response.json();
             // Set the name in local storage right away
-            setDeviceName(result.newDeviceId, values.blockName);
+            setDeviceName(result.newDeviceId, values.deviceName);
             onBlockAdded(result.elevators);
             onOpenChange(false);
             form.reset();
@@ -78,7 +78,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="blockName"
+              name="deviceName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2"><Landmark/> Block Name</FormLabel>
@@ -91,7 +91,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
             />
             <FormField
               control={form.control}
-              name="numElevators"
+              name="numSlaves"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2"><SlidersHorizontal/> Number of Elevators</FormLabel>
