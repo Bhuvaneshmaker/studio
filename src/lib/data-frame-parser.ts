@@ -10,64 +10,85 @@ function getBit(byte: number, bitPosition: number): number {
     return (byte >> bitPosition) & 1;
 }
 
-export function parseDataFrame(frame: string): FrameParseResult {
-    const cleanedFrame = frame.replace(/\s+/g, '');
+// This function mimics the CheckSum logic from your C++ code.
+function calculateChecksum(bytes: number[]): number {
+    // The checksum is a simple sum of all bytes, overflowing at 255 (uint8_t).
+    const sum = bytes.reduce((acc, byte) => acc + byte, 0);
+    return sum & 0xFF; // Return only the last 8 bits.
+}
 
-    if (cleanedFrame.length < 10) { // Minimal frame length (Header+Info+CRC+Footer)
+export function parseDataFrame(frame: string): FrameParseResult {
+    const cleanedFrame = frame.replace(/\s+/g, '').toLowerCase();
+
+    // The frame is a string of hex characters, 2 chars per byte.
+    const frameBytes: number[] = [];
+    for (let i = 0; i < cleanedFrame.length; i += 2) {
+        frameBytes.push(hexToDec(cleanedFrame.substring(i, i + 2)));
+    }
+
+    if (frameBytes.length < 6) { // Min frame: Header(1),Type(1),DevID(1),CRC(1),Footer(1) = 5 bytes. Let's say at least one slave data (+5) is not always there, but min length is still essential.
         return { success: false, error: 'Frame is too short.' };
     }
-    if (!/^[0-9a-fA-F]+$/.test(cleanedFrame)) {
+    if (!/^[0-9a-f]+$/.test(cleanedFrame)) {
         return { success: false, error: 'Frame contains invalid hexadecimal characters.' };
     }
 
-    const header = cleanedFrame.substring(0, 2);
-    if (header !== '80') {
-        return { success: false, error: `Invalid header. Expected '80', got '${header}'.` };
+    const header = frameBytes[0];
+    if (header !== 0x80) {
+        return { success: false, error: `Invalid header. Expected 0x80, got 0x${header.toString(16)}.` };
     }
 
-    const frameType = cleanedFrame.substring(2, 4);
-    if (frameType !== '05') {
-        return { success: false, error: `Invalid frame type. Expected '05' for data frame, got '${frameType}'.` };
-    }
-    
-    // Not using CRC and Footer for now, but good to know they are there.
-    // const crc = cleanedFrame.substring(cleanedFrame.length - 4, cleanedFrame.length - 2);
-    const footer = cleanedFrame.substring(cleanedFrame.length - 2);
-    if (footer !== 'ff' && footer !== 'FF') {
-        return { success: false, error: `Invalid footer. Expected 'FF', got '${footer}'.` };
+    const frameType = frameBytes[1];
+    if (frameType !== 0x05) {
+        return { success: false, error: `Invalid frame type. Expected 0x05 for data frame, got 0x${frameType.toString(16)}.` };
     }
 
-    const deviceId = hexToDec(cleanedFrame.substring(4, 6)).toString();
+    const footer = frameBytes[frameBytes.length - 1];
+    if (footer !== 0xff) {
+        return { success: false, error: `Invalid footer. Expected 0xFF, got 0x${footer.toString(16)}.` };
+    }
+
+    // Per your C++ code, checksum is on all bytes *except* the last two (checksum and footer).
+    const dataForChecksum = frameBytes.slice(0, frameBytes.length - 2);
+    const calculatedChecksum = calculateChecksum(dataForChecksum);
+    const receivedChecksum = frameBytes[frameBytes.length - 2];
+
+    if (calculatedChecksum !== receivedChecksum) {
+        // We can make this a soft warning instead of a hard error if needed.
+        // For now, we will enforce it for data integrity.
+        return { success: false, error: `Checksum mismatch. Calculated 0x${calculatedChecksum.toString(16)} but received 0x${receivedChecksum.toString(16)}.` };
+    }
+
+
+    const deviceId = frameBytes[2].toString();
     const elevatorsData: ParsedElevatorData[] = [];
-    // The data for all slaves is between the device ID (byte 2, index 4) and the CRC (last 4 chars)
-    const slaveDataContent = cleanedFrame.substring(6, cleanedFrame.length - 4);
+    // The data for all slaves is between the device ID (byte 2) and the CRC/Footer (last 2 bytes)
+    const slaveDataBytes = frameBytes.slice(3, frameBytes.length - 2);
 
-    if (slaveDataContent.length % 10 !== 0) {
-        return { success: false, error: 'Slave data section has incorrect length. Each slave should have 5 bytes (10 hex chars).' };
+    if (slaveDataBytes.length % 5 !== 0) {
+        return { success: false, error: 'Slave data section has incorrect length. Each slave should have 5 bytes.' };
     }
 
-    for (let i = 0; i < slaveDataContent.length; i += 10) {
-        const slaveChunk = slaveDataContent.substring(i, i + 10);
+    for (let i = 0; i < slaveDataBytes.length; i += 5) {
+        const slaveChunk = slaveDataBytes.slice(i, i + 5);
         
-        const slaveId = hexToDec(slaveChunk.substring(0, 2));
-        const responseCode = hexToDec(slaveChunk.substring(2, 4));
-        const dataByte1 = hexToDec(slaveChunk.substring(4, 6)); // Data
-        const dataByte2 = hexToDec(slaveChunk.substring(6, 8)); // Data + Floor Direction (13 bit)
-        const dataByte3 = hexToDec(slaveChunk.substring(8, 10)); // Floor Count
+        const slaveId = slaveChunk[0];
+        const responseCode = slaveChunk[1];
+        // dataByte1 is slaveChunk[2], but seems unused in favor of bits from dataByte2 and dataByte3
+        const dataByte2 = slaveChunk[3]; // Contains status bits
+        const dataByte3 = slaveChunk[4]; // Contains floor count
 
         // --- Parsing logic based on the spec ---
         
-        // Byte 4: Response Status
         let responseStatus: 'Positive' | 'No Response' | 'Frame Error' = 'Positive';
         if (responseCode === 1) responseStatus = 'No Response';
         else if (responseCode === 2) responseStatus = 'Frame Error';
         
-        // Byte 6 (dataByte2): Contains multiple flags
-        const doorStateBit = getBit(dataByte2, 7); // Bit 7 for door
+        const doorStateBit = getBit(dataByte2, 7);
         const doorState: DoorState = doorStateBit === 1 ? 'OPEN' : 'CLOSED';
 
-        const directionBit1 = getBit(dataByte2, 6); // Bit 6
-        const directionBit0 = getBit(dataByte2, 5); // Bit 5
+        const directionBit1 = getBit(dataByte2, 6);
+        const directionBit0 = getBit(dataByte2, 5);
         let direction: ElevatorDirection = 'IDLE';
         if (directionBit1 === 0 && directionBit0 === 1) {
             direction = 'UP';
@@ -81,7 +102,6 @@ export function parseDataFrame(frame: string): FrameParseResult {
         const emergencyStopBit = getBit(dataByte2, 3);
         const emergencyStop = emergencyStopBit === 1;
 
-        // Byte 7 (dataByte3): Floor Count
         const currentFloor = dataByte3;
         
         elevatorsData.push({
