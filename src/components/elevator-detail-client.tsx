@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from "@/hooks/use-naming";
