@@ -25,4 +25,5 @@ export interface ElevatorData {
 export interface Slave {
   slaveId: string;
   slaveAddress: string;
+  slaveName?: string;
 }

@@ -46,7 +46,7 @@ export function getElevatorById(id: string): ElevatorData | undefined {
     return elevators.find(e => e.id === id);
 }
 
-export function addDevice(deviceId: string, deviceName: string, ipAddress: string, slaves: Slave[]): { success: boolean; error?: string } {
+export function addDevice(deviceId: string, ipAddress: string, slaves: Slave[]): { success: boolean; error?: string } {
     const deviceExists = elevators.some(e => e.deviceId === deviceId);
     if (deviceExists) {
         return { success: false, error: `Device with ID ${deviceId} already exists.` };

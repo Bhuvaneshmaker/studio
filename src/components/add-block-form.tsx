@@ -18,6 +18,7 @@ import { Separator } from './ui/separator';
 const slaveSchema = z.object({
   slaveId: z.string().min(1, "Slave ID is required."),
   slaveAddress: z.string().min(1, "Slave Address is required."),
+  slaveName: z.string().optional(),
 });
 
 const addBlockSchema = z.object({
@@ -37,7 +38,7 @@ type AddBlockFormProps = {
 
 export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: AddBlockFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { setDeviceName } = useNaming();
+  const { setDeviceName, setElevatorName } = useNaming();
   
   const form = useForm<z.infer<typeof addBlockSchema>>({
     resolver: zodResolver(addBlockSchema),
@@ -46,7 +47,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
       deviceName: "",
       ipAddress: "",
       numSlaves: 1,
-      slaves: [{ slaveId: "1", slaveAddress: "1" }],
+      slaves: [{ slaveId: "1", slaveAddress: "1", slaveName: "" }],
     },
   });
 
@@ -61,6 +62,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
     const newSlaves = Array.from({ length: numSlaves || 0 }, (_, i) => ({
       slaveId: (i + 1).toString(),
       slaveAddress: (i + 1).toString(),
+      slaveName: "",
     }));
     replace(newSlaves);
   }, [numSlaves, replace]);
@@ -77,6 +79,12 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
         if (response.ok) {
             const result = await response.json();
             setDeviceName(result.newDeviceId, values.deviceName);
+            values.slaves.forEach(slave => {
+                if (slave.slaveName) {
+                    const compositeId = `${result.newDeviceId}-${slave.slaveId}`;
+                    setElevatorName(compositeId, slave.slaveName);
+                }
+            });
             onBlockAdded(result.elevators);
             onOpenChange(false);
             form.reset();
@@ -96,7 +104,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {children}
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <PlusCircle /> Add New Block
@@ -169,7 +177,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
                     <h4 className="text-lg font-medium">Elevator (Slave) Configuration</h4>
 
                     {fields.map((field, index) => (
-                         <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg relative">
+                         <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg relative">
                             <p className="absolute -top-2 left-2 px-1 bg-background text-sm font-medium text-muted-foreground">Elevator {index + 1}</p>
                             <FormField
                                 control={form.control}
@@ -192,6 +200,19 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
                                         <FormLabel className="flex items-center gap-2 text-sm"><TextCursorInput /> Slave Address</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g., 1" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`slaves.${index}.slaveName`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2 text-sm"><TextCursorInput /> Elevator Name (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., Lobby Elevator" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

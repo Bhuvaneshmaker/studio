@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const { deviceId, deviceName, ipAddress, slaves } = await request.json();
 
     if (deviceId && deviceName && ipAddress && Array.isArray(slaves) && slaves.length > 0) {
-        const result = addDevice(deviceId, deviceName, ipAddress, slaves);
+        const result = addDevice(deviceId, ipAddress, slaves);
         
         if (!result.success) {
             return NextResponse.json({ error: result.error }, { status: 409 });
