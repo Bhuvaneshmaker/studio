@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 // Directly call the service function instead of using fetch with a hardcoded URL
 async function getElevator(id: string): Promise<ElevatorData | null> {
-    const elevator = await getElevatorById(id);
+    const elevator = getElevatorById(id);
     return elevator || null;
 }
 
