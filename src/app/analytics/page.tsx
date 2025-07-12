@@ -3,15 +3,18 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Building, AreaChart, BarChart, AlertTriangle, Clock, TrendingUp, Download } from 'lucide-react';
+import { Building, AreaChart, BarChart, AlertTriangle, Clock, TrendingUp, Download, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { BackButton } from '@/components/back-button';
-import type { AnalyticsData } from '@/types/analytics';
+import type { AnalyticsData, HistoricalData } from '@/types/analytics';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart as RechartsBarChart } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
+
+type LogType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 const StatCard = ({ title, value, icon, description }: { title: string, value: string, icon: React.ReactNode, description: string }) => (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -82,65 +85,100 @@ export default function AnalyticsPage() {
         fetchData();
     }, []);
 
-    const handleDownloadLog = () => {
+    const handleDownloadLog = async (logType: LogType) => {
         if (!analytics || elevators.length === 0) return;
 
+        // Fetch historical data for longer-term logs
+        let historicalData: HistoricalData | null = null;
+        if (logType !== 'daily') {
+            const res = await fetch(`/api/analytics/historical?period=${logType}`);
+            if (res.ok) {
+                historicalData = await res.json();
+            }
+        }
+        
         const { kpis, usageByBlock, faultsByDay } = analytics;
         const today = new Date();
         const timestamp = today.toISOString();
         const dateString = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const logTypeName = logType.charAt(0).toUpperCase() + logType.slice(1);
 
-        let logContent = `ElevateView - System Status Log\n`;
+        let logContent = `ElevateView - ${logTypeName} System Status Log\n`;
         logContent += `==================================\n\n`;
         logContent += `Date Generated: ${dateString}\n`;
         logContent += `Timestamp: ${timestamp}\n\n`;
 
-        logContent += `--- Key Performance Indicators (KPIs) ---\n`;
-        logContent += `Overall Uptime: ${kpis.uptimePercentage}%\n`;
-        logContent += `Average Wait Time: ${kpis.averageWaitTime}s\n`;
-        logContent += `Total Faults (Last 30 days): ${kpis.totalFaults}\n`;
-        logContent += `Peak Usage Hour: ${kpis.peakUsageHour}\n\n`;
+        if (logType === 'daily') {
+            logContent += `--- Key Performance Indicators (Today) ---\n`;
+            logContent += `Overall Uptime: ${kpis.uptimePercentage}%\n`;
+            logContent += `Average Wait Time: ${kpis.averageWaitTime}s\n`;
+            logContent += `Total Faults (Last 30 days): ${kpis.totalFaults}\n`;
+            logContent += `Peak Usage Hour: ${kpis.peakUsageHour}\n\n`;
+        } else if (historicalData) {
+             logContent += `--- Key Performance Indicators (${logTypeName} Summary) ---\n`;
+             logContent += `Average Uptime: ${historicalData.kpis.uptimePercentage}%\n`;
+             logContent += `Average Wait Time: ${historicalData.kpis.averageWaitTime}s\n`;
+             logContent += `Total Faults: ${historicalData.kpis.totalFaults}\n`;
+             logContent += `Most Common Peak Hour: ${historicalData.kpis.peakUsageHour}\n\n`;
+        }
         logContent += `-----------------------------------------\n\n`;
 
-        logContent += `--- Live Elevator Status by Block ---\n`;
-        const elevatorsByBlock = elevators.reduce((acc, elevator) => {
-            if (!acc[elevator.deviceId]) {
-                acc[elevator.deviceId] = [];
-            }
-            acc[elevator.deviceId].push(elevator);
-            return acc;
-        }, {} as Record<string, ElevatorData[]>);
+        if (logType === 'daily') {
+            logContent += `--- Live Elevator Status by Block ---\n`;
+            const elevatorsByBlock = elevators.reduce((acc, elevator) => {
+                if (!acc[elevator.deviceId]) {
+                    acc[elevator.deviceId] = [];
+                }
+                acc[elevator.deviceId].push(elevator);
+                return acc;
+            }, {} as Record<string, ElevatorData[]>);
 
-        Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).forEach(([deviceId, deviceElevators]) => {
-            logContent += `\n## BLOCK: ${getDeviceName(deviceId)} (ID: ${deviceId}) ##\n`;
-            deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).forEach(elevator => {
-                logContent += `\n  - Elevator: ${getElevatorName(elevator.id)}\n`;
-                logContent += `    ID: ${elevator.id}\n`;
-                logContent += `    Status: ${elevator.status}`;
-                if (elevator.status === 'ERROR') logContent += ` (Code: ${elevator.errorCode})`;
-                if (elevator.status === 'MAINTENANCE' && elevator.maintenanceDetails) logContent += ` (Reason: ${elevator.maintenanceDetails})`;
-                logContent += `\n`;
-                logContent += `    Current Floor: ${getFloorName(elevator.currentFloor.toString())}\n`;
-                logContent += `    Destination: ${getFloorName(elevator.destinationFloor.toString())}\n`;
-                logContent += `    Direction: ${elevator.direction}\n`;
-                logContent += `    Door: ${elevator.doorState}\n`;
-                logContent += `    Main Power: ${elevator.mainPower ? 'ON' : 'OFF'}\n`;
-                logContent += `    Emergency Stop: ${elevator.emergencyStop ? 'ACTIVATED' : 'Inactive'}\n`;
+            Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).forEach(([deviceId, deviceElevators]) => {
+                logContent += `\n## BLOCK: ${getDeviceName(deviceId)} (ID: ${deviceId}) ##\n`;
+                deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).forEach(elevator => {
+                    logContent += `\n  - Elevator: ${getElevatorName(elevator.id)}\n`;
+                    logContent += `    ID: ${elevator.id}\n`;
+                    logContent += `    Status: ${elevator.status}`;
+                    if (elevator.status === 'ERROR') logContent += ` (Code: ${elevator.errorCode})`;
+                    if (elevator.status === 'MAINTENANCE' && elevator.maintenanceDetails) logContent += ` (Reason: ${elevator.maintenanceDetails})`;
+                    logContent += `\n`;
+                    logContent += `    Current Floor: ${getFloorName(elevator.currentFloor.toString())}\n`;
+                    logContent += `    Destination: ${getFloorName(elevator.destinationFloor.toString())}\n`;
+                    logContent += `    Direction: ${elevator.direction}\n`;
+                    logContent += `    Door: ${elevator.doorState}\n`;
+                    logContent += `    Main Power: ${elevator.mainPower ? 'ON' : 'OFF'}\n`;
+                    logContent += `    Emergency Stop: ${elevator.emergencyStop ? 'ACTIVATED' : 'Inactive'}\n`;
+                });
+                logContent += `\n-----------------------------------------\n`;
             });
-            logContent += `\n-----------------------------------------\n`;
-        });
+        }
         
-        logContent += `\n--- Summary: Usage by Block (Last 24 hours) ---\n`;
-        usageByBlock.forEach(block => {
-            logContent += `${block.name}: ${block.trips} trips\n`;
-        });
-        logContent += `\n`;
+        if (logType === 'daily') {
+            logContent += `\n--- Summary: Usage by Block (Last 24 hours) ---\n`;
+            usageByBlock.forEach(block => {
+                logContent += `${block.name}: ${block.trips} trips\n`;
+            });
+            logContent += `\n`;
 
-        logContent += `--- Summary: Monthly Fault Trend (Last 30 days) ---\n`;
-        faultsByDay.forEach(day => {
-            logContent += `${day.name}: ${day.faults} faults\n`;
-        });
-        logContent += `\n`;
+            logContent += `--- Summary: Daily Fault Trend (Last 30 days) ---\n`;
+            faultsByDay.forEach(day => {
+                logContent += `${day.name}: ${day.faults} faults\n`;
+            });
+            logContent += `\n`;
+        } else if (historicalData) {
+            logContent += `\n--- Summary: Usage by Block (${logTypeName}) ---\n`;
+            historicalData.usageByBlock.forEach(block => {
+                logContent += `${block.name}: ${block.trips} trips\n`;
+            });
+            logContent += `\n`;
+
+            logContent += `--- Summary: Fault Trend (${logTypeName}) ---\n`;
+            historicalData.faultsByPeriod.forEach(period => {
+                logContent += `${period.name}: ${period.faults} faults\n`;
+            });
+            logContent += `\n`;
+        }
+
 
         logContent += `--- End of Report ---\n`;
         
@@ -148,7 +186,7 @@ export default function AnalyticsPage() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `ElevateView_Log_${today.toISOString().split('T')[0]}.txt`;
+        link.download = `ElevateView_${logTypeName}_Log_${today.toISOString().split('T')[0]}.txt`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -175,10 +213,22 @@ export default function AnalyticsPage() {
                     </h2>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handleDownloadLog} disabled={loading || !analytics}>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download Log
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" disabled={loading || !analytics}>
+                                <Download className="w-4 h-4 mr-2" />
+                                Download Log
+                                <ChevronDown className="w-4 h-4 ml-2" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDownloadLog('daily')}>Daily Log</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDownloadLog('weekly')}>Weekly Log</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDownloadLog('monthly')}>Monthly Log</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDownloadLog('yearly')}>Yearly Log</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
                     <BackButton />
                 </div>
                 </div>
