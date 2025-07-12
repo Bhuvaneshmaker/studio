@@ -330,10 +330,6 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                 )}
                             </CardContent>
                         </Card>
-                        <MaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
-                        <FaultControls elevator={elevator} onUpdate={handleUpdate} />
-                   </div>
-                   <div className="lg:col-span-1">
                         <Card className="shadow-lg">
                             <CardHeader>
                                 <CardTitle>System Details</CardTitle>
@@ -376,6 +372,10 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                 />
                             </CardContent>
                         </Card>
+                   </div>
+                   <div className="lg:col-span-1 space-y-8">
+                        <MaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
+                        <FaultControls elevator={elevator} onUpdate={handleUpdate} />
                    </div>
                 </div>
             </main>
