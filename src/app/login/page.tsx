@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Building, LogIn, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { Building, LogIn, ShieldAlert, Eye, EyeOff, Info } from 'lucide-react';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, { message: "Email or username is required." }),
@@ -122,6 +122,14 @@ export default function LoginPage() {
             </Form>
           </CardContent>
         </Card>
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Demo Credentials</AlertTitle>
+          <AlertDescription>
+            <p><b>Admin:</b> admin / password</p>
+            <p><b>User:</b> user / password</p>
+          </AlertDescription>
+        </Alert>
          <p className="text-center text-sm text-muted-foreground">
           ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
         </p>
