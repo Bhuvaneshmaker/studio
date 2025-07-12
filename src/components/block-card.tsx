@@ -8,16 +8,20 @@ import type { ElevatorData } from "@/types/elevator";
 import { useNaming } from '@/hooks/use-naming';
 import { Wrench, ShieldAlert, CheckCircle2, ArrowRight, Landmark } from "lucide-react";
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/auth-context';
 
-export function BlockCard({ blockId, elevators }: { blockId: string, elevators: ElevatorData[] }) {
-  const { getBlockName } = useNaming();
-  const blockName = getBlockName(blockId);
+export function BlockCard({ deviceId, elevators }: { deviceId: string, elevators: ElevatorData[] }) {
+  const { getDeviceName } = useNaming();
+  const { user } = useAuth();
+  const blockName = getDeviceName(deviceId);
 
   const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
   const errorCount = elevators.filter(e => e.status === 'ERROR' || e.emergencyStop).length;
   const activeCount = elevators.length - maintenanceCount - errorCount;
 
   const hasFault = errorCount > 0;
+  
+  const unitName = user?.role === 'Admin' ? 'Slaves' : 'Elevators';
 
   return (
     <Card className={cn(
@@ -29,7 +33,7 @@ export function BlockCard({ blockId, elevators }: { blockId: string, elevators: 
           <Landmark className="w-6 h-6 text-muted-foreground" />
           {blockName}
         </CardTitle>
-        <CardDescription>{elevators.length} Elevators</CardDescription>
+        <CardDescription>{elevators.length} {unitName}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow p-4 pt-0 space-y-3">
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
@@ -56,8 +60,8 @@ export function BlockCard({ blockId, elevators }: { blockId: string, elevators: 
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full" variant={hasFault ? 'destructive' : 'outline'}>
-          <Link href={`/elevators?block=${blockId}`}>
-            View Elevators <ArrowRight className="ml-2 w-4 h-4" />
+          <Link href={`/elevators?device=${deviceId}`}>
+            View {unitName} <ArrowRight className="ml-2 w-4 h-4" />
           </Link>
         </Button>
       </CardFooter>

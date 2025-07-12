@@ -4,21 +4,25 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ElevatorGrid } from '@/components/elevator-grid';
-import { Building, Search, X, Server } from 'lucide-react';
+import { Building, Search, X, Landmark } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
 import { BackButton } from '@/components/back-button';
+import { useAuth } from '@/context/auth-context';
 
 export default function ElevatorsPage() {
   const searchParams = useSearchParams();
   const deviceFilter = searchParams.get('device');
   const [searchQuery, setSearchQuery] = useState("");
   const { getDeviceName } = useNaming();
+  const { user } = useAuth();
 
   const pageTitle = deviceFilter 
     ? getDeviceName(deviceFilter)
-    : 'All Elevators';
+    : (user?.role === 'Admin' ? 'All Slaves' : 'All Elevators');
+  
+  const blocksPageTitle = user?.role === 'Admin' ? 'Devices' : 'Blocks';
 
   return (
     <div className="min-h-screen">
@@ -35,7 +39,7 @@ export default function ElevatorsPage() {
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
             <Link href="/blocks" className="text-lg sm:text-2xl font-semibold text-foreground hover:underline truncate flex items-center gap-2">
-                <Server className="w-5 h-5" /> Devices
+                <Landmark className="w-5 h-5" /> {blocksPageTitle}
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
             <h2 className="text-lg sm:text-2xl font-semibold text-primary truncate">
@@ -58,7 +62,7 @@ export default function ElevatorsPage() {
             <div className="relative w-full sm:w-auto sm:ml-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
-                    placeholder="Search elevators/slaves..." 
+                    placeholder="Search by name or ID..." 
                     className="pl-10 w-full sm:w-64"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}

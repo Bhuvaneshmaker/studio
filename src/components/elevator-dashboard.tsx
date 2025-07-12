@@ -2,13 +2,14 @@
 "use client";
 
 import type { ElevatorData } from '@/types/elevator';
-import { Server, Wrench, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Landmark, Wrench, ShieldAlert, CheckCircle2, SlidersHorizontal } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { useMemo } from 'react';
+import { useAuth } from '@/context/auth-context';
 
 export default function ElevatorDashboard({ elevators }: { elevators: ElevatorData[] }) {
-
+  const { user } = useAuth();
   const {
     activeCount,
     maintenanceCount,
@@ -24,6 +25,9 @@ export default function ElevatorDashboard({ elevators }: { elevators: ElevatorDa
     return { activeCount, maintenanceCount, errorCount, totalElevators, numDevices };
   }, [elevators]);
 
+  const isAdmin = user?.role === 'Admin';
+  const deviceTitle = isAdmin ? 'Devices' : 'Blocks';
+  const elevatorTitle = isAdmin ? 'Slaves Active' : 'Elevators Active';
 
   return (
     <>
@@ -36,16 +40,16 @@ export default function ElevatorDashboard({ elevators }: { elevators: ElevatorDa
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
             <Link href="/blocks" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
               <div className="flex flex-col justify-center h-full">
-                <Server className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-primary mb-2"/>
+                <Landmark className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-primary mb-2"/>
                 <p className="text-2xl sm:text-3xl font-bold">{numDevices}</p>
-                <p className="text-sm text-muted-foreground">Devices</p>
+                <p className="text-sm text-muted-foreground">{deviceTitle}</p>
               </div>
             </Link>
              <Link href="/elevators" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
                <div className="flex flex-col justify-center h-full">
                   <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-green-500 mb-2"/>
                   <p className="text-2xl sm:text-3xl font-bold">{activeCount}/{totalElevators}</p>
-                  <p className="text-sm text-muted-foreground">Elevators Active</p>
+                  <p className="text-sm text-muted-foreground">{elevatorTitle}</p>
               </div>
             </Link>
             <Link href="/maintenance" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">

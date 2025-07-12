@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Building, Home, Save, Trash2, Info, Search, Server, SlidersHorizontal, MapPin } from 'lucide-react';
+import { Building, Home, Save, Trash2, Info, Search, Landmark, SlidersHorizontal, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS, NUM_BLOCKS } from '@/lib/elevator-simulation';
 import { cn } from '@/lib/utils';
@@ -63,8 +63,8 @@ const NamingEditor = ({
     }
 
     const typeLabels = {
-        device: { title: "Device (Teensy)", idLabel: "Current Device Name", nameLabel: "Custom Device Name" },
-        elevator: { title: "Elevator / Slave", idLabel: "Current Elevator Name", nameLabel: "Custom Elevator Name" },
+        device: { title: "Block", idLabel: "Current Block Name", nameLabel: "Custom Block Name" },
+        elevator: { title: "Elevator", idLabel: "Current Elevator Name", nameLabel: "Custom Elevator Name" },
         floor: { title: "Floor", idLabel: "Current Floor Name", nameLabel: "Custom Floor Name" },
     }
     const labels = typeLabels[selectedType];
@@ -109,7 +109,7 @@ const NamingEditor = ({
 export default function NamingPage() {
     const { 
         customNames, 
-        getDeviceName, getElevatorName, getFloorName,
+        getBlockName, getElevatorName, getFloorName,
         setDeviceName, setElevatorName, setFloorName,
         deleteDeviceName, deleteElevatorName, deleteFloorName
     } = useNaming();
@@ -135,7 +135,7 @@ export default function NamingPage() {
     }
 
     const nameGetters: Record<NamingType, (id: string) => string> = {
-        device: getDeviceName,
+        device: getBlockName, // Use getBlockName for consistent "Block" terminology here
         elevator: getElevatorName,
         floor: getFloorName,
     };
@@ -220,8 +220,8 @@ export default function NamingPage() {
             <main className="container mx-auto p-4 sm:p-6">
                 <Tabs defaultValue="device" className="w-full mb-6" onValueChange={handleTabChange}>
                     <TabsList className="grid w-full grid-cols-3 h-12 text-base">
-                        <TabsTrigger value="device"><Server className="mr-2"/>Devices</TabsTrigger>
-                        <TabsTrigger value="elevator"><SlidersHorizontal className="mr-2"/>Elevators / Slaves</TabsTrigger>
+                        <TabsTrigger value="device"><Landmark className="mr-2"/>Blocks</TabsTrigger>
+                        <TabsTrigger value="elevator"><SlidersHorizontal className="mr-2"/>Elevators</TabsTrigger>
                         <TabsTrigger value="floor"><MapPin className="mr-2"/>Floors</TabsTrigger>
                     </TabsList>
                 </Tabs>

@@ -6,7 +6,7 @@ import { Building, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { AuthWidget } from '@/components/auth-widget';
 import ElevatorDashboard from '@/components/elevator-dashboard';
-import { AddDeviceFormWrapper } from '@/components/add-device-form-wrapper';
+import { AddBlockFormWrapper } from '@/components/add-block-form-wrapper';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 
@@ -28,7 +28,7 @@ export default function Home() {
     fetchData();
   }, []);
   
-  const handleDeviceAdded = (newElevators: ElevatorData[]) => {
+  const handleBlockAdded = (newElevators: ElevatorData[]) => {
     setElevators(newElevators);
   };
 
@@ -47,12 +47,12 @@ export default function Home() {
                 </Link>
             </div>
             <div className="flex items-center gap-2">
-              <AddDeviceFormWrapper onDeviceAdded={handleDeviceAdded}>
+              <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
                  <Button size="sm">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add New Device
+                    Add New Block
                   </Button>
-              </AddDeviceFormWrapper>
+              </AddBlockFormWrapper>
               <AuthWidget />
             </div>
         </div>

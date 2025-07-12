@@ -4,11 +4,10 @@
 import type { AnalyticsData, ChartDataPoint, KpiData } from '@/types/analytics';
 import { getElevatorData } from './elevator-service';
 import { NUM_BLOCKS } from '@/lib/elevator-simulation';
-import { useNaming } from '@/hooks/use-naming';
 
-// This is a server-side only hook for naming, we can't use the real hook.
+// This is a server-side only helper for naming.
 // In a real app, this logic would come from a database.
-const getDeviceNameServer = (deviceId: string) => `Device ${deviceId}`;
+const getDeviceNameServer = (deviceId: string) => `Block ${deviceId}`;
 
 
 function generateAnalytics(): AnalyticsData {
@@ -18,7 +17,7 @@ function generateAnalytics(): AnalyticsData {
     const uptimePercentage = parseFloat(((operationalElevators / elevators.length) * 100).toFixed(1));
     
     const kpis: KpiData = {
-        uptimePercentage: uptimePercentage || 100,
+        uptimePercentage: isNaN(uptimePercentage) ? 100 : uptimePercentage,
         averageWaitTime: Math.floor(Math.random() * 25) + 15, // 15-40 seconds
         totalFaults: Math.floor(Math.random() * 10) + 1, // 1-10 faults
         peakUsageHour: `${Math.floor(Math.random() * 3) + 8}:00 AM`, // 8, 9, or 10 AM

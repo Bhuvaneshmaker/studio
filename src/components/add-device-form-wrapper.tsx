@@ -3,24 +3,24 @@
 
 import { useAuth } from "@/context/auth-context";
 import { useState } from "react";
-import { AddDeviceForm } from "./add-device-form";
+import { AddBlockForm } from "./add-block-form";
 import type { ElevatorData } from "@/types/elevator";
 
-export function AddDeviceFormWrapper({ children, onDeviceAdded }: { children: React.ReactNode, onDeviceAdded: (newElevators: ElevatorData[]) => void }) {
+export function AddBlockFormWrapper({ children, onBlockAdded }: { children: React.ReactNode, onBlockAdded: (newElevators: ElevatorData[]) => void }) {
     const { user } = useAuth();
-    const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
+    const [isAddBlockOpen, setIsAddBlockOpen] = useState(false);
 
     if (user?.role !== 'Admin') {
         return null;
     }
 
     return (
-        <AddDeviceForm
-            open={isAddDeviceOpen}
-            onOpenChange={setIsAddDeviceOpen}
-            onDeviceAdded={onDeviceAdded}
+        <AddBlockForm
+            open={isAddBlockOpen}
+            onOpenChange={setIsAddBlockOpen}
+            onBlockAdded={onBlockAdded}
         >
-           <div onClick={() => setIsAddDeviceOpen(true)}>{children}</div>
-        </AddDeviceForm>
+           <div onClick={() => setIsAddBlockOpen(true)}>{children}</div>
+        </AddBlockForm>
     );
 }

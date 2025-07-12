@@ -9,51 +9,51 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { PlusCircle, Server, SlidersHorizontal } from 'lucide-react';
+import { PlusCircle, Landmark, SlidersHorizontal } from 'lucide-react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 
-const addDeviceSchema = z.object({
-  deviceName: z.string().min(1, { message: "Device name is required." }),
-  numSlaves: z.coerce.number().int().min(1, { message: "Must have at least one slave." }).max(20, { message: "Cannot exceed 20 slaves per device." }),
+const addBlockSchema = z.object({
+  blockName: z.string().min(1, { message: "Block name is required." }),
+  numElevators: z.coerce.number().int().min(1, { message: "Must have at least one elevator." }).max(20, { message: "Cannot exceed 20 elevators per block." }),
 });
 
-type AddDeviceFormProps = {
+type AddBlockFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDeviceAdded: (newElevators: ElevatorData[]) => void;
+  onBlockAdded: (newElevators: ElevatorData[]) => void;
   children: React.ReactNode;
 };
 
-export function AddDeviceForm({ open, onOpenChange, onDeviceAdded, children }: AddDeviceFormProps) {
+export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: AddBlockFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { setDeviceName } = useNaming();
-  const form = useForm<z.infer<typeof addDeviceSchema>>({
-    resolver: zodResolver(addDeviceSchema),
+  const form = useForm<z.infer<typeof addBlockSchema>>({
+    resolver: zodResolver(addBlockSchema),
     defaultValues: {
-      deviceName: "",
-      numSlaves: 5,
+      blockName: "",
+      numElevators: 5,
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof addDeviceSchema>) => {
+  const onSubmit = async (values: z.infer<typeof addBlockSchema>) => {
     setIsSubmitting(true);
     try {
         const response = await fetch('/api/elevators', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(values),
+            body: JSON.stringify({ deviceName: values.blockName, numSlaves: values.numElevators }),
         });
         if (response.ok) {
             const result = await response.json();
             // Set the name in local storage right away
-            setDeviceName(result.newDeviceId, values.deviceName);
-            onDeviceAdded(result.elevators);
+            setDeviceName(result.newDeviceId, values.blockName);
+            onBlockAdded(result.elevators);
             onOpenChange(false);
             form.reset();
         } else {
             // Handle error
-            console.error("Failed to add device");
+            console.error("Failed to add block");
         }
     } catch (error) {
         console.error("Error submitting form", error);
@@ -68,22 +68,22 @@ export function AddDeviceForm({ open, onOpenChange, onDeviceAdded, children }: A
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PlusCircle /> Add New Device (Teensy)
+            <PlusCircle /> Add New Block
           </DialogTitle>
           <DialogDescription>
-            Configure a new device and specify how many slaves (elevators) it controls.
+            Configure a new building block and specify how many elevators it contains.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="deviceName"
+              name="blockName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2"><Server/> Device Name</FormLabel>
+                  <FormLabel className="flex items-center gap-2"><Landmark/> Block Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., North Tower Controller" {...field} />
+                    <Input placeholder="e.g., North Tower, Research Wing" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -91,10 +91,10 @@ export function AddDeviceForm({ open, onOpenChange, onDeviceAdded, children }: A
             />
             <FormField
               control={form.control}
-              name="numSlaves"
+              name="numElevators"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2"><SlidersHorizontal/> Number of Slaves (Elevators)</FormLabel>
+                  <FormLabel className="flex items-center gap-2"><SlidersHorizontal/> Number of Elevators</FormLabel>
                   <FormControl>
                     <Input type="number" {...field} />
                   </FormControl>
@@ -108,7 +108,7 @@ export function AddDeviceForm({ open, onOpenChange, onDeviceAdded, children }: A
                 </DialogClose>
                  <Button type="submit" disabled={isSubmitting}>
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    {isSubmitting ? 'Creating...' : 'Create Device'}
+                    {isSubmitting ? 'Creating...' : 'Create Block'}
                 </Button>
             </DialogFooter>
           </form>

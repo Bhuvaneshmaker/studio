@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Server, SlidersHorizontal, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal, AlertCircle, ShieldCheck } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
 import Link from 'next/link';
@@ -97,6 +97,7 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
     
     const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
     const isOperational = mainPower && !emergencyStop;
+    const isAdmin = user?.role === 'Admin';
 
     const getStatusInfo = () => {
         if (!mainPower) return { text: "Offline", icon: <PowerOff className="w-6 h-6 text-gray-500" />, color: "text-gray-500" };
@@ -178,13 +179,13 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <DetailItem 
-                                    icon={<Server className="w-6 h-6 text-muted-foreground" />}
-                                    label="Device ID"
+                                    icon={<Landmark className="w-6 h-6 text-muted-foreground" />}
+                                    label={isAdmin ? 'Device ID' : 'Block ID'}
                                     value={elevator.deviceId}
                                 />
                                 <DetailItem 
                                     icon={<SlidersHorizontal className="w-6 h-6 text-muted-foreground" />}
-                                    label="Slave ID"
+                                    label={isAdmin ? 'Slave ID' : 'Elevator No.'}
                                     value={elevator.elevatorNum.toString()}
                                 />
                                 <Separator/>

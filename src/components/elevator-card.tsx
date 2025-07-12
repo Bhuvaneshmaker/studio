@@ -10,38 +10,6 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useNaming } from "@/hooks/use-naming";
 
-const DirectionIcon = ({ direction }: { direction: ElevatorData['direction'] }) => {
-  switch (direction) {
-    case 'UP':
-      return <ArrowUp className="w-5 h-5 text-green-500" />;
-    case 'DOWN':
-      return <ArrowDown className="w-5 h-5 text-orange-500" />;
-    default:
-      return <Minus className="w-5 h-5 text-muted-foreground" />;
-  }
-};
-
-const StatusBadge = ({ status, mainPower, emergencyStop }: { status: ElevatorData['status'], mainPower: boolean, emergencyStop: boolean }) => {
-  if (!mainPower) {
-    return <Badge variant="destructive" className="bg-gray-700 text-gray-200 border-gray-600"><PowerOff className="w-3 h-3 mr-1" />Offline</Badge>;
-  }
-  if (emergencyStop) {
-    return <Badge variant="destructive"><TriangleAlert className="w-3 h-3 mr-1" />E-Stop</Badge>;
-  }
-  switch (status) {
-    case 'MOVING':
-      return <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">Moving</Badge>;
-    case 'IDLE':
-      return <Badge variant="secondary">Idle</Badge>;
-    case 'MAINTENANCE':
-      return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20"><Wrench className="w-3 h-3 mr-1" />Maint.</Badge>;
-    case 'ERROR':
-      return <Badge variant="destructive">Fault</Badge>;
-    default:
-      return <Badge variant="secondary">Unknown</Badge>;
-  }
-};
-
 export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
   const { id, currentFloor, direction, status, errorCode, destinationFloor, mainPower, emergencyStop, deviceId } = elevator;
   const { getElevatorName, getDeviceName } = useNaming();
@@ -119,3 +87,35 @@ export function ElevatorCard({ elevator }: { elevator: ElevatorData }) {
     </Link>
   );
 }
+
+const DirectionIcon = ({ direction }: { direction: ElevatorData['direction'] }) => {
+  switch (direction) {
+    case 'UP':
+      return <ArrowUp className="w-5 h-5 text-green-500" />;
+    case 'DOWN':
+      return <ArrowDown className="w-5 h-5 text-orange-500" />;
+    default:
+      return <Minus className="w-5 h-5 text-muted-foreground" />;
+  }
+};
+
+const StatusBadge = ({ status, mainPower, emergencyStop }: { status: ElevatorData['status'], mainPower: boolean, emergencyStop: boolean }) => {
+  if (!mainPower) {
+    return <Badge variant="destructive" className="bg-gray-700 text-gray-200 border-gray-600"><PowerOff className="w-3 h-3 mr-1" />Offline</Badge>;
+  }
+  if (emergencyStop) {
+    return <Badge variant="destructive"><TriangleAlert className="w-3 h-3 mr-1" />E-Stop</Badge>;
+  }
+  switch (status) {
+    case 'MOVING':
+      return <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">Moving</Badge>;
+    case 'IDLE':
+      return <Badge variant="secondary">Idle</Badge>;
+    case 'MAINTENANCE':
+      return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20"><Wrench className="w-3 h-3 mr-1" />Maint.</Badge>;
+    case 'ERROR':
+      return <Badge variant="destructive">Fault</Badge>;
+    default:
+      return <Badge variant="secondary">Unknown</Badge>;
+  }
+};
