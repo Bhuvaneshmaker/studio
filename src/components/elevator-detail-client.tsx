@@ -274,31 +274,66 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                 </div>
             </header>
             <main className="container mx-auto p-4 sm:p-6 flex-grow">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                   <div className="lg:col-span-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                   <div className="lg:col-span-1 space-y-8">
                         <Card className="shadow-lg h-full">
                             <CardHeader>
                                 <CardTitle>Current Status</CardTitle>
                                 <CardDescription>Real-time elevator overview</CardDescription>
                             </CardHeader>
-                            <CardContent className="flex flex-col items-center justify-center text-center gap-4">
-                               <div className="flex items-center justify-center text-center bg-muted/50 p-6 rounded-lg w-full">
-                                    <div>
+                            <CardContent className="space-y-4">
+                               <div className="flex items-center justify-around text-center bg-muted/50 p-6 rounded-lg w-full gap-4">
+                                    <div className="flex-1">
                                         <p className="text-lg text-muted-foreground">Floor</p>
-                                        <p className="text-8xl sm:text-9xl font-bold text-primary relative">
+                                        <p className="text-7xl font-bold text-primary">
                                             {isOperational ? getFloorName(currentFloor.toString()) : '-'}
                                         </p>
                                         <p className="text-sm text-muted-foreground">of {totalFloors}</p>
                                     </div>
+                                    <div className="flex-1 space-y-2">
+                                         <div className={cn("flex items-center justify-center gap-2 p-3 rounded-lg", statusInfo.color)}>
+                                            {statusInfo.icon}
+                                            <span className="font-bold text-lg">{statusInfo.text}</span>
+                                        </div>
+                                         <div className="flex items-center justify-center gap-2 p-3 rounded-lg">
+                                            {getDirectionIcon()}
+                                            <span className="font-bold text-lg">{isOperational ? direction : "N/A"}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className={cn("flex items-center gap-3 p-4 rounded-lg w-full justify-center", statusInfo.color)}>
-                                    {statusInfo.icon}
-                                    <span className="text-2xl font-bold">{statusInfo.text}</span>
-                                </div>
+                                {status === 'ERROR' && isOperational && (
+                                    <Alert variant="destructive" className="border-2">
+                                        <ShieldAlert className="h-4 w-4" />
+                                        <AlertTitle className="font-bold">Fault Detected!</AlertTitle>
+                                        <AlertDescription>
+                                        An issue has been automatically detected. Error code: <strong>{errorCode}</strong>. Maintenance may be required.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                {status === 'MAINTENANCE' && (
+                                    <Alert className="border-yellow-500/50 text-yellow-600 dark:text-yellow-500">
+                                        <Wrench className="h-4 w-4 !text-yellow-500" />
+                                        <AlertTitle className="font-bold">Under Maintenance</AlertTitle>
+                                        <AlertDescription>
+                                            {elevator.maintenanceDetails || "This unit is currently undergoing scheduled maintenance."}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                 {isOperational && status !== 'ERROR' && status !== 'MAINTENANCE' && (
+                                    <Alert>
+                                        <ShieldCheck className="h-4 w-4" />
+                                        <AlertTitle>System Nominal</AlertTitle>
+                                        <AlertDescription>
+                                        All systems are operating correctly. No faults detected.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
                             </CardContent>
                         </Card>
+                        <MaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
+                        <FaultControls elevator={elevator} onUpdate={handleUpdate} />
                    </div>
-                   <div className="lg:col-span-2">
+                   <div className="lg:col-span-1">
                         <Card className="shadow-lg">
                             <CardHeader>
                                 <CardTitle>System Details</CardTitle>
@@ -328,51 +363,19 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                     value={emergencyStop ? 'ACTIVE' : 'INACTIVE'}
                                     valueClassName={emergencyStop ? 'text-red-500' : 'text-green-500'}
                                 />
-                                <Separator/>
+                                 <Separator/>
                                  <DetailItem 
-                                    icon={getDirectionIcon()}
-                                    label="Direction"
-                                    value={isOperational ? direction : "N/A"}
-                                />
-                                <DetailItem 
                                     icon={<CircleDot className={cn("w-6 h-6", status === 'MOVING' ? 'text-blue-500' : 'text-muted-foreground')} />}
                                     label="Destination"
                                     value={isOperational ? (destinationFloor === currentFloor ? "Holding" : getFloorName(destinationFloor.toString())) : "N/A"}
                                 />
-                                 <Separator/>
-                                 {status === 'ERROR' && isOperational && (
-                                    <Alert variant="destructive" className="border-2">
-                                        <ShieldAlert className="h-4 w-4" />
-                                        <AlertTitle className="font-bold">Fault Detected!</AlertTitle>
-                                        <AlertDescription>
-                                        An issue has been automatically detected. Error code: <strong>{errorCode}</strong>. Maintenance may be required.
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-                                {status === 'MAINTENANCE' && (
-                                    <Alert className="border-yellow-500/50 text-yellow-600 dark:text-yellow-500">
-                                        <Wrench className="h-4 w-4 !text-yellow-500" />
-                                        <AlertTitle className="font-bold">Under Maintenance</AlertTitle>
-                                        <AlertDescription>
-                                            {elevator.maintenanceDetails || "This unit is currently undergoing scheduled maintenance."}
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-                                 {isOperational && status !== 'ERROR' && status !== 'MAINTENANCE' && (
-                                    <Alert>
-                                        <ShieldCheck className="h-4 w-4" />
-                                        <AlertTitle>System Nominal</AlertTitle>
-                                        <AlertDescription>
-                                        All systems are operating correctly. No faults detected.
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
+                                <DetailItem 
+                                    icon={<CircleDot className="w-6 h-6 text-muted-foreground" />}
+                                    label="Door State"
+                                    value={elevator.doorState}
+                                />
                             </CardContent>
                         </Card>
-                        <div className="space-y-6 mt-6">
-                            <MaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
-                            <FaultControls elevator={elevator} onUpdate={handleUpdate} />
-                        </div>
                    </div>
                 </div>
             </main>
