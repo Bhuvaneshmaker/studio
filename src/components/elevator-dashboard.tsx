@@ -56,11 +56,13 @@ export default function ElevatorDashboard({ elevators }: { elevators: ElevatorDa
                 <p className="text-sm text-muted-foreground">In Maintenance</p>
                 </div>
             </Link>
-            <div className="p-4 rounded-lg bg-muted/50 flex flex-col justify-center h-full">
-              <ShieldAlert className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-red-500 mb-2"/>
-              <p className="text-2xl sm:text-3xl font-bold">{errorCount}</p>
-              <p className="text-sm text-muted-foreground">System Alerts</p>
-            </div>
+            <Link href="/elevators" className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
+              <div className="flex flex-col justify-center h-full">
+                <ShieldAlert className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-red-500 mb-2"/>
+                <p className="text-2xl sm:text-3xl font-bold">{errorCount}</p>
+                <p className="text-sm text-muted-foreground">System Alerts</p>
+              </div>
+            </Link>
           </div>
         </CardContent>
       </Card>
