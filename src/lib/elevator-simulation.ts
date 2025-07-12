@@ -45,7 +45,8 @@ export const generateInitialElevators = (numDevices = NUM_BLOCKS, elevatorsPerDe
   
   for (let deviceNum = 1; deviceNum <= numDevices; deviceNum++) {
     const deviceId = deviceNum.toString();
-    const newDevice = createInitialDevice(deviceId, elevatorsPerDevice);
+    const elevatorsForThisDevice = deviceId === '3' ? 8 : elevatorsPerDevice;
+    const newDevice = createInitialDevice(deviceId, elevatorsForThisDevice);
     
     // Randomize initial state for generated devices
     const randomizedBlock = newDevice.map(elevator => {
