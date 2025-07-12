@@ -104,6 +104,23 @@ export function resolveElevatorFault(id: string): boolean {
     return false;
 }
 
+export function toggleMaintenanceStatus(id: string, reason?: string): boolean {
+    const elevatorIndex = elevators.findIndex(e => e.id === id);
+    if (elevatorIndex > -1) {
+        const isCurrentlyMaintenance = elevators[elevatorIndex].status === 'MAINTENANCE';
+        
+        elevators[elevatorIndex] = {
+            ...elevators[elevatorIndex],
+            status: isCurrentlyMaintenance ? 'IDLE' : 'MAINTENANCE',
+            direction: 'IDLE',
+            maintenanceDetails: isCurrentlyMaintenance ? undefined : (reason || 'Manual maintenance activated.'),
+            errorCode: 0,
+        };
+        return true;
+    }
+    return false;
+}
+
 interface UpdateResult {
     success: boolean;
     updatedCount: number;

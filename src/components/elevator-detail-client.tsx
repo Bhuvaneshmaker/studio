@@ -47,9 +47,9 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
     };
 
     return (
-        <Card className="shadow-lg mt-6 border-yellow-500/50">
+        <Card className="shadow-lg mt-6 border-red-500/50">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-yellow-600">
+                <CardTitle className="flex items-center gap-2 text-red-600">
                     <AlertCircle /> Admin Fault Controls
                 </CardTitle>
                 <CardDescription>Manually trigger or resolve a fault status for this elevator.</CardDescription>
@@ -64,6 +64,46 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
                         <ShieldCheck className="mr-2" /> {isLoading ? 'Resolving...' : 'Resolve Fault'}
                     </Button>
                 )}
+            </CardContent>
+        </Card>
+    );
+};
+
+const AdminMaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleToggleMaintenance = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/elevators/${elevator.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'toggleMaintenance', reason: 'Manual override by admin.' }),
+            });
+            if(response.ok) {
+                const updatedElevator = await response.json();
+                onUpdate(updatedElevator);
+            }
+        } catch (error) {
+            console.error('Failed to toggle maintenance mode', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <Card className="shadow-lg mt-6 border-yellow-500/50">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-yellow-600">
+                    <Wrench /> Admin Maintenance Controls
+                </CardTitle>
+                <CardDescription>Manually enable or disable maintenance mode for this elevator.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button onClick={handleToggleMaintenance} variant="secondary" className="w-full" disabled={isLoading}>
+                    <Wrench className="mr-2" />
+                    {isLoading ? 'Updating...' : (elevator.status === 'MAINTENANCE' ? 'Disable Maintenance Mode' : 'Enable Maintenance Mode')}
+                </Button>
             </CardContent>
         </Card>
     );
@@ -228,7 +268,7 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                         <Wrench className="h-4 w-4 !text-yellow-500" />
                                         <AlertTitle className="font-bold">Under Maintenance</AlertTitle>
                                         <AlertDescription>
-                                            This unit is currently undergoing scheduled maintenance.
+                                            {elevator.maintenanceDetails || "This unit is currently undergoing scheduled maintenance."}
                                         </AlertDescription>
                                     </Alert>
                                 )}
@@ -243,7 +283,12 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                 )}
                             </CardContent>
                         </Card>
-                        {user?.role === 'Admin' && <AdminFaultControls elevator={elevator} onUpdate={handleUpdate} />}
+                        {user?.role === 'Admin' && 
+                            <div className="space-y-6">
+                                <AdminMaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
+                                <AdminFaultControls elevator={elevator} onUpdate={handleUpdate} />
+                            </div>
+                        }
                    </div>
                 </div>
             </main>

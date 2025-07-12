@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getElevatorById, setElevatorFault, resolveElevatorFault } from '@/services/elevator-service';
+import { getElevatorById, setElevatorFault, resolveElevatorFault, toggleMaintenanceStatus } from '@/services/elevator-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +13,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
-    const { action, errorCode } = await request.json();
+    const { action, errorCode, reason } = await request.json();
     const { id } = params;
 
     if (action === 'triggerFault') {
@@ -30,6 +30,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
             return NextResponse.json(elevator);
         }
         return NextResponse.json({ error: 'Could not resolve fault' }, { status: 500 });
+    }
+
+    if (action === 'toggleMaintenance') {
+        if (toggleMaintenanceStatus(id, reason)) {
+            const elevator = getElevatorById(id);
+            return NextResponse.json(elevator);
+        }
+        return NextResponse.json({ error: 'Could not toggle maintenance status' }, { status: 500 });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
