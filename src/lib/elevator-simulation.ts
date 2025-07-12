@@ -170,6 +170,7 @@ export const updateElevatorState = (
             });
         }
 
+        /*
         if (Math.random() < 0.0005) {
             newElevator.emergencyStop = true;
             newElevator.status = 'ERROR';
@@ -179,6 +180,7 @@ export const updateElevatorState = (
                 description: `The emergency stop has been activated.`,
             });
         }
+        */
         
         return newElevator;
     });

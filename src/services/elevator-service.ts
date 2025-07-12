@@ -122,6 +122,7 @@ export function toggleMaintenanceStatus(id: string, reason?: string): boolean {
 }
 
 export function toggleEmergencyStopStatus(id: string, reason?: string): boolean {
+    /*
     const elevatorIndex = elevators.findIndex(e => e.id === id);
     if (elevatorIndex > -1) {
         const isCurrentlyStopped = elevators[elevatorIndex].emergencyStop;
@@ -141,6 +142,7 @@ export function toggleEmergencyStopStatus(id: string, reason?: string): boolean 
 
         return true;
     }
+    */
     return false;
 }
 

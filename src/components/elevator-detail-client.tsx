@@ -196,7 +196,7 @@ const MaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, o
         </Card>
     );
 };
-
+/*
 const EmergencyStopControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
     const [isLoading, setIsLoading] = useState(false);
 
@@ -253,7 +253,7 @@ const EmergencyStopControls = ({ elevator, onUpdate }: { elevator: ElevatorData,
         </Card>
     );
 };
-
+*/
 
 export function ElevatorDetailClient({ initialElevator }: { initialElevator: ElevatorData }) {
     const [elevator, setElevator] = useState(initialElevator);
@@ -430,7 +430,7 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                         <div className="space-y-6 mt-6">
                             <MaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
                             <FaultControls elevator={elevator} onUpdate={handleUpdate} />
-                             <EmergencyStopControls elevator={elevator} onUpdate={handleUpdate} />
+                             {/* <EmergencyStopControls elevator={elevator} onUpdate={handleUpdate} /> */}
                         </div>
                    </div>
                 </div>

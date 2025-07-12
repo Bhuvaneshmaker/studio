@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { TriangleAlert } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+/*
 const EmergencyStopAlert = ({ elevators, isOpen, onAcknowledge }: { elevators: ElevatorData[], isOpen: boolean, onAcknowledge: () => void }) => {
     const { getDeviceName, getElevatorName } = useNaming();
 
@@ -45,6 +46,7 @@ const EmergencyStopAlert = ({ elevators, isOpen, onAcknowledge }: { elevators: E
         </AlertDialog>
     );
 };
+*/
 
 
 export default function RootLayout({
@@ -52,31 +54,31 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [elevators, setElevators] = useState<ElevatorData[]>([]);
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  // const [elevators, setElevators] = useState<ElevatorData[]>([]);
+  // const [isAlertOpen, setIsAlertOpen] = useState(false);
 
-  const emergencyStopElevators = elevators.filter(e => e.emergencyStop);
+  // const emergencyStopElevators = elevators.filter(e => e.emergencyStop);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // This fetch should only happen on the client side
-      if (typeof window !== 'undefined') {
-        const res = await fetch('/api/elevators', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          setElevators(data);
-          // If there are E-Stops, show the alert.
-          if (data.some((e: ElevatorData) => e.emergencyStop)) {
-            setIsAlertOpen(true);
-          }
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     // This fetch should only happen on the client side
+  //     if (typeof window !== 'undefined') {
+  //       const res = await fetch('/api/elevators', { cache: 'no-store' });
+  //       if (res.ok) {
+  //         const data = await res.json();
+  //         setElevators(data);
+  //         // If there are E-Stops, show the alert.
+  //         if (data.some((e: ElevatorData) => e.emergencyStop)) {
+  //           setIsAlertOpen(true);
+  //         }
+  //       }
+  //     }
+  //   };
     
-    fetchData();
-    const interval = setInterval(fetchData, 3000); // Poll for E-Stop status
-    return () => clearInterval(interval);
-  }, []);
+  //   fetchData();
+  //   const interval = setInterval(fetchData, 3000); // Poll for E-Stop status
+  //   return () => clearInterval(interval);
+  // }, []);
 
   return (
     <html lang="en" className="dark">
@@ -92,11 +94,11 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
-          <EmergencyStopAlert 
+          {/* <EmergencyStopAlert 
             elevators={emergencyStopElevators} 
             isOpen={isAlertOpen && emergencyStopElevators.length > 0} 
             onAcknowledge={() => setIsAlertOpen(false)}
-          />
+          /> */}
         </AuthProvider>
       </body>
     </html>
