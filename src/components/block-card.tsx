@@ -8,11 +8,9 @@ import type { ElevatorData } from "@/types/elevator";
 import { useNaming } from '@/hooks/use-naming';
 import { Wrench, ShieldAlert, CheckCircle2, ArrowRight, Landmark } from "lucide-react";
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/context/auth-context';
 
 export function BlockCard({ deviceId, elevators }: { deviceId: string, elevators: ElevatorData[] }) {
   const { getDeviceName } = useNaming();
-  const { user } = useAuth();
   const blockName = getDeviceName(deviceId);
 
   const maintenanceCount = elevators.filter(e => e.status === 'MAINTENANCE').length;
@@ -21,7 +19,7 @@ export function BlockCard({ deviceId, elevators }: { deviceId: string, elevators
 
   const hasFault = errorCount > 0;
   
-  const unitName = user?.role === 'Admin' ? 'Slaves' : 'Elevators';
+  const unitName = 'Elevators';
 
   return (
     <Card className={cn(

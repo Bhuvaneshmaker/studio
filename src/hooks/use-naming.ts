@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { CustomNames } from '@/types/naming';
-import { useAuth } from '@/context/auth-context';
 
 const NAMING_STORAGE_KEY = 'elevateview-custom-names';
 
@@ -34,7 +33,6 @@ const loadNamesFromStorage = (): CustomNames => {
 
 export const useNaming = () => {
   const [customNames, setCustomNames] = useState<CustomNames>(loadNamesFromStorage);
-  const { user } = useAuth();
   
   // Effect to sync state with localStorage when it changes
   useEffect(() => {
@@ -65,21 +63,19 @@ export const useNaming = () => {
     };
   }, []);
 
-  const isAdmin = user?.role === 'Admin';
-
   const getDeviceName = useCallback((deviceId: string) => {
-    const defaultName = isAdmin ? `Device ${deviceId}` : `Block ${deviceId}`;
+    const defaultName = `Block ${deviceId}`;
     return customNames.devices[deviceId] || defaultName;
-  }, [customNames.devices, isAdmin]);
+  }, [customNames.devices]);
 
   const getBlockName = useCallback((deviceId: string) => {
     return customNames.devices[deviceId] || `Block ${deviceId}`;
   }, [customNames.devices]);
 
   const getElevatorName = useCallback((elevatorId: string) => {
-    const defaultName = isAdmin ? `Slave ${elevatorId.split('-')[1]}` : `Elevator ${elevatorId.split('-')[1]}`;
+    const defaultName = `Elevator ${elevatorId.split('-')[1]}`;
     return customNames.elevators[elevatorId] || defaultName;
-  }, [customNames.elevators, isAdmin]);
+  }, [customNames.elevators]);
   
   const getFloorName = useCallback((floorId: string) => {
     return customNames.floors[floorId] || `Floor ${floorId}`;

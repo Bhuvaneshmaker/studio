@@ -74,7 +74,7 @@ export default function MaintenancePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wrench className="w-6 h-6 text-yellow-500" />
-              Elevators / Slaves Under Maintenance
+              Elevators Under Maintenance
             </CardTitle>
             <CardDescription>
               The following units are currently offline for scheduled maintenance or repairs.
@@ -86,8 +86,8 @@ export default function MaintenancePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Elevator / Slave</TableHead>
-                      <TableHead>Device</TableHead>
+                      <TableHead>Elevator</TableHead>
+                      <TableHead>Block</TableHead>
                       <TableHead>Reason</TableHead>
                       <TableHead className="text-right">Status</TableHead>
                     </TableRow>

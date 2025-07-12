@@ -2,14 +2,12 @@
 "use client";
 
 import type { ElevatorData } from '@/types/elevator';
-import { Landmark, Wrench, ShieldAlert, CheckCircle2, SlidersHorizontal } from 'lucide-react';
+import { Landmark, Wrench, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { useAuth } from '@/context/auth-context';
 
 export default function ElevatorDashboard({ elevators }: { elevators: ElevatorData[] }) {
-  const { user } = useAuth();
   const {
     activeCount,
     maintenanceCount,
@@ -25,9 +23,8 @@ export default function ElevatorDashboard({ elevators }: { elevators: ElevatorDa
     return { activeCount, maintenanceCount, errorCount, totalElevators, numDevices };
   }, [elevators]);
 
-  const isAdmin = user?.role === 'Admin';
-  const deviceTitle = isAdmin ? 'Devices' : 'Blocks';
-  const elevatorTitle = isAdmin ? 'Slaves Active' : 'Elevators Active';
+  const deviceTitle = 'Blocks';
+  const elevatorTitle = 'Elevators Active';
 
   return (
     <>

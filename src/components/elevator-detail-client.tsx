@@ -52,7 +52,7 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
                 <CardTitle className="flex items-center gap-2 text-yellow-600">
                     <AlertCircle /> Admin Fault Controls
                 </CardTitle>
-                <CardDescription>Manually trigger or resolve a fault status for this elevator/slave.</CardDescription>
+                <CardDescription>Manually trigger or resolve a fault status for this elevator.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4">
                 {elevator.status !== 'ERROR' ? (
@@ -97,7 +97,6 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
     
     const { currentFloor, direction, status, errorCode, totalFloors, destinationFloor, mainPower, emergencyStop } = elevator;
     const isOperational = mainPower && !emergencyStop;
-    const isAdmin = user?.role === 'Admin';
 
     const getStatusInfo = () => {
         if (!mainPower) return { text: "Offline", icon: <PowerOff className="w-6 h-6 text-gray-500" />, color: "text-gray-500" };
@@ -152,7 +151,7 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                         <Card className="shadow-lg h-full">
                             <CardHeader>
                                 <CardTitle>Current Status</CardTitle>
-                                <CardDescription>Real-time elevator/slave overview</CardDescription>
+                                <CardDescription>Real-time elevator overview</CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center justify-center text-center gap-4">
                                <div className="flex items-center justify-center text-center bg-muted/50 p-6 rounded-lg w-full">
@@ -180,12 +179,12 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                             <CardContent className="space-y-3">
                                 <DetailItem 
                                     icon={<Landmark className="w-6 h-6 text-muted-foreground" />}
-                                    label={isAdmin ? 'Device ID' : 'Block ID'}
+                                    label="Block ID"
                                     value={elevator.deviceId}
                                 />
                                 <DetailItem 
                                     icon={<SlidersHorizontal className="w-6 h-6 text-muted-foreground" />}
-                                    label={isAdmin ? 'Slave ID' : 'Elevator No.'}
+                                    label="Elevator No."
                                     value={elevator.elevatorNum.toString()}
                                 />
                                 <Separator/>

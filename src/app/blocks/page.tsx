@@ -10,7 +10,6 @@ import { BackButton } from '@/components/back-button';
 import type { ElevatorData } from '@/types/elevator';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/context/auth-context';
 
 const BlocksPageSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -25,7 +24,6 @@ const BlocksPageSkeleton = () => (
 export default function BlocksPage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
@@ -51,7 +49,7 @@ export default function BlocksPage() {
     return acc;
   }, {} as Record<string, ElevatorData[]>);
 
-  const pageTitle = user?.role === 'Admin' ? 'Devices' : 'Blocks';
+  const pageTitle = 'Blocks';
 
   return (
     <div className="min-h-screen">

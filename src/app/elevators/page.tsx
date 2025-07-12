@@ -9,20 +9,18 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
 import { BackButton } from '@/components/back-button';
-import { useAuth } from '@/context/auth-context';
 
 export default function ElevatorsPage() {
   const searchParams = useSearchParams();
   const deviceFilter = searchParams.get('device');
   const [searchQuery, setSearchQuery] = useState("");
   const { getDeviceName } = useNaming();
-  const { user } = useAuth();
 
   const pageTitle = deviceFilter 
     ? getDeviceName(deviceFilter)
-    : (user?.role === 'Admin' ? 'All Slaves' : 'All Elevators');
+    : 'All Elevators';
   
-  const blocksPageTitle = user?.role === 'Admin' ? 'Devices' : 'Blocks';
+  const blocksPageTitle = 'Blocks';
 
   return (
     <div className="min-h-screen">
