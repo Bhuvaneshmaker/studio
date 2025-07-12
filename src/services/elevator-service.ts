@@ -10,8 +10,8 @@ import type { ParsedElevatorData } from '@/types/parser';
 import { 
     generateInitialElevators,
     updateElevatorState as updateState,
-    createDevice as createNewDevice
 } from '@/lib/elevator-simulation';
+import type { Slave } from '@/types/elevator';
 
 let elevators: ElevatorData[] = generateInitialElevators();
 let simulationInterval: NodeJS.Timeout | null = null;
@@ -46,15 +46,35 @@ export function getElevatorById(id: string): ElevatorData | undefined {
     return elevators.find(e => e.id === id);
 }
 
-export function addDevice(numSlaves: number): string {
-    const existingDeviceIds = [...new Set(elevators.map(e => parseInt(e.deviceId, 10)))].filter(id => !isNaN(id));
-    const newDeviceId = existingDeviceIds.length > 0 ? Math.max(...existingDeviceIds) + 1 : 1;
-    const newDeviceIdStr = newDeviceId.toString();
-
-    const newDevice = createNewDevice(newDeviceIdStr, numSlaves);
-    elevators = [...elevators, ...newDevice];
-
-    return newDeviceIdStr;
+export function addDevice(deviceId: string, deviceName: string, ipAddress: string, slaves: Slave[]): { success: boolean; error?: string } {
+    const deviceExists = elevators.some(e => e.deviceId === deviceId);
+    if (deviceExists) {
+        return { success: false, error: `Device with ID ${deviceId} already exists.` };
+    }
+    
+    const newElevators: ElevatorData[] = slaves.map(slave => {
+        const compositeId = `${deviceId}-${slave.slaveId}`;
+        
+        return {
+          id: compositeId,
+          deviceId,
+          elevatorNum: parseInt(slave.slaveId, 10),
+          slaveAddress: slave.slaveAddress,
+          currentFloor: 1,
+          direction: 'IDLE',
+          status: 'IDLE',
+          doorState: 'CLOSED',
+          errorCode: 0,
+          totalFloors: 15, // Default value, can be configured later
+          destinationFloor: 1,
+          mainPower: true,
+          emergencyStop: false,
+          ipAddress,
+        };
+    });
+    
+    elevators = [...elevators, ...newElevators];
+    return { success: true };
 }
 
 export function setElevatorFault(id: string, errorCode: number): boolean {

@@ -8,6 +8,8 @@ export interface ElevatorData {
   id: string; 
   deviceId: string;
   elevatorNum: number; // This is the Slave ID
+  slaveAddress?: string; // Slave address
+  ipAddress?: string; // IP address of the parent device
   currentFloor: number;
   direction: ElevatorDirection;
   status: ElevatorStatus;
@@ -18,4 +20,9 @@ export interface ElevatorData {
   mainPower: boolean;
   emergencyStop: boolean;
   maintenanceDetails?: string;
+}
+
+export interface Slave {
+  slaveId: string;
+  slaveAddress: string;
 }

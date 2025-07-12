@@ -10,15 +10,18 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-    const { deviceName, numSlaves } = await request.json();
+    const { deviceId, deviceName, ipAddress, slaves } = await request.json();
 
-    if (deviceName && numSlaves) {
-        const newDeviceId = addDevice(numSlaves);
-        // Note: The custom name is set on the client-side via the useNaming hook,
-        // which persists it to localStorage. A real DB would handle this server-side.
+    if (deviceId && deviceName && ipAddress && Array.isArray(slaves) && slaves.length > 0) {
+        const result = addDevice(deviceId, deviceName, ipAddress, slaves);
+        
+        if (!result.success) {
+            return NextResponse.json({ error: result.error }, { status: 409 });
+        }
+        
         const elevators = getElevatorData();
-        return NextResponse.json({ success: true, newDeviceId, elevators });
+        return NextResponse.json({ success: true, newDeviceId: deviceId, elevators });
     }
 
-    return NextResponse.json({ error: 'Missing deviceName or numSlaves' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing required fields for adding a device.' }, { status: 400 });
 }
