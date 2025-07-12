@@ -50,8 +50,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = (identifier: string, password?: string): boolean => {
     const lowerIdentifier = identifier.toLowerCase();
     const foundUser = users.find(u => 
-        u.email.toLowerCase() === lowerIdentifier || 
-        u.username.toLowerCase() === lowerIdentifier
+        (u.email && u.email.toLowerCase() === lowerIdentifier) || 
+        (u.username && u.username.toLowerCase() === lowerIdentifier)
     );
     
     if (foundUser && foundUser.password === password) {
