@@ -6,8 +6,11 @@ import type { ElevatorData } from '@/types/elevator';
 import { ElevatorCard } from '@/components/elevator-card';
 import { useNaming } from "@/hooks/use-naming";
 import { Separator } from './ui/separator';
-import { SearchX, Landmark } from 'lucide-react';
+import { SearchX, Landmark, PlusCircle } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Button } from './ui/button';
+import Link from 'next/link';
 
 const ElevatorGridSkeleton = () => (
   <div className="space-y-8">
@@ -95,7 +98,28 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
     return <ElevatorGridSkeleton />;
   }
 
-  if (elevators.length > 0 && filteredElevators.length === 0) {
+  if (elevators.length === 0) {
+    return (
+        <Card className="mt-10 col-span-full">
+            <CardHeader className="text-center">
+              <CardTitle>No Elevators in the System</CardTitle>
+              <CardDescription>
+                You first need to add a block to create and monitor elevators.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+                <Button size="lg" asChild>
+                    <Link href="/blocks">
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Add New Block
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
+    );
+  }
+
+  if (filteredElevators.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center gap-4 py-16">
         <SearchX className="w-16 h-16 text-muted-foreground" />

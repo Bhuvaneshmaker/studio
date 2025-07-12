@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { Building, PlusCircle, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BlockCard } from '@/components/block-card';
 import { AddBlockFormWrapper } from '@/components/add-block-form-wrapper';
 import { BackButton } from '@/components/back-button';
@@ -92,12 +93,29 @@ export default function BlocksPage() {
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
         {loading ? (
           <BlocksPageSkeleton />
-        ) : (
+        ) : Object.keys(elevatorsByBlock).length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([deviceId, deviceElevators]) => (
               <BlockCard key={deviceId} deviceId={deviceId} elevators={deviceElevators} />
             ))}
           </div>
+        ) : (
+           <Card className="mt-10 col-span-full">
+            <CardHeader className="text-center">
+              <CardTitle>No Blocks Configured</CardTitle>
+              <CardDescription>
+                Get started by adding your first block to monitor elevators.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
+                <Button size="lg">
+                  <PlusCircle className="mr-2 h-5 w-5" />
+                  Add New Block to ElevateView
+                </Button>
+              </AddBlockFormWrapper>
+            </CardContent>
+          </Card>
         )}
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">

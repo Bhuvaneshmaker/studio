@@ -2,24 +2,23 @@
 "use client";
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNaming } from '@/hooks/use-naming';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Building, Home, Save, Trash2, Info, Search, Landmark, SlidersHorizontal, MapPin } from 'lucide-react';
+import { Building, Home, Save, Trash2, Info, Search, Landmark, SlidersHorizontal, MapPin, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
-import { NUM_ELEVATORS_PER_BLOCK, MAX_FLOORS, NUM_BLOCKS } from '@/lib/elevator-simulation';
+import { MAX_FLOORS } from '@/lib/elevator-simulation';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BackButton } from '@/components/back-button';
+import type { ElevatorData } from '@/types/elevator';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const allDeviceIds = Array.from({ length: NUM_BLOCKS }, (_, i) => (i + 1).toString());
-const allElevatorIds = Array.from({ length: NUM_BLOCKS }, (_, i) => {
-    return Array.from({ length: NUM_ELEVATORS_PER_BLOCK }, (_, j) => `${i + 1}-${j + 1}`);
-}).flat();
+
 const allFloorIds = Array.from({ length: MAX_FLOORS }, (_, i) => (i + 1).toString());
 
 type NamingType = 'device' | 'elevator' | 'floor';
@@ -114,9 +113,35 @@ export default function NamingPage() {
         deleteDeviceName, deleteElevatorName, deleteFloorName
     } = useNaming();
 
-    const [selectedId, setSelectedId] = useState<string | null>(allDeviceIds[0]);
+    const [allDeviceIds, setAllDeviceIds] = useState<string[]>([]);
+    const [allElevatorIds, setAllElevatorIds] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [selectedType, setSelectedType] = useState<NamingType>('device');
     const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const fetchElevatorData = async () => {
+            setLoading(true);
+            const res = await fetch('/api/elevators');
+            const data: ElevatorData[] = await res.json();
+            
+            const deviceIds = [...new Set(data.map(e => e.deviceId))];
+            const elevatorIds = data.map(e => e.id);
+
+            setAllDeviceIds(deviceIds);
+            setAllElevatorIds(elevatorIds);
+
+            // Set initial selection
+            if(selectedType === 'device') setSelectedId(deviceIds[0] || null);
+            else if (selectedType === 'elevator') setSelectedId(elevatorIds[0] || null);
+            else if (selectedType === 'floor') setSelectedId(allFloorIds[0] || null);
+
+            setLoading(false);
+        };
+        fetchElevatorData();
+    }, [selectedType]); // Refetch when tab changes to ensure data is fresh
 
     const handleSelect = (id: string, type: NamingType) => {
         setSelectedId(id);
@@ -127,11 +152,7 @@ export default function NamingPage() {
         const newType = value as NamingType;
         setSelectedType(newType);
         setSearchQuery('');
-        // Select the first item of the new type
-        if (newType === 'device') setSelectedId(allDeviceIds[0]);
-        else if (newType === 'elevator') setSelectedId(allElevatorIds[0]);
-        else if (newType === 'floor') setSelectedId(allFloorIds[0]);
-        else setSelectedId(null);
+        setSelectedId(null); // Reset selection
     }
 
     const nameGetters: Record<NamingType, (id: string) => string> = {
@@ -154,6 +175,29 @@ export default function NamingPage() {
         elevator: customNames.elevators,
         floor: customNames.floors,
     };
+    
+    const EmptyState = ({ type }: { type: NamingType }) => {
+        const messages = {
+            device: { title: "No Blocks Found", description: "You need to add a block before you can name it.", button: "Add a Block" },
+            elevator: { title: "No Elevators Found", description: "Add a block to create elevators to name.", button: "Add a Block" },
+            floor: { title: "No Floors to Name", description: "Floors are available to be named.", button: "View Blocks" }
+        }
+        const message = messages[type];
+
+        return (
+            <div className="text-center py-10 text-muted-foreground flex flex-col items-center gap-4">
+                 <p className="font-semibold">{message.title}</p>
+                 <p className="text-sm">{message.description}</p>
+                 <Button asChild>
+                     <Link href="/blocks">
+                         <PlusCircle className="mr-2 h-4 w-4" />
+                         {message.button}
+                     </Link>
+                 </Button>
+             </div>
+        )
+    };
+    
 
     const renderNamingList = (
         itemIds: string[], 
@@ -166,6 +210,18 @@ export default function NamingPage() {
             const idLower = id.toLowerCase();
             return name.includes(query) || idLower.includes(query);
         });
+
+        if (loading) {
+            return (
+                <div className="space-y-2 pr-4">
+                    {Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+                </div>
+            )
+        }
+        
+        if (itemIds.length === 0) {
+            return <EmptyState type={type} />;
+        }
 
         return (
             <ScrollArea className="h-[calc(100vh-340px)]">
