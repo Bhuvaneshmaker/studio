@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/back-button';
 import type { AnalyticsData } from '@/types/analytics';
+import type { ElevatorData } from '@/types/elevator';
+import { useNaming } from '@/hooks/use-naming';
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart as RechartsBarChart } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -58,28 +60,37 @@ const AnalyticsPageSkeleton = () => (
 
 export default function AnalyticsPage() {
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+    const [elevators, setElevators] = useState<ElevatorData[]>([]);
     const [loading, setLoading] = useState(true);
+    const { getDeviceName, getElevatorName, getFloorName } = useNaming();
 
     useEffect(() => {
         async function fetchData() {
             setLoading(true);
-            const response = await fetch('/api/analytics');
-            const data = await response.json();
-            setAnalytics(data);
+            const [analyticsRes, elevatorsRes] = await Promise.all([
+                fetch('/api/analytics'),
+                fetch('/api/elevators')
+            ]);
+            
+            const analyticsData = await analyticsRes.json();
+            const elevatorsData = await elevatorsRes.json();
+
+            setAnalytics(analyticsData);
+            setElevators(elevatorsData);
             setLoading(false);
         }
         fetchData();
     }, []);
 
     const handleDownloadLog = () => {
-        if (!analytics) return;
+        if (!analytics || elevators.length === 0) return;
 
         const { kpis, usageByBlock, faultsByDay } = analytics;
         const today = new Date();
         const timestamp = today.toISOString();
         const dateString = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-        let logContent = `ElevateView - Daily Activity Log\n`;
+        let logContent = `ElevateView - System Status Log\n`;
         logContent += `==================================\n\n`;
         logContent += `Date Generated: ${dateString}\n`;
         logContent += `Timestamp: ${timestamp}\n\n`;
@@ -89,14 +100,43 @@ export default function AnalyticsPage() {
         logContent += `Average Wait Time: ${kpis.averageWaitTime}s\n`;
         logContent += `Total Faults (Last 30 days): ${kpis.totalFaults}\n`;
         logContent += `Peak Usage Hour: ${kpis.peakUsageHour}\n\n`;
+        logContent += `-----------------------------------------\n\n`;
 
-        logContent += `--- Usage by Block (Last 24 hours) ---\n`;
+        logContent += `--- Live Elevator Status by Block ---\n`;
+        const elevatorsByBlock = elevators.reduce((acc, elevator) => {
+            if (!acc[elevator.deviceId]) {
+                acc[elevator.deviceId] = [];
+            }
+            acc[elevator.deviceId].push(elevator);
+            return acc;
+        }, {} as Record<string, ElevatorData[]>);
+
+        Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).forEach(([deviceId, deviceElevators]) => {
+            logContent += `\n## BLOCK: ${getDeviceName(deviceId)} (ID: ${deviceId}) ##\n`;
+            deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).forEach(elevator => {
+                logContent += `\n  - Elevator: ${getElevatorName(elevator.id)}\n`;
+                logContent += `    ID: ${elevator.id}\n`;
+                logContent += `    Status: ${elevator.status}`;
+                if (elevator.status === 'ERROR') logContent += ` (Code: ${elevator.errorCode})`;
+                if (elevator.status === 'MAINTENANCE' && elevator.maintenanceDetails) logContent += ` (Reason: ${elevator.maintenanceDetails})`;
+                logContent += `\n`;
+                logContent += `    Current Floor: ${getFloorName(elevator.currentFloor.toString())}\n`;
+                logContent += `    Destination: ${getFloorName(elevator.destinationFloor.toString())}\n`;
+                logContent += `    Direction: ${elevator.direction}\n`;
+                logContent += `    Door: ${elevator.doorState}\n`;
+                logContent += `    Main Power: ${elevator.mainPower ? 'ON' : 'OFF'}\n`;
+                logContent += `    Emergency Stop: ${elevator.emergencyStop ? 'ACTIVATED' : 'Inactive'}\n`;
+            });
+            logContent += `\n-----------------------------------------\n`;
+        });
+        
+        logContent += `\n--- Summary: Usage by Block (Last 24 hours) ---\n`;
         usageByBlock.forEach(block => {
             logContent += `${block.name}: ${block.trips} trips\n`;
         });
         logContent += `\n`;
 
-        logContent += `--- Monthly Fault Trend (Last 30 days) ---\n`;
+        logContent += `--- Summary: Monthly Fault Trend (Last 30 days) ---\n`;
         faultsByDay.forEach(day => {
             logContent += `${day.name}: ${day.faults} faults\n`;
         });
