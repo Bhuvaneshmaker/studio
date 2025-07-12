@@ -163,5 +163,6 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
 }
 
 
-// Automatically start the simulation when the server starts.
-startSimulation();
+// The simulation is no longer started automatically.
+// To run the simulation for testing, you could create a temporary API endpoint to call startSimulation().
+// startSimulation();
