@@ -58,7 +58,7 @@ export default function LoginPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Login</CardTitle>
-            <CardDescription>Use your assigned credentials. Any password will work for the default users (admin/user).</CardDescription>
+            <CardDescription>Use your assigned credentials to sign in.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>

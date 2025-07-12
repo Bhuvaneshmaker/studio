@@ -54,8 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         u.username.toLowerCase() === lowerIdentifier
     );
     
-    // In a real app, you'd check the password here
-    if (foundUser) {
+    if (foundUser && foundUser.password === password) {
       setUser(foundUser);
       sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(foundUser));
       return true;

@@ -19,6 +19,7 @@ import { PlusCircle, Trash2, User, ShieldCheck } from 'lucide-react';
 const userFormSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
   role: z.enum(['Admin', 'User'], { required_error: "You need to select a role." }),
 });
 
@@ -30,12 +31,13 @@ export function UserManagementCard() {
         defaultValues: {
             username: "",
             email: "",
+            password: "",
             role: "User",
         },
     });
 
     function onSubmit(data: z.infer<typeof userFormSchema>) {
-        addUser(data.username, data.email, data.role);
+        addUser(data.username, data.email, data.password, data.role);
         form.reset();
     }
 
@@ -75,6 +77,19 @@ export function UserManagementCard() {
                                             <FormLabel>Email Address</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="user@example.com" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Password</FormLabel>
+                                            <FormControl>
+                                                <Input type="password" placeholder="••••••••" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

@@ -7,8 +7,8 @@ import type { User, UserRole } from '@/types/user';
 const USERS_STORAGE_KEY = 'elevateview-users';
 
 const defaultUsers: User[] = [
-    { id: '1', username: 'admin', email: 'admin@example.com', role: 'Admin' },
-    { id: '2', username: 'user', email: 'user@example.com', role: 'User' },
+    { id: '1', username: 'admin', email: 'admin@example.com', password: 'password', role: 'Admin' },
+    { id: '2', username: 'user', email: 'user@example.com', password: 'password', role: 'User' },
 ];
 
 const loadUsersFromStorage = (): User[] => {
@@ -58,12 +58,13 @@ export const useUsers = () => {
     };
   }, []);
 
-  const addUser = useCallback((username: string, email: string, role: UserRole) => {
+  const addUser = useCallback((username: string, email: string, password: string, role: UserRole) => {
     setUsers(prev => {
         const newUser: User = {
             id: new Date().getTime().toString(), // simple unique id
             username,
             email,
+            password,
             role,
         };
         return [...prev, newUser];
