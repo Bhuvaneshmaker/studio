@@ -35,16 +35,26 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
   const { getDeviceName, getElevatorName } = useNaming();
 
   useEffect(() => {
-    async function fetchData() {
+    // Initial fetch with loading state
+    const initialFetch = async () => {
         setLoading(true);
         const res = await fetch('/api/elevators');
         const data = await res.json();
         setElevators(data);
         setLoading(false);
     }
-    fetchData();
+    initialFetch();
 
-    const interval = setInterval(fetchData, 5000); // Poll for updates every 5 seconds
+    // Subsequent fetches without setting loading state
+    const fetchUpdates = async () => {
+        const res = await fetch('/api/elevators', { cache: 'no-store' });
+        if (res.ok) {
+            const data = await res.json();
+            setElevators(data);
+        }
+    }
+
+    const interval = setInterval(fetchUpdates, 5000); // Poll for updates every 5 seconds
     return () => clearInterval(interval);
   }, []);
 

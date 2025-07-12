@@ -77,13 +77,15 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
 
     // Set up polling to get "real-time" updates
     useEffect(() => {
-        const interval = setInterval(async () => {
-            const response = await fetch(`/api/elevators/${elevator.id}`);
+        const fetchUpdates = async () => {
+            const response = await fetch(`/api/elevators/${elevator.id}`, { cache: 'no-store' });
             if (response.ok) {
                 const data = await response.json();
                 setElevator(data);
             }
-        }, 2000); // Poll every 2 seconds
+        };
+
+        const interval = setInterval(fetchUpdates, 2000); // Poll every 2 seconds
 
         return () => clearInterval(interval);
     }, [elevator.id]);
