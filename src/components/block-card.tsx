@@ -21,7 +21,8 @@ export function BlockCard({ deviceId, elevators }: { deviceId: string, elevators
   const activeCount = elevators.length - maintenanceCount - errorCount;
 
   const hasFault = errorCount > 0;
-  const isIncomplete = elevators.length < NUM_ELEVATORS_PER_BLOCK;
+  // An incomplete block is one that has less elevators than the standard number, but more than zero.
+  const isIncomplete = elevators.length > 0 && elevators.length < NUM_ELEVATORS_PER_BLOCK;
   
   const unitName = 'Elevators';
 

@@ -64,8 +64,7 @@ export const useNaming = () => {
   }, []);
 
   const getDeviceName = useCallback((deviceId: string) => {
-    const defaultName = `Block ${deviceId}`;
-    return customNames.devices[deviceId] || defaultName;
+    return customNames.devices[deviceId] || `Block ${deviceId}`;
   }, [customNames.devices]);
 
   const getBlockName = useCallback((deviceId: string) => {

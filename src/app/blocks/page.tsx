@@ -14,8 +14,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 const BlocksPageSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, i) => (
-             <div key={i} className="space-y-3">
-              <Skeleton className="h-56 w-full rounded-lg" />
+             <div key={i} className="space-y-3 rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <div className="space-y-2 pt-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="pt-2">
+                <Skeleton className="h-10 w-full" />
+              </div>
             </div>
         ))}
     </div>

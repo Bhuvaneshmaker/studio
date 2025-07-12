@@ -6,20 +6,30 @@ import type { ElevatorData } from '@/types/elevator';
 import { ElevatorCard } from '@/components/elevator-card';
 import { useNaming } from "@/hooks/use-naming";
 import { Separator } from './ui/separator';
-import { SearchX } from 'lucide-react';
+import { SearchX, Landmark } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 
 const ElevatorGridSkeleton = () => (
   <div className="space-y-8">
     {[1, 2].map(i => (
       <section key={i}>
-        <Skeleton className="h-8 w-48 mb-4" />
+        <div className="flex items-center gap-2 mb-4">
+            <Landmark className="w-7 h-7 text-primary" />
+            <Skeleton className="h-8 w-48" />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {Array.from({ length: 5 }).map((_, j) => (
-            <div key={j} className="space-y-3">
-              <Skeleton className="h-40 w-full rounded-lg" />
-              <Skeleton className="h-4 w-3/4" />
+            <div key={j} className="space-y-3 rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+              <Skeleton className="h-6 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
+              <div className="flex items-center justify-around gap-4 pt-4">
+                  <Skeleton className="h-24 w-1/2 rounded-lg" />
+                  <Skeleton className="h-12 w-1/2 rounded-md" />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-8 w-1/2" />
+              </div>
             </div>
           ))}
         </div>
@@ -35,26 +45,18 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
   const { getDeviceName, getElevatorName } = useNaming();
 
   useEffect(() => {
-    // Initial fetch with loading state
-    const initialFetch = async () => {
-        setLoading(true);
-        const res = await fetch('/api/elevators');
-        const data = await res.json();
-        setElevators(data);
-        setLoading(false);
-    }
-    initialFetch();
-
-    // Subsequent fetches without setting loading state
-    const fetchUpdates = async () => {
+    const fetchData = async () => {
         const res = await fetch('/api/elevators', { cache: 'no-store' });
         if (res.ok) {
             const data = await res.json();
             setElevators(data);
         }
+        setLoading(false); // Only set loading to false after the first fetch
     }
 
-    const interval = setInterval(fetchUpdates, 5000); // Poll for updates every 5 seconds
+    fetchData();
+
+    const interval = setInterval(fetchData, 5000); // Poll for updates every 5 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -109,7 +111,7 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
     <div className="space-y-8">
       {Object.entries(elevatorsByDevice).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([deviceId, deviceElevators], index) => (
         <section key={deviceId} id={`device-${deviceId}`}>
-            <h3 className="text-2xl font-bold text-primary mb-4">{getDeviceName(deviceId)}</h3>
+            <h3 className="text-2xl font-bold text-primary mb-4 flex items-center gap-2"><Landmark/> {getDeviceName(deviceId)}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).map(elevator => (
                     <ElevatorCard key={elevator.id} elevator={elevator} />

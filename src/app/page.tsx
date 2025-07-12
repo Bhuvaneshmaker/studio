@@ -14,18 +14,20 @@ export default function Home() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    setLoading(true);
-    const res = await fetch('/api/elevators', { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      setElevators(data);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchData();
+    const fetchData = async () => {
+      const res = await fetch('/api/elevators', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setElevators(data);
+      }
+      setLoading(false);
+    };
+
+    fetchData(); // Initial fetch
+    
+    const interval = setInterval(fetchData, 5000); // Poll for updates every 5 seconds
+    return () => clearInterval(interval); // Cleanup interval on component unmount
   }, []);
   
   const handleBlockAdded = (newElevators: ElevatorData[]) => {
@@ -58,7 +60,7 @@ export default function Home() {
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
-        <ElevatorDashboard elevators={elevators} />
+        <ElevatorDashboard elevators={elevators} loading={loading} />
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">
