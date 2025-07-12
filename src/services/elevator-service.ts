@@ -6,6 +6,7 @@
  */
 
 import type { ElevatorData } from '@/types/elevator';
+import type { ParsedElevatorData } from '@/types/parser';
 import { 
     generateInitialElevators,
     updateElevatorState as updateState,
@@ -82,6 +83,65 @@ export function resolveElevatorFault(id: string): boolean {
     }
     return false;
 }
+
+interface UpdateResult {
+    success: boolean;
+    updatedCount: number;
+    errors: { elevatorId: string; reason: string }[];
+}
+
+export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]): UpdateResult {
+    stopSimulation(); // Stop simulation when manual data is pushed
+    let updatedCount = 0;
+    const errors: { elevatorId: string; reason: string }[] = [];
+
+    parsedData.forEach(data => {
+        const elevatorId = `${data.blockId}-${data.elevatorNum}`;
+        const elevatorIndex = elevators.findIndex(e => e.id === elevatorId);
+
+        if (elevatorIndex !== -1) {
+            const currentElevator = elevators[elevatorIndex];
+            
+            // Determine status
+            let newStatus: ElevatorData['status'] = currentElevator.status;
+            if (data.emergencyStop || data.responseStatus !== 'Positive') {
+                newStatus = 'ERROR';
+            } else if (currentElevator.status === 'ERROR' && !data.emergencyStop) {
+                // If it was in error but the new data is clean, set to idle
+                newStatus = 'IDLE';
+            } else if (currentElevator.status !== 'MAINTENANCE') {
+                 // Don't override maintenance status
+                 if (data.direction !== 'IDLE') {
+                    newStatus = 'MOVING';
+                 } else {
+                    newStatus = 'IDLE';
+                 }
+            }
+            
+            elevators[elevatorIndex] = {
+                ...currentElevator,
+                currentFloor: data.currentFloor,
+                destinationFloor: data.direction !== 'IDLE' ? currentElevator.destinationFloor : data.currentFloor,
+                direction: data.direction,
+                doorState: data.doorState,
+                mainPower: data.mainPower,
+                emergencyStop: data.emergencyStop,
+                status: newStatus,
+                errorCode: data.responseStatus !== 'Positive' ? 404 : (data.emergencyStop ? 911 : 0),
+            };
+            updatedCount++;
+        } else {
+            errors.push({ elevatorId, reason: 'Elevator not found in system.' });
+        }
+    });
+
+    return {
+        success: errors.length === 0,
+        updatedCount,
+        errors,
+    };
+}
+
 
 // Automatically start the simulation when the server starts.
 startSimulation();

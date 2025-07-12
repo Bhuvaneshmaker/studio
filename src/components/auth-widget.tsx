@@ -4,7 +4,7 @@
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Pencil, Wrench, Users, LogOut, AreaChart } from 'lucide-react';
+import { Pencil, Wrench, Users, LogOut, AreaChart, GitCommitHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,10 +62,17 @@ export function AuthWidget() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.email}</p>
+                    <p className="text-sm font-medium leading-none truncate">{user?.email}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user?.role}</p>
                 </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                 <DropdownMenuItem asChild>
+                    <Link href="/parser">
+                        <GitCommitHorizontal className="mr-2 h-4 w-4" />
+                        <span>Data Frame Parser</span>
+                    </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
