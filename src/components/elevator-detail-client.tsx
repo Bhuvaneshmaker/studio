@@ -1,10 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from "@/hooks/use-naming";
-import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
@@ -51,6 +50,10 @@ const ActionConfirmationDialog = ({
         setOpen(false);
         setReason('');
     };
+    
+    const handleReasonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setReason(e.target.value);
+    };
 
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
@@ -63,7 +66,10 @@ const ActionConfirmationDialog = ({
                     <AlertDialogDescription>{description}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="py-4 space-y-2">
-                    {children}
+                    {React.cloneElement(children as React.ReactElement, {
+                        value: reason,
+                        onChange: handleReasonChange
+                    })}
                 </div>
                 <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setReason('')}>Cancel</AlertDialogCancel>
@@ -74,11 +80,10 @@ const ActionConfirmationDialog = ({
             </AlertDialogContent>
         </AlertDialog>
     );
-}
+};
 
-const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
+const FaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
     const [isLoading, setIsLoading] = useState(false);
-    const reasonRef = useRef<HTMLTextAreaElement>(null);
 
     const handleFaultAction = async (action: 'triggerFault' | 'resolveFault', errorCode?: number, reason?: string) => {
         setIsLoading(true);
@@ -103,7 +108,7 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
         <Card className="shadow-lg mt-6 border-red-500/50">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-600">
-                    <AlertCircle /> Admin Fault Controls
+                    <AlertCircle /> Fault Controls
                 </CardTitle>
                 <CardDescription>Manually trigger or resolve a fault status for this elevator.</CardDescription>
             </CardHeader>
@@ -120,8 +125,10 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
                             </Button>
                         }
                     >
-                        <Label htmlFor="fault-reason">Reason for Fault</Label>
-                        <Textarea id="fault-reason" placeholder="e.g., Investigating panel issue." onChange={(e) => reasonRef.current!.value = e.target.value} defaultValue="" onBlur={(e) => reasonRef.current!.value = e.target.value} />
+                        <>
+                            <Label htmlFor="fault-reason">Reason for Fault</Label>
+                            <Textarea id="fault-reason" placeholder="e.g., Investigating panel issue." />
+                        </>
                     </ActionConfirmationDialog>
                 ) : (
                     <Button onClick={() => handleFaultAction('resolveFault')} variant="secondary" className="w-full bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 border" disabled={isLoading}>
@@ -133,7 +140,7 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
     );
 };
 
-const AdminMaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
+const MaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleToggleMaintenance = async (reason?: string) => {
@@ -159,7 +166,7 @@ const AdminMaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorDa
         <Card className="shadow-lg mt-6 border-yellow-500/50">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-yellow-600">
-                    <Wrench /> Admin Maintenance Controls
+                    <Wrench /> Maintenance Controls
                 </CardTitle>
                 <CardDescription>Manually enable or disable maintenance mode for this elevator.</CardDescription>
             </CardHeader>
@@ -182,8 +189,10 @@ const AdminMaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorDa
                             </Button>
                         }
                     >
-                        <Label htmlFor="maintenance-reason">Reason for Maintenance</Label>
-                        <Textarea id="maintenance-reason" placeholder="e.g., Scheduled quarterly inspection." onChange={(e) => (e.currentTarget.value)} />
+                        <>
+                            <Label htmlFor="maintenance-reason">Reason for Maintenance</Label>
+                            <Textarea id="maintenance-reason" placeholder="e.g., Scheduled quarterly inspection." />
+                        </>
                     </ActionConfirmationDialog>
                 )}
             </CardContent>
@@ -195,7 +204,6 @@ const AdminMaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorDa
 export function ElevatorDetailClient({ initialElevator }: { initialElevator: ElevatorData }) {
     const [elevator, setElevator] = useState(initialElevator);
     const { getElevatorName, getDeviceName, getFloorName } = useNaming();
-    const { user } = useAuth();
 
     // Set up polling to get "real-time" updates
     useEffect(() => {
@@ -365,12 +373,10 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                                 )}
                             </CardContent>
                         </Card>
-                        {user?.role === 'Admin' && 
-                            <div className="space-y-6">
-                                <AdminMaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
-                                <AdminFaultControls elevator={elevator} onUpdate={handleUpdate} />
-                            </div>
-                        }
+                        <div className="space-y-6">
+                            <MaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
+                            <FaultControls elevator={elevator} onUpdate={handleUpdate} />
+                        </div>
                    </div>
                 </div>
             </main>
