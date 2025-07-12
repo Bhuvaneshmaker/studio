@@ -121,11 +121,6 @@ export function toggleMaintenanceStatus(id: string, reason?: string): boolean {
     return false;
 }
 
-export function toggleEmergencyStopStatus(id: string, reason?: string): boolean {
-    // This feature is currently disabled.
-    return false;
-}
-
 interface UpdateResult {
     success: boolean;
     updatedCount: number;

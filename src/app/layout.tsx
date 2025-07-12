@@ -4,12 +4,6 @@
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/auth-context';
-import { useState, useEffect } from 'react';
-import type { ElevatorData } from '@/types/elevator';
-import { useNaming } from '@/hooks/use-naming';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
-import { TriangleAlert } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function RootLayout({
   children,
