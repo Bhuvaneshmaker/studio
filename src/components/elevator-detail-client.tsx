@@ -196,64 +196,6 @@ const MaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, o
         </Card>
     );
 };
-/*
-const EmergencyStopControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleToggleEmergencyStop = async (reason?: string) => {
-        setIsLoading(true);
-        try {
-            const response = await fetch(`/api/elevators/${elevator.id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'toggleEmergencyStop', reason }),
-            });
-            if(response.ok) {
-                const updatedElevator = await response.json();
-                onUpdate(updatedElevator);
-            }
-        } catch (error) {
-            console.error('Failed to toggle emergency stop', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <Card className="shadow-lg border-red-500/50">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-600">
-                    <TriangleAlert /> Emergency Stop
-                </CardTitle>
-                <CardDescription>Activate or deactivate the emergency stop for this unit.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                 {elevator.emergencyStop ? (
-                     <Button onClick={() => handleToggleEmergencyStop()} variant="destructive" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={isLoading}>
-                        <ShieldCheck className="mr-2" />
-                        {isLoading ? 'Deactivating...' : 'Deactivate Emergency Stop'}
-                    </Button>
-                ) : (
-                    <ActionConfirmationDialog
-                        title="Activate Emergency Stop"
-                        description="This is a critical action. Please provide a reason for activating the emergency stop."
-                        actionLabel="Confirm and Activate E-Stop"
-                        onConfirm={(reason) => handleToggleEmergencyStop(reason)}
-                        reasonLabel="Reason for Emergency Stop"
-                        reasonPlaceholder="e.g., Obstruction in doorway."
-                        triggerButton={
-                             <Button variant="destructive" className="w-full" disabled={isLoading}>
-                                <TriangleAlert className="mr-2" />
-                                {isLoading ? 'Activating...' : 'Activate Emergency Stop'}
-                            </Button>
-                        }
-                    />
-                )}
-            </CardContent>
-        </Card>
-    );
-};
-*/
 
 export function ElevatorDetailClient({ initialElevator }: { initialElevator: ElevatorData }) {
     const [elevator, setElevator] = useState(initialElevator);
@@ -430,7 +372,6 @@ export function ElevatorDetailClient({ initialElevator }: { initialElevator: Ele
                         <div className="space-y-6 mt-6">
                             <MaintenanceControls elevator={elevator} onUpdate={handleUpdate} />
                             <FaultControls elevator={elevator} onUpdate={handleUpdate} />
-                             {/* <EmergencyStopControls elevator={elevator} onUpdate={handleUpdate} /> */}
                         </div>
                    </div>
                 </div>
