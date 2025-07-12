@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from "@/hooks/use-naming";
 import { useAuth } from '@/context/auth-context';
@@ -9,10 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Building, Power, PowerOff, TriangleAlert, ShieldAlert, Wrench, ArrowUp, ArrowDown, Minus, CircleDot, Landmark, SlidersHorizontal, AlertCircle, ShieldCheck } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { BackButton } from '@/components/back-button';
 import Link from 'next/link';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
 
 const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactNode, label: string, value: string | React.ReactNode, valueClassName?: string }) => (
     <div className="flex items-start sm:items-center justify-between p-3 sm:p-4 bg-muted/50 rounded-lg flex-col sm:flex-row gap-2 sm:gap-4">
@@ -24,16 +28,65 @@ const DetailItem = ({ icon, label, value, valueClassName }: { icon: React.ReactN
     </div>
 );
 
+const ActionConfirmationDialog = ({
+    triggerButton,
+    title,
+    description,
+    actionLabel,
+    onConfirm,
+    children
+}: {
+    triggerButton: React.ReactNode;
+    title: string;
+    description: string;
+    actionLabel: string;
+    onConfirm: (reason: string) => void;
+    children: React.ReactNode;
+}) => {
+    const [reason, setReason] = useState('');
+    const [open, setOpen] = useState(false);
+
+    const handleConfirm = () => {
+        onConfirm(reason);
+        setOpen(false);
+        setReason('');
+    };
+
+    return (
+        <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+                {triggerButton}
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{title}</AlertDialogTitle>
+                    <AlertDialogDescription>{description}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="py-4 space-y-2">
+                    {children}
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setReason('')}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirm} disabled={!reason.trim()}>
+                        {actionLabel}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
+
 const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
     const [isLoading, setIsLoading] = useState(false);
+    const reasonRef = useRef<HTMLTextAreaElement>(null);
 
-    const handleFaultAction = async (action: 'triggerFault' | 'resolveFault', errorCode?: number) => {
+    const handleFaultAction = async (action: 'triggerFault' | 'resolveFault', errorCode?: number, reason?: string) => {
         setIsLoading(true);
         try {
             const response = await fetch(`/api/elevators/${elevator.id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, errorCode }),
+                body: JSON.stringify({ action, errorCode, reason }),
             });
             if(response.ok) {
                 const updatedElevator = await response.json();
@@ -56,9 +109,20 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4">
                 {elevator.status !== 'ERROR' ? (
-                    <Button onClick={() => handleFaultAction('triggerFault', 999)} variant="destructive" className="w-full" disabled={isLoading}>
-                        <TriangleAlert className="mr-2" /> {isLoading ? 'Triggering...' : 'Trigger Manual Fault'}
-                    </Button>
+                     <ActionConfirmationDialog
+                        title="Trigger Manual Fault"
+                        description="Please provide a reason for manually triggering a fault. This will be logged."
+                        actionLabel="Confirm and Trigger Fault"
+                        onConfirm={(reason) => handleFaultAction('triggerFault', 999, reason)}
+                        triggerButton={
+                            <Button variant="destructive" className="w-full" disabled={isLoading}>
+                                <TriangleAlert className="mr-2" /> {isLoading ? 'Triggering...' : 'Trigger Manual Fault'}
+                            </Button>
+                        }
+                    >
+                        <Label htmlFor="fault-reason">Reason for Fault</Label>
+                        <Textarea id="fault-reason" placeholder="e.g., Investigating panel issue." onChange={(e) => reasonRef.current!.value = e.target.value} defaultValue="" onBlur={(e) => reasonRef.current!.value = e.target.value} />
+                    </ActionConfirmationDialog>
                 ) : (
                     <Button onClick={() => handleFaultAction('resolveFault')} variant="secondary" className="w-full bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 border" disabled={isLoading}>
                         <ShieldCheck className="mr-2" /> {isLoading ? 'Resolving...' : 'Resolve Fault'}
@@ -72,13 +136,13 @@ const AdminFaultControls = ({ elevator, onUpdate }: { elevator: ElevatorData, on
 const AdminMaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorData, onUpdate: (elevator: ElevatorData) => void }) => {
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleToggleMaintenance = async () => {
+    const handleToggleMaintenance = async (reason?: string) => {
         setIsLoading(true);
         try {
             const response = await fetch(`/api/elevators/${elevator.id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'toggleMaintenance', reason: 'Manual override by admin.' }),
+                body: JSON.stringify({ action: 'toggleMaintenance', reason }),
             });
             if(response.ok) {
                 const updatedElevator = await response.json();
@@ -100,10 +164,28 @@ const AdminMaintenanceControls = ({ elevator, onUpdate }: { elevator: ElevatorDa
                 <CardDescription>Manually enable or disable maintenance mode for this elevator.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Button onClick={handleToggleMaintenance} variant="secondary" className="w-full" disabled={isLoading}>
-                    <Wrench className="mr-2" />
-                    {isLoading ? 'Updating...' : (elevator.status === 'MAINTENANCE' ? 'Disable Maintenance Mode' : 'Enable Maintenance Mode')}
-                </Button>
+                 {elevator.status === 'MAINTENANCE' ? (
+                    <Button onClick={() => handleToggleMaintenance()} variant="secondary" className="w-full" disabled={isLoading}>
+                        <Wrench className="mr-2" />
+                        {isLoading ? 'Updating...' : 'Disable Maintenance Mode'}
+                    </Button>
+                ) : (
+                    <ActionConfirmationDialog
+                        title="Enable Maintenance Mode"
+                        description="Please provide a reason for placing this elevator into maintenance mode."
+                        actionLabel="Confirm and Enable"
+                        onConfirm={(reason) => handleToggleMaintenance(reason)}
+                        triggerButton={
+                             <Button variant="secondary" className="w-full" disabled={isLoading}>
+                                <Wrench className="mr-2" />
+                                {isLoading ? 'Updating...' : 'Enable Maintenance Mode'}
+                            </Button>
+                        }
+                    >
+                        <Label htmlFor="maintenance-reason">Reason for Maintenance</Label>
+                        <Textarea id="maintenance-reason" placeholder="e.g., Scheduled quarterly inspection." onChange={(e) => (e.currentTarget.value)} />
+                    </ActionConfirmationDialog>
+                )}
             </CardContent>
         </Card>
     );
