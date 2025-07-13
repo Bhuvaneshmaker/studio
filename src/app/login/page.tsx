@@ -19,6 +19,21 @@ const loginSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 
+const AnimatedBackground = () => (
+  <div className="animation-container">
+    <div className="elevator" style={{ left: '10%', animationDuration: '12s', animationDelay: '0s' }}></div>
+    <div className="elevator" style={{ left: '20%', animationDuration: '8s', animationDelay: '-2s' }}></div>
+    <div className="elevator" style={{ left: '30%', animationDuration: '15s', animationDelay: '-5s' }}></div>
+    <div className="elevator" style={{ left: '40%', animationDuration: '10s', animationDelay: '-1s' }}></div>
+    <div className="elevator" style={{ left: '50%', animationDuration: '9s', animationDelay: '-3s' }}></div>
+    <div className="elevator" style={{ left: '60%', animationDuration: '14s', animationDelay: '-4s' }}></div>
+    <div className="elevator" style={{ left: '70%', animationDuration: '11s', animationDelay: '-6s' }}></div>
+    <div className="elevator" style={{ left: '80%', animationDuration: '7s', animationDelay: '-1s' }}></div>
+    <div className="elevator" style={{ left: '90%', animationDuration: '13s', animationDelay: '-2s' }}></div>
+  </div>
+);
+
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
@@ -45,8 +60,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative">
+      <AnimatedBackground />
+      <div className="w-full max-w-md space-y-6 z-10">
         <div className="flex flex-col items-center text-center">
             <div className="bg-primary text-primary-foreground p-3 rounded-lg mb-4">
                 <Building className="w-10 h-10" />
@@ -56,7 +72,7 @@ export default function LoginPage() {
             </h1>
             <p className="text-muted-foreground mt-2">Sign in to access the control room</p>
         </div>
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Login</CardTitle>
             <CardDescription>Use your assigned credentials to sign in.</CardDescription>

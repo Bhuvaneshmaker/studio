@@ -67,3 +67,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Animation for login page background */
+@layer utilities {
+  .animation-container {
+    @apply fixed top-0 left-0 w-full h-full overflow-hidden z-0;
+  }
+  .elevator {
+    @apply absolute bottom-0 w-2 bg-primary/20;
+    animation: move-elevators 10s ease-in-out infinite;
+  }
+}
+
+@keyframes move-elevators {
+  0% {
+    height: 0%;
+    bottom: 0;
+  }
+  10% {
+    height: 100%;
+    bottom: 0;
+  }
+  50% {
+    height: 100%;
+    bottom: 100%;
+  }
+  60% {
+    height: 0%;
+    bottom: 100%;
+  }
+  100% {
+    height: 0%;
+    bottom: 0;
+  }
+}
