@@ -16,6 +16,18 @@ const maintenanceReasons = [
   "Emergency brake system check.",
 ];
 
+const numberToLetter = (num: number) => {
+    if (num <= 0) return '';
+    let letter = '';
+    while (num > 0) {
+        const remainder = (num - 1) % 26;
+        letter = String.fromCharCode(65 + remainder) + letter;
+        num = Math.floor((num - 1) / 26);
+    }
+    return letter;
+};
+
+
 export const createInitialDevice = (deviceId: string, numElevators: number): ElevatorData[] => {
     const elevators: ElevatorData[] = [];
     for (let i = 1; i <= numElevators; i++) {
@@ -44,8 +56,8 @@ export const generateInitialElevators = (numDevices = NUM_BLOCKS, elevatorsPerDe
   let elevators: ElevatorData[] = [];
   
   for (let deviceNum = 1; deviceNum <= numDevices; deviceNum++) {
-    const deviceId = deviceNum.toString();
-    const elevatorsForThisDevice = deviceId === '3' ? 8 : elevatorsPerDevice;
+    const deviceId = numberToLetter(deviceNum); // Generate alphabetical ID
+    const elevatorsForThisDevice = deviceId === 'C' ? 8 : elevatorsPerDevice; // Adjusted for 'C' instead of '3'
     const newDevice = createInitialDevice(deviceId, elevatorsForThisDevice);
     
     // Randomize initial state for generated devices
@@ -169,18 +181,6 @@ export const updateElevatorState = (
                 description: `A critical error (Code: ${newElevator.errorCode}) has been detected.`,
             });
         }
-
-        /*
-        if (Math.random() < 0.0005) {
-            newElevator.emergencyStop = true;
-            newElevator.status = 'ERROR';
-            newAlerts.push({
-                id: newElevator.id,
-                title: `Block ${newElevator.deviceId} - Elevator ${newElevator.elevatorNum} Emergency Stop!`,
-                description: `The emergency stop has been activated.`,
-            });
-        }
-        */
         
         return newElevator;
     });

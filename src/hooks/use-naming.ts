@@ -63,27 +63,12 @@ export const useNaming = () => {
     };
   }, []);
 
-  const numberToLetter = (num: number) => {
-    if (num <= 0) return '';
-    let letter = '';
-    while (num > 0) {
-        const remainder = (num - 1) % 26;
-        letter = String.fromCharCode(65 + remainder) + letter;
-        num = Math.floor((num - 1) / 26);
-    }
-    return letter;
-  }
-
   const getDeviceName = useCallback((deviceId: string) => {
-    const deviceNum = parseInt(deviceId, 10);
-    const defaultName = isNaN(deviceNum) ? `Block ${deviceId}` : `Block ${numberToLetter(deviceNum)}`;
-    return customNames.devices[deviceId] || defaultName;
+    return customNames.devices[deviceId] || `Block ${deviceId}`;
   }, [customNames.devices]);
 
   const getBlockName = useCallback((deviceId: string) => {
-     const deviceNum = parseInt(deviceId, 10);
-    const defaultName = isNaN(deviceNum) ? `Block ${deviceId}` : `Block ${numberToLetter(deviceNum)}`;
-    return customNames.devices[deviceId] || defaultName;
+    return customNames.devices[deviceId] || `Block ${deviceId}`;
   }, [customNames.devices]);
 
   const getElevatorName = useCallback((elevatorId: string) => {
