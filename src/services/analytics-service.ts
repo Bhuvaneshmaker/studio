@@ -5,9 +5,20 @@ import type { AnalyticsData, ChartDataPoint, KpiData, HistoricalData, Historical
 import { getElevatorData } from './elevator-service';
 import { NUM_BLOCKS } from '@/lib/elevator-simulation';
 
+const numberToLetter = (num: number) => {
+    if (num <= 0) return '';
+    let letter = '';
+    while (num > 0) {
+        const remainder = (num - 1) % 26;
+        letter = String.fromCharCode(65 + remainder) + letter;
+        num = Math.floor((num - 1) / 26);
+    }
+    return letter;
+};
+
 // This is a server-side only helper for naming.
 // In a real app, this logic would come from a database.
-const getDeviceNameServer = (deviceId: string) => `Block ${deviceId}`;
+const getDeviceNameServer = (deviceId: string) => `Block ${numberToLetter(parseInt(deviceId, 10))}`;
 
 
 function generateDailyAnalytics(): AnalyticsData {
