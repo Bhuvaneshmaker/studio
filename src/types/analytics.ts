@@ -15,6 +15,7 @@ export interface ChartDataPoint {
 export interface AnalyticsData {
     kpis: KpiData;
     usageByBlock: ChartDataPoint[];
+    usageByElevator: ChartDataPoint[];
     faultsByDay: ChartDataPoint[];
 }
 
@@ -23,5 +24,6 @@ export type HistoricalPeriod = 'weekly' | 'monthly' | 'yearly';
 export interface HistoricalData {
     kpis: KpiData;
     usageByBlock: ChartDataPoint[];
+    usageByElevator: ChartDataPoint[];
     faultsByPeriod: ChartDataPoint[];
 }

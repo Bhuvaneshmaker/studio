@@ -88,16 +88,16 @@ export default function AnalyticsPage() {
     const handleDownloadLog = async (logType: LogType) => {
         if (!analytics || elevators.length === 0) return;
 
-        // Fetch historical data for longer-term logs
-        let historicalData: HistoricalData | null = null;
+        // Fetch historical data for longer-term logs if needed
+        let reportData: AnalyticsData | HistoricalData = analytics;
         if (logType !== 'daily') {
             const res = await fetch(`/api/analytics/historical?period=${logType}`);
             if (res.ok) {
-                historicalData = await res.json();
+                reportData = await res.json();
             }
         }
         
-        const { kpis, usageByBlock, faultsByDay } = analytics;
+        const { kpis, usageByBlock, faultsByDay, usageByElevator, faultsByPeriod } = reportData as HistoricalData & AnalyticsData;
         const today = new Date();
         const timestamp = today.toISOString();
         const dateString = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -110,17 +110,14 @@ export default function AnalyticsPage() {
 
         if (logType === 'daily') {
             logContent += `--- Key Performance Indicators (Today) ---\n`;
-            logContent += `Overall Uptime: ${kpis.uptimePercentage}%\n`;
-            logContent += `Average Wait Time: ${kpis.averageWaitTime}s\n`;
-            logContent += `Total Faults (Last 30 days): ${kpis.totalFaults}\n`;
-            logContent += `Peak Usage Hour: ${kpis.peakUsageHour}\n\n`;
-        } else if (historicalData) {
-             logContent += `--- Key Performance Indicators (${logTypeName} Summary) ---\n`;
-             logContent += `Average Uptime: ${historicalData.kpis.uptimePercentage}%\n`;
-             logContent += `Average Wait Time: ${historicalData.kpis.averageWaitTime}s\n`;
-             logContent += `Total Faults: ${historicalData.kpis.totalFaults}\n`;
-             logContent += `Most Common Peak Hour: ${historicalData.kpis.peakUsageHour}\n\n`;
+        } else {
+            logContent += `--- Key Performance Indicators (${logTypeName} Summary) ---\n`;
         }
+        logContent += `Average Uptime: ${kpis.uptimePercentage}%\n`;
+        logContent += `Average Wait Time: ${kpis.averageWaitTime}s\n`;
+        logContent += `Total Faults: ${kpis.totalFaults}\n`;
+        logContent += `Peak Usage Hour / Most Common: ${kpis.peakUsageHour}\n\n`;
+
         logContent += `-----------------------------------------\n\n`;
 
         logContent += `--- Live Elevator Status by Block (at time of log generation) ---\n`;
@@ -151,31 +148,27 @@ export default function AnalyticsPage() {
             logContent += `\n-----------------------------------------\n`;
         });
         
-        if (logType === 'daily') {
-            logContent += `\n--- Summary: Usage by Block (Last 24 hours) ---\n`;
-            usageByBlock.forEach(block => {
-                logContent += `${getDeviceName(block.name)}: ${block.trips} trips\n`;
-            });
-            logContent += `\n`;
+        logContent += `\n--- Summary: Usage by Block (${logTypeName}) ---\n`;
+        usageByBlock.forEach(block => {
+            logContent += `${getDeviceName(block.name)}: ${block.trips} trips\n`;
+        });
+        logContent += `\n`;
 
-            logContent += `--- Summary: Daily Fault Trend (Last 30 days) ---\n`;
-            faultsByDay.forEach(day => {
-                logContent += `${day.name}: ${day.faults} faults\n`;
-            });
-            logContent += `\n`;
-        } else if (historicalData) {
-            logContent += `\n--- Summary: Usage by Block (${logTypeName}) ---\n`;
-            historicalData.usageByBlock.forEach(block => {
-                logContent += `${getDeviceName(block.name)}: ${block.trips} trips\n`;
-            });
-            logContent += `\n`;
-
-            logContent += `--- Summary: Fault Trend (${logTypeName}) ---\n`;
-            historicalData.faultsByPeriod.forEach(period => {
-                logContent += `${period.name}: ${period.faults} faults\n`;
+        if (usageByElevator) {
+            logContent += `\n--- Summary: Usage by Elevator (${logTypeName}) ---\n`;
+            usageByElevator.forEach(item => {
+                logContent += `${getElevatorName(item.name)} (ID: ${item.name}): ${item.trips} trips\n`;
             });
             logContent += `\n`;
         }
+
+        const faultData = faultsByPeriod || faultsByDay;
+        const faultPeriodName = faultsByPeriod ? `(${logTypeName})` : `(Last 30 Days)`;
+        logContent += `--- Summary: Fault Trend ${faultPeriodName} ---\n`;
+        faultData.forEach(item => {
+            logContent += `${item.name}: ${item.faults} faults\n`;
+        });
+        logContent += `\n`;
 
 
         logContent += `--- End of Report ---\n`;

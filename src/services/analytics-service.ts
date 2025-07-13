@@ -40,6 +40,11 @@ function generateDailyAnalytics(): AnalyticsData {
         trips: Math.floor(Math.random() * 400) + 100, // 100-500 trips
     }));
 
+    const usageByElevator: ChartDataPoint[] = elevators.map(elevator => ({
+        name: elevator.id, // Use the unique elevator ID as the name
+        trips: Math.floor(Math.random() * 50) + 10, // 10-60 trips per day
+    }));
+
     const faultsByDay: ChartDataPoint[] = [];
     const today = new Date();
     for(let i = 29; i >= 0; i--) {
@@ -63,6 +68,7 @@ function generateDailyAnalytics(): AnalyticsData {
     return {
         kpis,
         usageByBlock,
+        usageByElevator,
         faultsByDay,
     };
 }
@@ -77,6 +83,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
 // --- Historical Data Generation ---
 
 function generateHistoricalData(period: HistoricalPeriod): HistoricalData {
+    const elevators = getElevatorData();
     const kpis: KpiData = {
         uptimePercentage: parseFloat((Math.random() * (99.8 - 95.0) + 95.0).toFixed(1)), // 95.0% - 99.8%
         averageWaitTime: Math.floor(Math.random() * 10) + 20, // 20-30s
@@ -125,9 +132,16 @@ function generateHistoricalData(period: HistoricalPeriod): HistoricalData {
         block.trips = (Math.floor(Math.random() * 300) + 100) * multiplier;
     });
 
+    const usageByElevator: ChartDataPoint[] = elevators.map(elevator => ({
+        name: elevator.id,
+        trips: (Math.floor(Math.random() * 50) + 10) * multiplier,
+    }));
+
+
     return {
         kpis,
         usageByBlock,
+        usageByElevator,
         faultsByPeriod,
     };
 }
