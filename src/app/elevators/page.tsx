@@ -4,23 +4,33 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ElevatorGrid } from '@/components/elevator-grid';
-import { Building, Search, X, Landmark } from 'lucide-react';
+import { Building, Search, X, Landmark, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
 import { BackButton } from '@/components/back-button';
+import { AddBlockFormWrapper } from '@/components/add-block-form-wrapper';
+import { Button } from '@/components/ui/button';
+import type { ElevatorData } from '@/types/elevator';
 
 export default function ElevatorsPage() {
   const searchParams = useSearchParams();
   const deviceFilter = searchParams.get('device');
   const [searchQuery, setSearchQuery] = useState("");
   const { getDeviceName } = useNaming();
+  // We need a local state to trigger re-renders in ElevatorGrid when a block is added.
+  const [elevators, setElevators] = useState<ElevatorData[]>([]);
 
   const pageTitle = deviceFilter 
     ? getDeviceName(deviceFilter)
     : 'All Elevators';
   
   const blocksPageTitle = 'Blocks';
+  
+  const handleBlockAdded = (newElevators: ElevatorData[]) => {
+    // This will trigger a re-render of the page and its children
+    setElevators(newElevators);
+  };
 
   return (
     <div className="min-h-screen">
@@ -44,7 +54,15 @@ export default function ElevatorsPage() {
               {pageTitle}
             </h2>
           </div>
-          <BackButton />
+          <div className="flex items-center gap-2">
+             <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
+               <Button size="sm">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Block
+                </Button>
+            </AddBlockFormWrapper>
+            <BackButton />
+          </div>
         </div>
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
@@ -67,7 +85,7 @@ export default function ElevatorsPage() {
                 />
             </div>
         </div>
-        <ElevatorGrid searchQuery={searchQuery} deviceFilter={deviceFilter} />
+        <ElevatorGrid searchQuery={searchQuery} deviceFilter={deviceFilter} key={elevators.length} />
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">

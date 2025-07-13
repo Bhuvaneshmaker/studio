@@ -11,6 +11,7 @@ import { Skeleton } from './ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import Link from 'next/link';
+import { AddBlockFormWrapper } from './add-block-form-wrapper';
 
 const ElevatorGridSkeleton = () => (
   <div className="space-y-8">
@@ -63,6 +64,10 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
     return () => clearInterval(interval);
   }, []);
 
+  const handleBlockAdded = (newElevators: ElevatorData[]) => {
+    setElevators(newElevators);
+  };
+
   const filteredElevators = elevators.filter(elevator => {
     if (deviceFilter && elevator.deviceId !== deviceFilter) {
         return false;
@@ -108,12 +113,12 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
-                <Button size="lg" asChild>
-                    <Link href="/blocks">
-                        <PlusCircle className="mr-2 h-5 w-5" />
-                        Add New Block
-                    </Link>
+              <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
+                <Button size="lg">
+                  <PlusCircle className="mr-2 h-5 w-5" />
+                  Add New Block to ElevateView
                 </Button>
+              </AddBlockFormWrapper>
             </CardContent>
         </Card>
     );
