@@ -52,7 +52,7 @@ export default function Home() {
               <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
                  <Button size="sm">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add New Block
+                    Add New Elevator
                   </Button>
               </AddBlockFormWrapper>
               <AuthWidget />

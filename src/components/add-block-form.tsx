@@ -107,7 +107,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PlusCircle /> Add New Block
+            <PlusCircle /> Add New Elevator
           </DialogTitle>
           <DialogDescription>
             Configure a new device (block) and its associated slaves (elevators).
@@ -231,7 +231,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
                 </DialogClose>
                  <Button type="submit" disabled={isSubmitting}>
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    {isSubmitting ? 'Creating...' : 'Create Block'}
+                    {isSubmitting ? 'Creating...' : 'Create Elevator'}
                 </Button>
             </DialogFooter>
           </form>

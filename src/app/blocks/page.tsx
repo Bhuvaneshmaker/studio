@@ -83,7 +83,7 @@ export default function BlocksPage() {
             <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
                <Button size="sm">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Add New Block
+                  Add New Elevator
                 </Button>
             </AddBlockFormWrapper>
             <BackButton />
@@ -111,7 +111,7 @@ export default function BlocksPage() {
               <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
                 <Button size="lg">
                   <PlusCircle className="mr-2 h-5 w-5" />
-                  Add New Block to ElevateView
+                  Add New Elevator to ElevateView
                 </Button>
               </AddBlockFormWrapper>
             </CardContent>
