@@ -18,7 +18,7 @@ const numberToLetter = (num: number) => {
 
 // This is a server-side only helper for naming.
 // In a real app, this logic would come from a database.
-const getDeviceNameServer = (deviceId: string) => `Block ${numberToLetter(parseInt(deviceId, 10))}`;
+const getDeviceNameServer = (deviceId: string) => `Block ${deviceId}`;
 
 
 function generateDailyAnalytics(): AnalyticsData {
@@ -36,7 +36,7 @@ function generateDailyAnalytics(): AnalyticsData {
 
     // Chart Data
     const usageByBlock: ChartDataPoint[] = Array.from({ length: NUM_BLOCKS }, (_, i) => ({
-        name: getDeviceNameServer((i + 1).toString()),
+        name: numberToLetter(i + 1),
         trips: Math.floor(Math.random() * 400) + 100, // 100-500 trips
     }));
 
@@ -85,7 +85,7 @@ function generateHistoricalData(period: HistoricalPeriod): HistoricalData {
     };
 
     const usageByBlock: ChartDataPoint[] = Array.from({ length: NUM_BLOCKS }, (_, i) => ({
-        name: getDeviceNameServer((i + 1).toString()),
+        name: numberToLetter(i + 1),
         trips: 0 // Calculated below
     }));
 

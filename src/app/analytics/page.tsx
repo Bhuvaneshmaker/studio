@@ -123,40 +123,38 @@ export default function AnalyticsPage() {
         }
         logContent += `-----------------------------------------\n\n`;
 
-        if (logType === 'daily') {
-            logContent += `--- Live Elevator Status by Block ---\n`;
-            const elevatorsByBlock = elevators.reduce((acc, elevator) => {
-                if (!acc[elevator.deviceId]) {
-                    acc[elevator.deviceId] = [];
-                }
-                acc[elevator.deviceId].push(elevator);
-                return acc;
-            }, {} as Record<string, ElevatorData[]>);
+        logContent += `--- Live Elevator Status by Block (at time of log generation) ---\n`;
+        const elevatorsByBlock = elevators.reduce((acc, elevator) => {
+            if (!acc[elevator.deviceId]) {
+                acc[elevator.deviceId] = [];
+            }
+            acc[elevator.deviceId].push(elevator);
+            return acc;
+        }, {} as Record<string, ElevatorData[]>);
 
-            Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).forEach(([deviceId, deviceElevators]) => {
-                logContent += `\n## BLOCK: ${getDeviceName(deviceId)} (ID: ${deviceId}) ##\n`;
-                deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).forEach(elevator => {
-                    logContent += `\n  - Elevator: ${getElevatorName(elevator.id)}\n`;
-                    logContent += `    ID: ${elevator.id}\n`;
-                    logContent += `    Status: ${elevator.status}`;
-                    if (elevator.status === 'ERROR') logContent += ` (Code: ${elevator.errorCode})`;
-                    if (elevator.status === 'MAINTENANCE' && elevator.maintenanceDetails) logContent += ` (Reason: ${elevator.maintenanceDetails})`;
-                    logContent += `\n`;
-                    logContent += `    Current Floor: ${getFloorName(elevator.currentFloor.toString())}\n`;
-                    logContent += `    Destination: ${getFloorName(elevator.destinationFloor.toString())}\n`;
-                    logContent += `    Direction: ${elevator.direction}\n`;
-                    logContent += `    Door: ${elevator.doorState}\n`;
-                    logContent += `    Main Power: ${elevator.mainPower ? 'ON' : 'OFF'}\n`;
-                    logContent += `    Emergency Stop: ${elevator.emergencyStop ? 'ACTIVATED' : 'Inactive'}\n`;
-                });
-                logContent += `\n-----------------------------------------\n`;
+        Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).forEach(([deviceId, deviceElevators]) => {
+            logContent += `\n## BLOCK: ${getDeviceName(deviceId)} (ID: ${deviceId}) ##\n`;
+            deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).forEach(elevator => {
+                logContent += `\n  - Elevator: ${getElevatorName(elevator.id)}\n`;
+                logContent += `    ID: ${elevator.id}\n`;
+                logContent += `    Status: ${elevator.status}`;
+                if (elevator.status === 'ERROR') logContent += ` (Code: ${elevator.errorCode})`;
+                if (elevator.status === 'MAINTENANCE' && elevator.maintenanceDetails) logContent += ` (Reason: ${elevator.maintenanceDetails})`;
+                logContent += `\n`;
+                logContent += `    Current Floor: ${getFloorName(elevator.currentFloor.toString())}\n`;
+                logContent += `    Destination: ${getFloorName(elevator.destinationFloor.toString())}\n`;
+                logContent += `    Direction: ${elevator.direction}\n`;
+                logContent += `    Door: ${elevator.doorState}\n`;
+                logContent += `    Main Power: ${elevator.mainPower ? 'ON' : 'OFF'}\n`;
+                logContent += `    Emergency Stop: ${elevator.emergencyStop ? 'ACTIVATED' : 'Inactive'}\n`;
             });
-        }
+            logContent += `\n-----------------------------------------\n`;
+        });
         
         if (logType === 'daily') {
             logContent += `\n--- Summary: Usage by Block (Last 24 hours) ---\n`;
             usageByBlock.forEach(block => {
-                logContent += `${block.name}: ${block.trips} trips\n`;
+                logContent += `${getDeviceName(block.name)}: ${block.trips} trips\n`;
             });
             logContent += `\n`;
 
@@ -168,7 +166,7 @@ export default function AnalyticsPage() {
         } else if (historicalData) {
             logContent += `\n--- Summary: Usage by Block (${logTypeName}) ---\n`;
             historicalData.usageByBlock.forEach(block => {
-                logContent += `${block.name}: ${block.trips} trips\n`;
+                logContent += `${getDeviceName(block.name)}: ${block.trips} trips\n`;
             });
             logContent += `\n`;
 
