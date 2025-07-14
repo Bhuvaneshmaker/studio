@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
 import { BackButton } from '@/components/back-button';
-import { AddElevatorFormWrapper } from '@/components/add-elevator-form-wrapper';
+import { AddBlockFormWrapper } from '@/components/add-block-form-wrapper';
 import { Button } from '@/components/ui/button';
 import type { ElevatorData } from '@/types/elevator';
 
@@ -18,7 +18,6 @@ export default function ElevatorsPage() {
   const deviceFilter = searchParams.get('device');
   const [searchQuery, setSearchQuery] = useState("");
   const { getDeviceName } = useNaming();
-  // We need a local state to trigger re-renders in ElevatorGrid when an elevator is added.
   const [lastUpdated, setLastUpdated] = useState(Date.now());
 
 
@@ -28,8 +27,7 @@ export default function ElevatorsPage() {
   
   const blocksPageTitle = 'Blocks';
   
-  const handleElevatorAdded = (newElevators: ElevatorData[]) => {
-    // This will trigger a re-render of the page and its children
+  const handleBlockAdded = (newElevators: ElevatorData[]) => {
     setLastUpdated(Date.now());
   };
 
@@ -56,12 +54,12 @@ export default function ElevatorsPage() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-             <AddElevatorFormWrapper onElevatorAdded={handleElevatorAdded}>
+             <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
                <Button size="sm">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Add New Elevator
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Block
                 </Button>
-            </AddElevatorFormWrapper>
+            </AddBlockFormWrapper>
             <BackButton />
           </div>
         </div>

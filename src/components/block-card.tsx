@@ -6,12 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import type { ElevatorData } from "@/types/elevator";
 import { useNaming } from '@/hooks/use-naming';
-import { Wrench, ShieldAlert, CheckCircle2, ArrowRight, Landmark, AlertTriangle, SlidersHorizontal, PlusCircle } from "lucide-react";
+import { Wrench, ShieldAlert, CheckCircle2, ArrowRight, Landmark, AlertTriangle } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from './ui/alert';
 import { NUM_ELEVATORS_PER_BLOCK } from '@/lib/elevator-simulation';
-import { AddElevatorFormWrapper } from './add-elevator-form-wrapper';
-import { Separator } from './ui/separator';
 
 
 export function BlockCard({ deviceId, elevators, onElevatorAdded }: { deviceId: string, elevators: ElevatorData[], onElevatorAdded: (newElevators: ElevatorData[]) => void }) {
@@ -23,7 +21,6 @@ export function BlockCard({ deviceId, elevators, onElevatorAdded }: { deviceId: 
   const activeCount = elevators.length - maintenanceCount - errorCount;
 
   const hasFault = errorCount > 0;
-  // An incomplete block is one that has less elevators than the standard number, but more than zero.
   const isIncomplete = elevators.length > 0 && elevators.length < NUM_ELEVATORS_PER_BLOCK;
   
   const unitName = 'Elevators';
@@ -78,12 +75,6 @@ export function BlockCard({ deviceId, elevators, onElevatorAdded }: { deviceId: 
             View Elevators <ArrowRight className="ml-2 w-4 h-4" />
           </Link>
         </Button>
-        <Separator className="my-1"/>
-         <AddElevatorFormWrapper onElevatorAdded={onElevatorAdded} preselectedBlock={deviceId}>
-            <Button variant="ghost" className="w-full text-muted-foreground">
-              <PlusCircle className="w-4 h-4 mr-2" /> Add Elevator to Block
-            </Button>
-          </AddElevatorFormWrapper>
       </CardFooter>
     </Card>
   );
