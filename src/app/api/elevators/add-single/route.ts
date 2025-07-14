@@ -6,10 +6,10 @@ import { getElevatorData } from '@/services/elevator-service';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-    const { deviceId, slaveId, slaveName } = await request.json();
+    const { deviceId, slaveId, slaveAddress, slaveName } = await request.json();
 
-    if (deviceId && slaveId) {
-        const result = addSingleElevator(deviceId, slaveId, slaveName);
+    if (deviceId && slaveId && slaveAddress) {
+        const result = addSingleElevator(deviceId, slaveId, slaveAddress, slaveName);
         
         if (!result.success) {
             return NextResponse.json({ error: result.error }, { status: 409 });

@@ -56,7 +56,7 @@ export function addDevice(deviceId: string, ipAddress: string): { success: boole
 }
 
 
-export function addSingleElevator(deviceId: string, slaveId: string, slaveName?: string): { success: boolean; error?: string, newElevatorId?: string } {
+export function addSingleElevator(deviceId: string, slaveId: string, slaveAddress: string, slaveName?: string): { success: boolean; error?: string, newElevatorId?: string } {
     const compositeId = `${deviceId}-${slaveId}`;
     const elevatorExists = elevators.some(e => e.id === compositeId);
     if (elevatorExists) {
@@ -75,7 +75,7 @@ export function addSingleElevator(deviceId: string, slaveId: string, slaveName?:
         id: compositeId,
         deviceId,
         elevatorNum: parseInt(slaveId, 10),
-        slaveAddress: slaveId, // Assuming slaveAddress is the same as slaveId for now
+        slaveAddress: slaveAddress,
         currentFloor: 1,
         direction: 'IDLE',
         status: 'IDLE',

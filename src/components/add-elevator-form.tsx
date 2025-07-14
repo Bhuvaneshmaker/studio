@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { PlusCircle, Landmark, SlidersHorizontal, Hash, TextCursorInput, Loader2, AlertCircle } from 'lucide-react';
+import { PlusCircle, SlidersHorizontal, Hash, TextCursorInput, Loader2, AlertCircle, CaseSensitive } from 'lucide-react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const addElevatorSchema = z.object({
   deviceId: z.string().min(1, "You must select a block."),
   slaveId: z.string().min(1, "Slave ID is required."),
+  slaveAddress: z.string().min(1, "Slave Address is required."),
   slaveName: z.string().optional(),
 });
 
@@ -54,6 +55,7 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
     defaultValues: {
       deviceId: preselectedBlock || "",
       slaveId: "",
+      slaveAddress: "",
       slaveName: "",
     },
   });
@@ -115,7 +117,7 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
         setSubmissionStatus("Configuration successful!");
         setTimeout(() => {
             onOpenChange(false);
-            form.reset({ deviceId: preselectedBlock || "", slaveId: "", slaveName: "" });
+            form.reset({ deviceId: preselectedBlock || "", slaveId: "", slaveName: "", slaveAddress: "" });
             setSubmissionStatus(null);
         }, 1500);
 
@@ -166,19 +168,34 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
                     </FormItem>
                   )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="slaveId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="flex items-center gap-2 text-sm"><Hash /> Slave ID</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., 1, 2, etc." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="slaveId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2 text-sm"><Hash /> Slave ID</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., 1" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="slaveAddress"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2 text-sm"><CaseSensitive /> Slave Address</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., 0x01" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <FormField
                     control={form.control}
                     name="slaveName"
