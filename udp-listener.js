@@ -175,7 +175,7 @@ async function setDeviceConfig(deviceId, ipAddress) {
 }
 
 async function setSlaveConfig(deviceId, slaveId, floorCount) {
-    console.log(`--- Configuring Slave ID: ${slaveId} for Device: ${deviceId} ---`);
+    console.log(`--- Configuring Slave ID: ${slaveId} for Device: ${deviceId} with ${floorCount} floors ---`);
     let frame = new Array(55).fill(0);
 
     frame[0] = FRAME_HEADER;

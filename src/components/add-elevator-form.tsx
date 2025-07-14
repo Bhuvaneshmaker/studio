@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { PlusCircle, SlidersHorizontal, Hash, TextCursorInput, Loader2, AlertCircle, CaseSensitive } from 'lucide-react';
+import { PlusCircle, SlidersHorizontal, Hash, TextCursorInput, Loader2, AlertCircle, CaseSensitive, ListTree } from 'lucide-react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
@@ -19,6 +19,7 @@ const addElevatorSchema = z.object({
   deviceId: z.string().min(1, "You must select a block."),
   slaveId: z.string().min(1, "Slave ID is required."),
   slaveAddress: z.string().min(1, "Slave Address is required."),
+  floorCount: z.string().min(1, "Number of floors is required."),
   slaveName: z.string().optional(),
 });
 
@@ -56,6 +57,7 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
       deviceId: preselectedBlock || "",
       slaveId: "",
       slaveAddress: "",
+      floorCount: "15",
       slaveName: "",
     },
   });
@@ -105,7 +107,7 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
         await configureDeviceOnBackend('set_slave', {
             deviceId: values.deviceId,
             slaveId: values.slaveId,
-            floorCount: 15 // Assuming a default, could be added to form
+            floorCount: values.floorCount
         });
         
         // If all successful, update UI state
@@ -117,7 +119,7 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
         setSubmissionStatus("Configuration successful!");
         setTimeout(() => {
             onOpenChange(false);
-            form.reset({ deviceId: preselectedBlock || "", slaveId: "", slaveName: "", slaveAddress: "" });
+            form.reset({ deviceId: preselectedBlock || "", slaveId: "", slaveName: "", slaveAddress: "", floorCount: "15" });
             setSubmissionStatus(null);
         }, 1500);
 
@@ -140,7 +142,7 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
             <SlidersHorizontal /> Add New Elevator
           </DialogTitle>
           <DialogDescription>
-            Add a new slave (elevator) to an existing block.
+            Add a new slave (elevator) to an existing block. This will configure the hardware.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -196,6 +198,19 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
                         )}
                     />
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="floorCount"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-sm"><ListTree /> Number of Floors</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="e.g., 15" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="slaveName"
