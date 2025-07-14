@@ -9,25 +9,18 @@ import type { ElevatorData } from '@/types/elevator';
 import type { ParsedElevatorData } from '@/types/parser';
 import { 
     generateInitialElevators,
-    updateElevatorState as updateState,
 } from '@/lib/elevator-simulation';
 import type { Slave } from '@/types/elevator';
 
-let elevators: ElevatorData[] = generateInitialElevators();
+// Initialize with an empty array. Data will now come from the UDP listener.
+let elevators: ElevatorData[] = []; 
 let simulationInterval: NodeJS.Timeout | null = null;
 
-function updateElevators() {
-    const { updatedElevators } = updateState(elevators);
-    elevators = updatedElevators;
-    // In a real app, you might emit events here to notify clients via websockets.
-}
-
+// The simulation is no longer needed as we'll get real data.
+// The functions are kept in case we need to re-enable for testing.
 export function startSimulation() {
-    if (simulationInterval) {
-        clearInterval(simulationInterval);
-    }
-    simulationInterval = setInterval(updateElevators, 2000);
-    console.log("Elevator simulation started.");
+    // This is now intentionally left blank.
+    console.log("Simulation is disabled in favor of real-time data.");
 }
 
 export function stopSimulation() {
@@ -67,7 +60,7 @@ export function addDevice(deviceId: string, ipAddress: string, slaves: Slave[]):
           errorCode: 0,
           totalFloors: 15, // Default value, can be configured later
           destinationFloor: 1,
-          mainPower: true,
+          mainPower: false, // Start as off until data is received
           emergencyStop: false,
           ipAddress,
         };
@@ -128,7 +121,6 @@ interface UpdateResult {
 }
 
 export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]): UpdateResult {
-    stopSimulation(); // Stop simulation when manual data is pushed
     let updatedCount = 0;
     const errors: { elevatorId: string; reason: string }[] = [];
 
@@ -139,15 +131,19 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
         if (elevatorIndex !== -1) {
             const currentElevator = elevators[elevatorIndex];
             
-            // Determine status
+            // Determine status based on real data
             let newStatus: ElevatorData['status'] = currentElevator.status;
-            if (data.emergencyStop || data.responseStatus !== 'Positive') {
+            
+            // Critical overrides
+            if (data.emergencyStop) {
                 newStatus = 'ERROR';
-            } else if (currentElevator.status === 'ERROR' && !data.emergencyStop) {
-                // If it was in error but the new data is clean, set to idle
-                newStatus = 'IDLE';
-            } else if (currentElevator.status !== 'MAINTENANCE') {
-                 // Don't override maintenance status
+            } else if (data.responseStatus !== 'Positive') {
+                 newStatus = 'ERROR';
+            } else if (currentElevator.status === 'MAINTENANCE') {
+                // Do not override maintenance status
+                newStatus = 'MAINTENANCE';
+            } else {
+                 // Normal operation
                  if (data.direction !== 'IDLE') {
                     newStatus = 'MOVING';
                  } else {
@@ -158,7 +154,8 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
             elevators[elevatorIndex] = {
                 ...currentElevator,
                 currentFloor: data.currentFloor,
-                destinationFloor: data.direction !== 'IDLE' ? currentElevator.destinationFloor : data.currentFloor,
+                // If moving, destination floor is maintained. If idle, it's the current floor.
+                destinationFloor: newStatus === 'MOVING' ? currentElevator.destinationFloor : data.currentFloor,
                 direction: data.direction,
                 doorState: data.doorState,
                 mainPower: data.mainPower,
@@ -168,9 +165,13 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
             };
             updatedCount++;
         } else {
-            errors.push({ elevatorId, reason: 'Elevator/Slave not found in system.' });
+            errors.push({ elevatorId, reason: 'Elevator/Slave not found in system. Please add it.' });
         }
     });
+
+    if (errors.length > 0) {
+        console.warn('Errors during data update:', errors);
+    }
 
     return {
         success: errors.length === 0,
@@ -178,8 +179,3 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
         errors,
     };
 }
-
-
-// The simulation is no longer started automatically.
-// To run the simulation for testing, you could create a temporary API endpoint to call startSimulation().
-startSimulation();
