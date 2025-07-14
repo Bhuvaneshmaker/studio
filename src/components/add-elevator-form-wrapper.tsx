@@ -10,12 +10,10 @@ export function AddElevatorFormWrapper({
     children, 
     onElevatorAdded,
     preselectedBlock,
-    allDeviceIds
 }: { 
     children: React.ReactNode, 
     onElevatorAdded: (newElevators: ElevatorData[]) => void,
     preselectedBlock?: string,
-    allDeviceIds?: string[]
 }) {
     const { user } = useAuth();
     const [isAddElevatorOpen, setIsAddElevatorOpen] = useState(false);
@@ -30,7 +28,6 @@ export function AddElevatorFormWrapper({
             onOpenChange={setIsAddElevatorOpen}
             onElevatorAdded={onElevatorAdded}
             preselectedBlock={preselectedBlock}
-            allDeviceIds={allDeviceIds}
         >
            <div onClick={() => setIsAddElevatorOpen(true)}>{children}</div>
         </AddElevatorForm>

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { PlusCircle, SlidersHorizontal, Hash, TextCursorInput, Loader2, AlertCircle, CaseSensitive, ListTree } from 'lucide-react';
+import { PlusCircle, SlidersHorizontal, Hash, TextCursorInput, Loader2, AlertCircle, CaseSensitive } from 'lucide-react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
@@ -19,7 +19,6 @@ const addElevatorSchema = z.object({
   deviceId: z.string().min(1, "You must select a block."),
   slaveId: z.string().min(1, "Slave ID is required."),
   slaveAddress: z.string().min(1, "Slave Address is required."),
-  floorCount: z.string().min(1, "Number of floors is required."),
   slaveName: z.string().optional(),
 });
 
@@ -29,7 +28,6 @@ type AddElevatorFormProps = {
   onElevatorAdded: (newElevators: ElevatorData[]) => void;
   children: React.ReactNode;
   preselectedBlock?: string;
-  allDeviceIds?: string[];
 };
 
 async function configureDeviceOnBackend(action: 'set_slave', payload: object) {
@@ -45,11 +43,11 @@ async function configureDeviceOnBackend(action: 'set_slave', payload: object) {
     return result;
 }
 
-export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children, preselectedBlock, allDeviceIds }: AddElevatorFormProps) {
+export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children, preselectedBlock }: AddElevatorFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submissionStatus, setSubmissionStatus] = React.useState<string | null>(null);
   const { setElevatorName, getDeviceName } = useNaming();
-  const [deviceIds, setDeviceIds] = React.useState<string[]>(allDeviceIds || []);
+  const [deviceIds, setDeviceIds] = React.useState<string[]>([]);
 
   const form = useForm<z.infer<typeof addElevatorSchema>>({
     resolver: zodResolver(addElevatorSchema),
@@ -57,7 +55,6 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
       deviceId: preselectedBlock || "",
       slaveId: "",
       slaveAddress: "",
-      floorCount: "15",
       slaveName: "",
     },
   });
@@ -69,25 +66,24 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
   }, [preselectedBlock, form]);
 
   React.useEffect(() => {
-    // Fetch device IDs if they weren't passed as a prop
     async function fetchDeviceIds() {
-        if (!allDeviceIds) {
-            const res = await fetch('/api/elevators');
-            const data: ElevatorData[] = await res.json();
-            const uniqueDeviceIds = [...new Set(data.map(e => e.deviceId))];
-            setDeviceIds(uniqueDeviceIds);
-        }
+        const res = await fetch('/api/elevators');
+        const data: ElevatorData[] = await res.json();
+        const uniqueDeviceIds = [...new Set(data.map(e => e.deviceId))];
+        setDeviceIds(uniqueDeviceIds);
     }
     if (open) {
       fetchDeviceIds();
     }
-  }, [open, allDeviceIds]);
+  }, [open]);
 
 
   const onSubmit = async (values: z.infer<typeof addElevatorSchema>) => {
     setIsSubmitting(true);
     setSubmissionStatus("Registering elevator in ElevateView...");
     form.clearErrors("root.serverError");
+
+    const floorCount = "15"; // Hardcode default floor count
 
     try {
         // Step 1: Add elevator to the application state
@@ -107,7 +103,7 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
         await configureDeviceOnBackend('set_slave', {
             deviceId: values.deviceId,
             slaveId: values.slaveId,
-            floorCount: values.floorCount
+            floorCount: floorCount 
         });
         
         // If all successful, update UI state
@@ -119,7 +115,7 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
         setSubmissionStatus("Configuration successful!");
         setTimeout(() => {
             onOpenChange(false);
-            form.reset({ deviceId: preselectedBlock || "", slaveId: "", slaveName: "", slaveAddress: "", floorCount: "15" });
+            form.reset({ deviceId: preselectedBlock || "", slaveId: "", slaveName: "", slaveAddress: "" });
             setSubmissionStatus(null);
         }, 1500);
 
@@ -198,19 +194,6 @@ export function AddElevatorForm({ open, onOpenChange, onElevatorAdded, children,
                         )}
                     />
                 </div>
-                 <FormField
-                    control={form.control}
-                    name="floorCount"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="flex items-center gap-2 text-sm"><ListTree /> Number of Floors</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="e.g., 15" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 <FormField
                     control={form.control}
                     name="slaveName"
