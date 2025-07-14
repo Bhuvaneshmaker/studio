@@ -4,12 +4,12 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ElevatorGrid } from '@/components/elevator-grid';
-import { Building, Search, X, Landmark, PlusCircle } from 'lucide-react';
+import { Building, Search, X, Landmark, PlusCircle, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
 import { BackButton } from '@/components/back-button';
-import { AddBlockFormWrapper } from '@/components/add-block-form-wrapper';
+import { AddElevatorFormWrapper } from '@/components/add-elevator-form-wrapper';
 import { Button } from '@/components/ui/button';
 import type { ElevatorData } from '@/types/elevator';
 
@@ -18,8 +18,9 @@ export default function ElevatorsPage() {
   const deviceFilter = searchParams.get('device');
   const [searchQuery, setSearchQuery] = useState("");
   const { getDeviceName } = useNaming();
-  // We need a local state to trigger re-renders in ElevatorGrid when a block is added.
-  const [elevators, setElevators] = useState<ElevatorData[]>([]);
+  // We need a local state to trigger re-renders in ElevatorGrid when an elevator is added.
+  const [lastUpdated, setLastUpdated] = useState(Date.now());
+
 
   const pageTitle = deviceFilter 
     ? getDeviceName(deviceFilter)
@@ -27,9 +28,9 @@ export default function ElevatorsPage() {
   
   const blocksPageTitle = 'Blocks';
   
-  const handleBlockAdded = (newElevators: ElevatorData[]) => {
+  const handleElevatorAdded = (newElevators: ElevatorData[]) => {
     // This will trigger a re-render of the page and its children
-    setElevators(newElevators);
+    setLastUpdated(Date.now());
   };
 
   return (
@@ -55,12 +56,12 @@ export default function ElevatorsPage() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-             <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
+             <AddElevatorFormWrapper onElevatorAdded={handleElevatorAdded}>
                <Button size="sm">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add New Block
+                  <SlidersHorizontal className="mr-2 h-4 w-4" />
+                  Add New Elevator
                 </Button>
-            </AddBlockFormWrapper>
+            </AddElevatorFormWrapper>
             <BackButton />
           </div>
         </div>
@@ -85,7 +86,7 @@ export default function ElevatorsPage() {
                 />
             </div>
         </div>
-        <ElevatorGrid searchQuery={searchQuery} deviceFilter={deviceFilter} key={elevators.length} />
+        <ElevatorGrid searchQuery={searchQuery} deviceFilter={deviceFilter} key={lastUpdated} />
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">

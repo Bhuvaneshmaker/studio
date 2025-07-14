@@ -6,13 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import type { ElevatorData } from "@/types/elevator";
 import { useNaming } from '@/hooks/use-naming';
-import { Wrench, ShieldAlert, CheckCircle2, ArrowRight, Landmark, AlertTriangle } from "lucide-react";
+import { Wrench, ShieldAlert, CheckCircle2, ArrowRight, Landmark, AlertTriangle, SlidersHorizontal, PlusCircle } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from './ui/alert';
 import { NUM_ELEVATORS_PER_BLOCK } from '@/lib/elevator-simulation';
+import { AddElevatorFormWrapper } from './add-elevator-form-wrapper';
+import { Separator } from './ui/separator';
 
 
-export function BlockCard({ deviceId, elevators }: { deviceId: string, elevators: ElevatorData[] }) {
+export function BlockCard({ deviceId, elevators, onElevatorAdded }: { deviceId: string, elevators: ElevatorData[], onElevatorAdded: (newElevators: ElevatorData[]) => void }) {
   const { getDeviceName } = useNaming();
   const blockName = getDeviceName(deviceId);
 
@@ -70,12 +72,18 @@ export function BlockCard({ deviceId, elevators }: { deviceId: string, elevators
           </Alert>
         )}
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full" variant={hasFault ? 'destructive' : 'outline'}>
+      <CardFooter className="flex flex-col gap-2 p-4 pt-0">
+         <Button asChild className="w-full" variant={hasFault ? 'destructive' : 'outline'}>
           <Link href={`/elevators?device=${deviceId}`}>
-            View {unitName} <ArrowRight className="ml-2 w-4 h-4" />
+            View Elevators <ArrowRight className="ml-2 w-4 h-4" />
           </Link>
         </Button>
+        <Separator className="my-1"/>
+         <AddElevatorFormWrapper onElevatorAdded={onElevatorAdded} preselectedBlock={deviceId}>
+            <Button variant="ghost" className="w-full text-muted-foreground">
+              <PlusCircle className="w-4 h-4 mr-2" /> Add Elevator to Block
+            </Button>
+          </AddElevatorFormWrapper>
       </CardFooter>
     </Card>
   );

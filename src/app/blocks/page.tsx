@@ -34,6 +34,7 @@ const BlocksPageSkeleton = () => (
 export default function BlocksPage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(Date.now());
 
   useEffect(() => {
     async function fetchData() {
@@ -44,10 +45,11 @@ export default function BlocksPage() {
         setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [lastUpdated]);
   
-  const handleBlockAdded = (newElevators: ElevatorData[]) => {
+  const handleUpdate = (newElevators: ElevatorData[]) => {
     setElevators(newElevators);
+    setLastUpdated(Date.now());
   };
 
   const elevatorsByBlock = elevators.reduce((acc, elevator) => {
@@ -80,7 +82,7 @@ export default function BlocksPage() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
+            <AddBlockFormWrapper onBlockAdded={handleUpdate}>
                <Button size="sm">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add New Block
@@ -96,7 +98,7 @@ export default function BlocksPage() {
         ) : Object.keys(elevatorsByBlock).length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([deviceId, deviceElevators]) => (
-              <BlockCard key={deviceId} deviceId={deviceId} elevators={deviceElevators} />
+              <BlockCard key={deviceId} deviceId={deviceId} elevators={deviceElevators} onElevatorAdded={handleUpdate} />
             ))}
           </div>
         ) : (
@@ -108,7 +110,7 @@ export default function BlocksPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
-              <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
+              <AddBlockFormWrapper onBlockAdded={handleUpdate}>
                 <Button size="lg">
                   <PlusCircle className="mr-2 h-5 w-5" />
                   Add New Block to ElevateView

@@ -14,7 +14,7 @@ async function sendCommandToListener(data: object): Promise<any> {
         const options = {
             hostname: COMMAND_HOST,
             port: COMMAND_PORT,
-            path: '/api/configure-device',
+            path: '/api/command',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -30,6 +30,10 @@ async function sendCommandToListener(data: object): Promise<any> {
             });
             res.on('end', () => {
                 try {
+                    if (res.statusCode && res.statusCode >= 400) {
+                       const parsedError = JSON.parse(responseBody);
+                       return reject(new Error(parsedError.error || `Listener returned status ${res.statusCode}`));
+                    }
                     resolve(JSON.parse(responseBody));
                 } catch (e) {
                     reject(new Error(`Failed to parse response from listener: ${responseBody}`));

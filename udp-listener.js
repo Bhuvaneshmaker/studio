@@ -1,15 +1,13 @@
+
 // This is a Node.js script to listen for UDP packets from the hardware
 // and forward them to the Next.js application's API endpoint.
 // It also exposes functions to be called by the Next.js app to configure hardware.
-
-// To run this script:
-// 1. Open a new terminal in your project's root directory.
-// 2. Run `node udp-listener.js`
 
 const dgram = require('dgram');
 const http = require('http');
 const fs = require('fs');
 const ini = require('ini');
+const path = require('path');
 
 // --- Configuration ---
 const LISTENER_PORT = 41234; // The port this listener will bind to.
@@ -18,7 +16,8 @@ const BROADCAST_ADDRESS = '192.168.0.255'; // Use the correct broadcast address 
 const API_HOST = 'localhost';
 const API_PORT = 9002;
 const API_PATH = '/api/parser';
-const TIMEOUT = 5000;
+const INI_FILE_PATH = path.join(__dirname, 'ini_ip.ini');
+
 
 // Frame Constants
 const FRAME_HEADER = 0x80;
@@ -32,20 +31,20 @@ const REQ_SET_SLAVE_ID = 0x03;
 const REQ_GET_SLAVE_ID = 0x04;
 const REQ_DATA_FRAME = 0x05;
 
-let Current_DeviceID = 0x00; // This can be dynamically updated
+let Current_DeviceID = 0x00; // This can be dynamically updated for broadcast commands
 
 // --- Helper Functions ---
-function calculateChecksum(dataFrame) {
-    // Sum all bytes except the checksum and footer
-    const totalSum = dataFrame.slice(0, 53).reduce((a, b) => a + b, 0);
-    return totalSum & 0xFF; // Return last 8 bits
+function calculateChecksum(bytes) {
+    // The checksum is a simple sum of all bytes, overflowing at 255 (uint8_t).
+    const sum = bytes.reduce((acc, byte) => acc + byte, 0);
+    return sum & 0xFF; // Return only the last 8 bits.
 }
 
 function sendUdpCommand(frame, targetIp = BROADCAST_ADDRESS, targetPort = HARDWARE_PORT) {
     return new Promise((resolve, reject) => {
         const socket = dgram.createSocket('udp4');
         socket.bind(() => {
-            socket.setBroadcast(true);
+            socket.setBroadcast(targetIp === BROADCAST_ADDRESS);
         });
 
         const buffer = Buffer.from(frame);
@@ -55,7 +54,7 @@ function sendUdpCommand(frame, targetIp = BROADCAST_ADDRESS, targetPort = HARDWA
                 socket.close();
                 return reject(err);
             }
-            console.log(`UDP packet sent to ${targetIp}:${targetPort}`);
+            console.log(`UDP command packet sent to ${targetIp}:${targetPort}`);
             socket.close();
             resolve();
         });
@@ -80,8 +79,11 @@ function postToApi(data) {
         res.setEncoding('utf8');
         res.on('data', (chunk) => { responseBody += chunk; });
         res.on('end', () => {
-            console.log(`API response status: ${res.statusCode}`);
-            console.log(`API response body: ${responseBody}`);
+            if (res.statusCode >= 400) {
+                 console.error(`API response status: ${res.statusCode} | body: ${responseBody}`);
+            } else {
+                 console.log(`API response status: ${res.statusCode} | body: ${responseBody}`);
+            }
         });
     });
 
@@ -94,9 +96,8 @@ function postToApi(data) {
 }
 
 
-// --- Main Logic ---
+// --- Main Logic: Data Listener ---
 
-// Listen for incoming data frames from hardware
 const dataListener = dgram.createSocket('udp4');
 
 dataListener.on('error', (err) => {
@@ -105,23 +106,23 @@ dataListener.on('error', (err) => {
 });
 
 dataListener.on('message', (msg, rinfo) => {
-    console.log(`\n--- Received UDP Data Frame from ${rinfo.address}:${rinfo.port} ---`);
+    console.log(`\n--- Received UDP Packet from ${rinfo.address}:${rinfo.port} ---`);
     const receivedBytes = Array.from(msg);
     
-    if (receivedBytes.length < 6 || receivedBytes[0] !== FRAME_HEADER || receivedBytes[receivedBytes.length-1] !== FRAME_FOOTER) {
-        console.error('Received invalid or malformed data frame.');
-        return;
-    }
-    
-    if (receivedBytes[1] !== REQ_DATA_FRAME) {
-        console.log('Received a command response, not a data frame. Ignoring in this listener.');
-        return;
+    // Check for data frames (type 0x05)
+    if (receivedBytes[1] === REQ_DATA_FRAME) {
+        if (receivedBytes.length < 6 || receivedBytes[0] !== FRAME_HEADER || receivedBytes[receivedBytes.length-1] !== FRAME_FOOTER) {
+            console.error('Received invalid or malformed data frame.');
+            return;
+        }
+        
+        const frameString = msg.toString('hex');
+        console.log(`Forwarding Raw Data Frame to API: ${frameString}`);
+        postToApi([frameString]); // The parser API expects an array of frame strings
+    } else {
+        console.log("Received a command ACK or other non-data frame. Ignoring.")
     }
 
-    // Pass the raw hex string to the parser API
-    const frameString = msg.toString('hex');
-    console.log(`Forwarding Raw Frame to API: ${frameString}`);
-    postToApi([frameString]); // The parser API expects an array of frame strings
 });
 
 dataListener.on('listening', () => {
@@ -133,65 +134,64 @@ dataListener.on('listening', () => {
 dataListener.bind(LISTENER_PORT);
 
 
-// --- Functions to be called from the Next.js backend ---
+// --- Command Functions ---
 
-async function setDeviceIDAndIP(newDeviceId, ipAddress) {
-    console.log(`--- Configuring Device ID: ${newDeviceId}, IP: ${ipAddress.join('.')} ---`);
+async function setDeviceConfig(deviceId, ipAddress) {
+    console.log(`--- Configuring Device ID: ${deviceId}, IP: ${ipAddress} ---`);
     let frame = new Array(55).fill(0);
     
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_DEVICE_IP;
     frame[2] = Current_DeviceID; // Source device ID, 0x00 for broadcast
-    frame[3] = parseInt(newDeviceId);
+    frame[3] = deviceId.charCodeAt(0); // Assuming single letter IDs like 'A'
     
+    const ipParts = ipAddress.split('.').map(Number);
     for (let i = 0; i < 4; i++) {
-        frame[4 + i] = ipAddress[i];
+        frame[4 + i] = ipParts[i];
     }
     
-    frame[53] = calculateChecksum(frame);
+    frame[53] = calculateChecksum(frame.slice(0, 53));
     frame[54] = FRAME_FOOTER;
     
     await sendUdpCommand(frame);
     console.log("Set Device ID/IP command sent.");
 
-    // Here you would typically listen for a response to confirm success.
-    // For now, we'll assume it works and update the local config.
+    // Update the local config file
     try {
-        const config = ini.parse(fs.readFileSync('ini_ip.ini', 'utf-8'));
-        const targetBlock = `BLOCK_${newDeviceId}`; // e.g. BLOCK_A
+        const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
+        const targetBlock = `BLOCK_${deviceId}`;
         if (!config[targetBlock]) {
             config[targetBlock] = {};
         }
-        config[targetBlock]['block_id'] = newDeviceId;
-        config[targetBlock]['ip_address'] = ipAddress.join('.');
-        fs.writeFileSync('ini_ip.ini', ini.stringify(config));
+        config[targetBlock]['block_id'] = deviceId;
+        config[targetBlock]['ip_address'] = ipAddress;
+        fs.writeFileSync(INI_FILE_PATH, ini.stringify(config));
         console.log(`ini_ip.ini updated for ${targetBlock}.`);
-        return { success: true, message: `Device ${newDeviceId} configured.` };
+        return { success: true, message: `Device ${deviceId} configured.` };
     } catch (e) {
         console.error("Error updating ini file:", e);
         return { success: false, error: "Failed to update config file." };
     }
 }
 
-async function setSlaveID(deviceId, slaveId, floorCount) {
+async function setSlaveConfig(deviceId, slaveId, floorCount) {
     console.log(`--- Configuring Slave ID: ${slaveId} for Device: ${deviceId} ---`);
     let frame = new Array(55).fill(0);
 
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_SLAVE_ID;
-    frame[2] = parseInt(deviceId);
-    frame[3] = parseInt(slaveId);
-    frame[4] = parseInt(floorCount);
+    frame[2] = deviceId.charCodeAt(0);
+    frame[3] = parseInt(slaveId, 10);
+    frame[4] = parseInt(floorCount, 10);
     
-    frame[53] = calculateChecksum(frame);
+    frame[53] = calculateChecksum(frame.slice(0, 53));
     frame[54] = FRAME_FOOTER;
 
-    // We need to know the specific IP of the device to send this command
-    let targetIp = BROADCAST_ADDRESS;
+    let targetIp = BROADCAST_ADDRESS; // Default to broadcast
     try {
-        const config = ini.parse(fs.readFileSync('ini_ip.ini', 'utf-8'));
-        const targetBlockKey = Object.keys(config).find(key => config[key].block_id === deviceId);
-        if (targetBlockKey && config[targetBlockKey].ip_address) {
+        const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
+        const targetBlockKey = `BLOCK_${deviceId}`;
+        if (config[targetBlockKey] && config[targetBlockKey].ip_address) {
             targetIp = config[targetBlockKey].ip_address;
         } else {
              console.warn(`IP for Device ${deviceId} not found in ini file, using broadcast.`);
@@ -203,19 +203,18 @@ async function setSlaveID(deviceId, slaveId, floorCount) {
     await sendUdpCommand(frame, targetIp);
     console.log(`Set Slave ID command sent to ${targetIp}.`);
     
-    // Again, assume success and update config
      try {
-        const config = ini.parse(fs.readFileSync('ini_ip.ini', 'utf-8'));
-        const targetBlockKey = Object.keys(config).find(key => config[key].block_id === deviceId);
-        if (targetBlockKey) {
+        const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
+        const targetBlockKey = `BLOCK_${deviceId}`;
+        if (config[targetBlockKey]) {
             const elevatorKey = `elevator_${slaveId}`;
             config[targetBlockKey][elevatorKey] = slaveId;
             config[targetBlockKey][`${elevatorKey}_floor_count`] = floorCount;
-            fs.writeFileSync('ini_ip.ini', ini.stringify(config));
+            fs.writeFileSync(INI_FILE_PATH, ini.stringify(config));
             console.log(`ini_ip.ini updated for slave ${slaveId} in ${targetBlockKey}.`);
             return { success: true, message: `Slave ${slaveId} configured.` };
         } else {
-            return { success: false, error: `Device ${deviceId} not found in config.` };
+             throw new Error(`Device block [${targetBlockKey}] not found in config.`);
         }
     } catch (e) {
         console.error("Error updating ini file:", e);
@@ -226,7 +225,7 @@ async function setSlaveID(deviceId, slaveId, floorCount) {
 
 // --- HTTP Server to receive commands from Next.js backend ---
 const commandServer = http.createServer(async (req, res) => {
-    if (req.url === '/api/configure-device' && req.method === 'POST') {
+    if (req.url === '/api/command' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => {
             body += chunk.toString();
@@ -235,25 +234,31 @@ const commandServer = http.createServer(async (req, res) => {
             try {
                 const { action, payload } = JSON.parse(body);
                 let result;
+                console.log(`Received command: ${action}`, payload);
 
                 if (action === 'set_device') {
                     const { deviceId, ipAddress } = payload;
-                    const ipParts = ipAddress.split('.').map(Number);
-                    result = await setDeviceIDAndIP(deviceId, ipParts);
+                    result = await setDeviceConfig(deviceId, ipAddress);
                 } else if (action === 'set_slave') {
                     const { deviceId, slaveId, floorCount } = payload;
-                    result = await setSlaveID(deviceId, slaveId, floorCount);
+                    result = await setSlaveConfig(deviceId, slaveId, floorCount);
                 } else {
                     result = { success: false, error: 'Invalid action' };
                 }
 
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(result));
+                if (result.success) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(result));
+                } else {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: false, error: result.error }));
+                }
 
             } catch (error) {
-                console.error("Error processing command request:", error);
+                const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+                console.error("Error processing command request:", errorMessage);
                 res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: false, error: 'Internal server error' }));
+                res.end(JSON.stringify({ success: false, error: errorMessage }));
             }
         });
     } else {
@@ -264,10 +269,5 @@ const commandServer = http.createServer(async (req, res) => {
 
 const COMMAND_PORT = 9003; // A separate port for the command server
 commandServer.listen(COMMAND_PORT, () => {
-    console.log(`Command server listening on http://localhost:${COMMAND_PORT}`);
+    console.log(`Command server listening for UI commands on http://localhost:${COMMAND_PORT}`);
 });
-
-module.exports = {
-    setDeviceIDAndIP,
-    setSlaveID
-};

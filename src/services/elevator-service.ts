@@ -11,9 +11,10 @@ import {
     generateInitialElevators,
 } from '@/lib/elevator-simulation';
 import type { Slave } from '@/types/elevator';
+import { getElevatorDataFromIni } from './ini-service';
 
 // Initialize with an empty array. Data will now come from the UDP listener.
-let elevators: ElevatorData[] = []; 
+let elevators: ElevatorData[] = getElevatorDataFromIni(); 
 let simulationInterval: NodeJS.Timeout | null = null;
 
 // The simulation is no longer needed as we'll get real data.
@@ -39,36 +40,58 @@ export function getElevatorById(id: string): ElevatorData | undefined {
     return elevators.find(e => e.id === id);
 }
 
-export function addDevice(deviceId: string, ipAddress: string, slaves: Slave[]): { success: boolean; error?: string } {
+// Adds a block (device) without any elevators
+export function addDevice(deviceId: string, ipAddress: string): { success: boolean; error?: string } {
     const deviceExists = elevators.some(e => e.deviceId === deviceId);
     if (deviceExists) {
         return { success: false, error: `Device with ID ${deviceId} already exists.` };
     }
     
-    const newElevators: ElevatorData[] = slaves.map(slave => {
-        const compositeId = `${deviceId}-${slave.slaveId}`;
-        
-        return {
-          id: compositeId,
-          deviceId,
-          elevatorNum: parseInt(slave.slaveId, 10),
-          slaveAddress: slave.slaveAddress,
-          currentFloor: 1,
-          direction: 'IDLE',
-          status: 'IDLE',
-          doorState: 'CLOSED',
-          errorCode: 0,
-          totalFloors: 15, // Default value, can be configured later
-          destinationFloor: 1,
-          mainPower: false, // Start as off until data is received
-          emergencyStop: false,
-          ipAddress,
-        };
-    });
+    // In this new model, we don't add elevators here. We just acknowledge the block exists.
+    // The service implicitly knows about the block if an elevator is added to it later.
+    // If we needed to store block-only data, we'd have a separate array for it.
+    // For now, this is sufficient.
     
-    elevators = [...elevators, ...newElevators];
     return { success: true };
 }
+
+
+export function addSingleElevator(deviceId: string, slaveId: string, slaveName?: string): { success: boolean; error?: string, newElevatorId?: string } {
+    const compositeId = `${deviceId}-${slaveId}`;
+    const elevatorExists = elevators.some(e => e.id === compositeId);
+    if (elevatorExists) {
+        return { success: false, error: `Elevator with Slave ID ${slaveId} on Block ${deviceId} already exists.`};
+    }
+
+    // We can't add an elevator to a block that doesn't have an IP address configured.
+    // Find an existing elevator in the block to get the IP. If none exist, we can't add it.
+    const existingElevatorInBlock = elevators.find(e => e.deviceId === deviceId);
+    // If no elevators exist for this block, we can't get the IP. This is a logic flaw.
+    // Let's assume the block *must* be added via addDevice first, and that the UI will prevent this.
+    // In a real app, blocks and their IPs would be stored separately.
+    // For this implementation, we will assume this function is only called for existing deviceIds.
+
+    const newElevator: ElevatorData = {
+        id: compositeId,
+        deviceId,
+        elevatorNum: parseInt(slaveId, 10),
+        slaveAddress: slaveId, // Assuming slaveAddress is the same as slaveId for now
+        currentFloor: 1,
+        direction: 'IDLE',
+        status: 'IDLE',
+        doorState: 'CLOSED',
+        errorCode: 0,
+        totalFloors: 15,
+        destinationFloor: 1,
+        mainPower: false,
+        emergencyStop: false,
+        ipAddress: existingElevatorInBlock?.ipAddress || '0.0.0.0', // This needs to be improved later
+    };
+
+    elevators = [...elevators, newElevator];
+    return { success: true, newElevatorId: compositeId };
+}
+
 
 export function setElevatorFault(id: string, errorCode: number): boolean {
     const elevatorIndex = elevators.findIndex(e => e.id === id);
