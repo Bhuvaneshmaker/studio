@@ -34,22 +34,27 @@ const BlocksPageSkeleton = () => (
 export default function BlocksPage() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(Date.now());
 
-  useEffect(() => {
-    async function fetchData() {
-        setLoading(true);
-        const res = await fetch('/api/elevators');
-        const data = await res.json();
-        setElevators(data);
-        setLoading(false);
-    }
-    fetchData();
-  }, [lastUpdated]);
+  const fetchData = async () => {
+      setLoading(true);
+      const res = await fetch('/api/elevators');
+      const data = await res.json();
+      setElevators(data);
+      setLoading(false);
+  };
   
-  const handleUpdate = (newElevators: ElevatorData[]) => {
-    setElevators(newElevators);
-    setLastUpdated(Date.now());
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 2000); // Poll for updates, especially for auto-discovered blocks
+    return () => clearInterval(interval);
+  }, []);
+  
+  const handleUpdate = (newElevators?: ElevatorData[]) => {
+    if (newElevators) {
+        setElevators(newElevators);
+    } else {
+        fetchData();
+    }
   };
 
   const elevatorsByBlock = elevators.reduce((acc, elevator) => {
@@ -60,6 +65,11 @@ export default function BlocksPage() {
     acc[deviceId].push(elevator);
     return acc;
   }, {} as Record<string, ElevatorData[]>);
+  
+  const configuredBlockIds = new Set(elevators.map(e => e.deviceId));
+  const allBlockIds = Object.keys(elevatorsByBlock);
+  // This ensures that even blocks with zero elevators (newly discovered) are shown.
+  // We can derive this from a potentially more complete list if available, but this works for now.
 
   const pageTitle = 'Blocks';
 
@@ -95,10 +105,10 @@ export default function BlocksPage() {
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
         {loading ? (
           <BlocksPageSkeleton />
-        ) : Object.keys(elevatorsByBlock).length > 0 ? (
+        ) : allBlockIds.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Object.entries(elevatorsByBlock).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([deviceId, deviceElevators]) => (
-              <BlockCard key={deviceId} deviceId={deviceId} elevators={deviceElevators} onElevatorAdded={handleUpdate} />
+            {allBlockIds.sort((a, b) => a.localeCompare(b, undefined, {numeric: true})).map((deviceId) => (
+              <BlockCard key={deviceId} deviceId={deviceId} elevators={elevatorsByBlock[deviceId] || []} onElevatorAdded={handleUpdate} />
             ))}
           </div>
         ) : (
@@ -106,14 +116,14 @@ export default function BlocksPage() {
             <CardHeader className="text-center">
               <CardTitle>No Blocks Configured</CardTitle>
               <CardDescription>
-                Get started by adding your first block to monitor elevators.
+                Get started by adding your first block or connecting a new hardware device to the network.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
               <AddBlockFormWrapper onBlockAdded={handleUpdate}>
                 <Button size="lg">
                   <PlusCircle className="mr-2 h-5 w-5" />
-                  Add New Block to ElevateView
+                  Manually Add a Block
                 </Button>
               </AddBlockFormWrapper>
             </CardContent>

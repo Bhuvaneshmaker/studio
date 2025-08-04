@@ -12,91 +12,100 @@ const path = require('path');
 // --- Configuration ---
 const LISTENER_PORT = 41234; // The port this listener will bind to.
 const HARDWARE_PORT = 1234; // The port to send commands to on the hardware.
-const BROADCAST_ADDRESS = '192.168.0.255'; // Use the correct broadcast address for your network.
 const API_HOST = 'localhost';
 const API_PORT = 9002;
-const API_PATH = '/api/parser';
+const API_PATH_PARSER = '/api/parser';
+const API_PATH_ELEVATORS = '/api/elevators';
 const INI_FILE_PATH = path.join(__dirname, 'ini_ip.ini');
-
+const POLLING_INTERVAL_MS = 2000; // Poll hardware every 2 seconds.
 
 // Frame Constants
 const FRAME_HEADER = 0x80;
-const FRAME_FOOTER = 0xFF;
 const FRAME_ACK_HEADER = 0x81;
+const FRAME_FOOTER = 0xFF;
 
 // Request Types
 const REQ_SET_DEVICE_IP = 0x01;
 const REQ_GET_DEVICE_IP = 0x02;
 const REQ_SET_SLAVE_ID = 0x03;
-const REQ_GET_SLAVE_ID = 0x04;
+const REQ_GET_SLAVE_ID_DATA = 0x04; // This is used to poll for data
 const REQ_DATA_FRAME = 0x05;
 
-let Current_DeviceID = 0x00; // This can be dynamically updated for broadcast commands
-
 // --- Helper Functions ---
-function calculateChecksum(bytes) {
-    // The checksum is a simple sum of all bytes, overflowing at 255 (uint8_t).
-    const sum = bytes.reduce((acc, byte) => acc + byte, 0);
+function calculateChecksum(bytes, start, end) {
+    // The checksum is a simple sum of specified bytes, overflowing at 255 (uint8_t).
+    const dataForChecksum = bytes.slice(start, end);
+    const sum = dataForChecksum.reduce((acc, byte) => acc + byte, 0);
     return sum & 0xFF; // Return only the last 8 bits.
 }
 
-function sendUdpCommand(frame, targetIp = BROADCAST_ADDRESS, targetPort = HARDWARE_PORT) {
-    return new Promise((resolve, reject) => {
+function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
+     return new Promise((resolve, reject) => {
         const socket = dgram.createSocket('udp4');
-        socket.bind(() => {
-            socket.setBroadcast(targetIp === BROADCAST_ADDRESS);
-        });
-
         const buffer = Buffer.from(frame);
+
         socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
             if (err) {
-                console.error(`Error sending UDP packet to ${targetIp}:${targetPort}`, err);
+                // We will handle this gracefully in the calling function
                 socket.close();
                 return reject(err);
             }
-            console.log(`UDP command packet sent to ${targetIp}:${targetPort}`);
+            // console.log(`UDP command packet sent to ${targetIp}:${targetPort}`);
             socket.close();
             resolve();
         });
     });
 }
 
-function postToApi(data) {
-    const postData = JSON.stringify(data);
-    const options = {
-        hostname: API_HOST,
-        port: API_PORT,
-        path: API_PATH,
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(postData),
-        },
-    };
+function postToApi(data, apiPath) {
+    return new Promise((resolve, reject) => {
+        const postData = JSON.stringify(data);
+        const options = {
+            hostname: API_HOST,
+            port: API_PORT,
+            path: apiPath,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData),
+            },
+        };
 
-    const req = http.request(options, (res) => {
-        let responseBody = '';
-        res.setEncoding('utf8');
-        res.on('data', (chunk) => { responseBody += chunk; });
-        res.on('end', () => {
-            if (res.statusCode >= 400) {
-                 console.error(`API response status: ${res.statusCode} | body: ${responseBody}`);
-            } else {
-                 console.log(`API response status: ${res.statusCode} | body: ${responseBody}`);
-            }
+        const req = http.request(options, (res) => {
+            let responseBody = '';
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => { responseBody += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsedResponse = JSON.parse(responseBody);
+                     if (res.statusCode >= 400) {
+                        console.error(`API response error (${res.statusCode}): ${parsedResponse.error || responseBody}`);
+                        reject(new Error(parsedResponse.error || `API returned status ${res.statusCode}`));
+                    } else {
+                        resolve(parsedResponse);
+                    }
+                } catch (e) {
+                     console.error(`Failed to parse API JSON response: ${responseBody}`);
+                     reject(e);
+                }
+            });
         });
-    });
 
-    req.on('error', (e) => {
-        console.error(`Problem with API request: ${e.message}`);
-    });
+        req.on('error', (e) => {
+            console.error(`Problem with API request to ${apiPath}: ${e.message}`);
+            reject(e);
+        });
 
-    req.write(postData);
-    req.end();
+        req.write(postData);
+        req.end();
+    });
 }
 
 
 // --- Main Logic: Data Listener ---
+
+let dataFrameBatch = [];
+let batchTimeout = null;
 
 const dataListener = dgram.createSocket('udp4');
 
@@ -105,25 +114,33 @@ dataListener.on('error', (err) => {
     dataListener.close();
 });
 
-dataListener.on('message', (msg, rinfo) => {
-    console.log(`\n--- Received UDP Packet from ${rinfo.address}:${rinfo.port} ---`);
-    const receivedBytes = Array.from(msg);
-    
-    // Check for data frames (type 0x05)
-    if (receivedBytes[1] === REQ_DATA_FRAME) {
-        if (receivedBytes.length < 6 || receivedBytes[0] !== FRAME_HEADER || receivedBytes[receivedBytes.length-1] !== FRAME_FOOTER) {
-            console.error('Received invalid or malformed data frame.');
-            return;
-        }
-        
-        const frameString = msg.toString('hex');
-        console.log(`Forwarding Raw Data Frame to API: ${frameString}`);
-        postToApi([frameString]); // The parser API expects an array of frame strings
-    } else {
-        console.log("Received a command ACK or other non-data frame. Ignoring.")
+dataListener.on('message', async (msg, rinfo) => {
+    // Auto-discovery: Listen for a specific broadcast message from unconfigured devices
+    if (msg.toString() === 'ELEVATEVIEW_DISCOVERY_REQUEST') {
+        console.log(`Discovery: Received discovery request from new device at ${rinfo.address}`);
+        await handleNewDeviceDiscovery(rinfo.address);
+        return;
     }
-
+    
+    // Regular data frame processing
+    const receivedBytes = Array.from(msg);
+    if (receivedBytes[0] === FRAME_HEADER && receivedBytes[1] === REQ_DATA_FRAME) {
+        dataFrameBatch.push(receivedBytes);
+        if (!batchTimeout) {
+            batchTimeout = setTimeout(() => {
+                // console.log(`Processing batch of ${dataFrameBatch.length} frames.`);
+                postToApi(dataFrameBatch, API_PATH_PARSER)
+                    .catch(err => console.error("Error posting frame batch to API:", err.message));
+                dataFrameBatch = [];
+                batchTimeout = null;
+            }, 50); // Batch frames over a 50ms window
+        }
+    } else if (receivedBytes[0] === FRAME_ACK_HEADER) {
+        // This is an ACK, can be handled if needed for command confirmation
+        // console.log(`Received ACK from ${rinfo.address}:`, msg.toString('hex'));
+    }
 });
+
 
 dataListener.on('listening', () => {
     const address = dataListener.address();
@@ -134,7 +151,90 @@ dataListener.on('listening', () => {
 dataListener.bind(LISTENER_PORT);
 
 
-// --- Command Functions ---
+// --- Hardware Polling ---
+
+async function pollHardware() {
+    try {
+        const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
+        const blocks = Object.keys(config);
+        
+        for (const blockKey of blocks) {
+            const block = config[blockKey];
+            if (block.ip_address && block.block_id) {
+                // Frame to request data from all slaves on the block
+                let frame = new Array(55).fill(0);
+                frame[0] = FRAME_HEADER;
+                frame[1] = REQ_GET_SLAVE_ID_DATA;
+                frame[2] = block.block_id.charCodeAt(0); // Device ID of the block we are polling
+                frame[53] = calculateChecksum(frame, 0, 53);
+                frame[54] = FRAME_FOOTER;
+
+                await sendUdpCommand(frame, block.ip_address, HARDWARE_PORT)
+                    .catch(err => {
+                        if (err.code === 'ENETUNREACH' || err.code === 'EHOSTUNREACH') {
+                            // This is a common, non-critical error if hardware is offline. Log quietly.
+                            console.warn(`Hardware Poll Warning: Block '${block.block_id}' (${block.ip_address}) is unreachable.`);
+                        } else {
+                            // Log other errors more verbosely.
+                            console.error(`Hardware Poll: Failed to send poll command to ${block.ip_address}.`, err);
+                        }
+                    });
+            }
+        }
+    } catch (error) {
+        console.error("Hardware Poll: Error reading INI file or polling devices.", error.message);
+    }
+}
+
+// Start polling immediately and then on an interval
+pollHardware();
+setInterval(pollHardware, POLLING_INTERVAL_MS);
+
+
+// --- Command Functions & Auto-Discovery ---
+
+async function handleNewDeviceDiscovery(deviceIp) {
+    try {
+        const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
+        
+        // Check if this IP is already configured
+        const isKnownIp = Object.values(config).some(block => block.ip_address === deviceIp);
+        if (isKnownIp) {
+            console.log(`Discovery: Device at ${deviceIp} is already configured. Ignoring.`);
+            return;
+        }
+
+        // Determine the next available block ID
+        const existingIds = Object.values(config).map(b => b.block_id.charCodeAt(0));
+        let nextCharCode = 'A'.charCodeAt(0);
+        while(existingIds.includes(nextCharCode)) {
+            nextCharCode++;
+        }
+        const newDeviceId = String.fromCharCode(nextCharCode);
+
+        console.log(`Discovery: Assigning new Block ID '${newDeviceId}' to device at ${deviceIp}`);
+
+        // 1. Configure the hardware device itself
+        const result = await setDeviceConfig(newDeviceId, deviceIp);
+        if (!result.success) {
+            throw new Error(result.error || `Failed to send configuration to new device.`);
+        }
+
+        // 2. Add the new (empty) block to the application state via API
+        const newBlockPayload = {
+            deviceId: newDeviceId,
+            deviceName: `Block ${newDeviceId}`, // Default name
+            ipAddress: deviceIp,
+            slaves: [], // No slaves initially
+        };
+        await postToApi(newBlockPayload, API_PATH_ELEVATORS);
+
+        console.log(`Discovery: Successfully added and configured new Block ${newDeviceId} at ${deviceIp}.`);
+
+    } catch (error) {
+        console.error("Auto-Discovery Error:", error.message);
+    }
+}
 
 async function setDeviceConfig(deviceId, ipAddress) {
     console.log(`--- Configuring Device ID: ${deviceId}, IP: ${ipAddress} ---`);
@@ -142,22 +242,22 @@ async function setDeviceConfig(deviceId, ipAddress) {
     
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_DEVICE_IP;
-    frame[2] = Current_DeviceID; // Source device ID, 0x00 for broadcast
-    frame[3] = deviceId.charCodeAt(0); // Assuming single letter IDs like 'A'
+    frame[2] = 0x00; // Source device ID is 0 for initial configuration
+    frame[3] = deviceId.charCodeAt(0);
     
     const ipParts = ipAddress.split('.').map(Number);
     for (let i = 0; i < 4; i++) {
         frame[4 + i] = ipParts[i];
     }
     
-    frame[53] = calculateChecksum(frame.slice(0, 53));
+    frame[53] = calculateChecksum(frame, 0, 53);
     frame[54] = FRAME_FOOTER;
     
-    await sendUdpCommand(frame);
-    console.log("Set Device ID/IP command sent.");
-
-    // Update the local config file
     try {
+        await sendUdpCommand(frame, ipAddress); // Send directly to the device's IP
+        console.log("Set Device ID/IP command sent.");
+
+        // Update the local config file
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
         const targetBlock = `BLOCK_${deviceId}`;
         if (!config[targetBlock]) {
@@ -169,8 +269,8 @@ async function setDeviceConfig(deviceId, ipAddress) {
         console.log(`ini_ip.ini updated for ${targetBlock}.`);
         return { success: true, message: `Device ${deviceId} configured.` };
     } catch (e) {
-        console.error("Error updating ini file:", e);
-        return { success: false, error: "Failed to update config file." };
+        console.error("Error during setDeviceConfig:", e.message);
+        return { success: false, error: `Failed to configure device or update config file: ${e.message}` };
     }
 }
 
@@ -184,30 +284,37 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
     frame[3] = parseInt(slaveId, 10);
     frame[4] = parseInt(floorCount, 10);
     
-    frame[53] = calculateChecksum(frame.slice(0, 53));
+    frame[53] = calculateChecksum(frame, 0, 53);
     frame[54] = FRAME_FOOTER;
 
-    let targetIp = BROADCAST_ADDRESS; // Default to broadcast
+    let targetIp = '';
     try {
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
         const targetBlockKey = `BLOCK_${deviceId}`;
         if (config[targetBlockKey] && config[targetBlockKey].ip_address) {
             targetIp = config[targetBlockKey].ip_address;
         } else {
-             console.warn(`IP for Device ${deviceId} not found in ini file, using broadcast.`);
+             throw new Error(`IP for Device ${deviceId} not found in ini file.`);
         }
     } catch (e) {
-        console.error("Could not read ini file to find IP, using broadcast.", e);
+        return { success: false, error: `Could not read ini file to find IP: ${e.message}` };
     }
     
-    await sendUdpCommand(frame, targetIp);
-    console.log(`Set Slave ID command sent to ${targetIp}.`);
-    
-     try {
+    try {
+        await sendUdpCommand(frame, targetIp);
+        console.log(`Set Slave ID command sent to ${targetIp}.`);
+        
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
         const targetBlockKey = `BLOCK_${deviceId}`;
         if (config[targetBlockKey]) {
-            const elevatorKey = `elevator_${slaveId}`;
+            // Find the key for this slave or create a new one
+            let elevatorKey = Object.keys(config[targetBlockKey]).find(k => config[targetBlockKey][k] === slaveId && k.startsWith('elevator_'));
+            if (!elevatorKey) {
+                const existingElevatorKeys = Object.keys(config[targetBlockKey]).filter(k => k.startsWith('elevator_') && !k.endsWith('_floor_count'));
+                const nextElevatorNum = existingElevatorKeys.length + 1;
+                elevatorKey = `elevator_${nextElevatorNum}`;
+            }
+
             config[targetBlockKey][elevatorKey] = slaveId;
             config[targetBlockKey][`${elevatorKey}_floor_count`] = floorCount;
             fs.writeFileSync(INI_FILE_PATH, ini.stringify(config));
@@ -217,8 +324,8 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
              throw new Error(`Device block [${targetBlockKey}] not found in config.`);
         }
     } catch (e) {
-        console.error("Error updating ini file:", e);
-        return { success: false, error: "Failed to update config file." };
+        console.error("Error during setSlaveConfig:", e.message);
+        return { success: false, error: `Failed to configure slave or update config file: ${e.message}` };
     }
 }
 
