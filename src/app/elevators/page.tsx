@@ -28,6 +28,7 @@ export default function ElevatorsPage() {
   const blocksPageTitle = 'Blocks';
   
   const handleBlockAdded = (newElevators: ElevatorData[]) => {
+    // This function forces a re-render of the ElevatorGrid when a new block is added
     setLastUpdated(Date.now());
   };
 

@@ -48,16 +48,23 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
   const [loading, setLoading] = useState(true);
   const { getDeviceName, getElevatorName } = useNaming();
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async () => {
+    try {
         const res = await fetch('/api/elevators', { cache: 'no-store' });
         if (res.ok) {
             const data = await res.json();
             setElevators(data);
         }
-        setLoading(false); // Only set loading to false after the first fetch
+    } catch (error) {
+        console.error("Failed to fetch elevator data:", error);
+    } finally {
+        if (loading) {
+            setLoading(false);
+        }
     }
+  };
 
+  useEffect(() => {
     fetchData();
 
     const interval = setInterval(fetchData, 5000); // Poll for updates every 5 seconds
@@ -95,7 +102,10 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
     if (!acc[deviceId]) {
       acc[deviceId] = [];
     }
-    acc[deviceId].push(elevator);
+    // Don't show the placeholder card in the grid
+    if (!elevator.id.endsWith('-placeholder')) {
+      acc[deviceId].push(elevator);
+    }
     return acc;
   }, {} as Record<string, ElevatorData[]>);
 
@@ -138,17 +148,20 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
 
   return (
     <div className="space-y-8">
-      {Object.entries(elevatorsByDevice).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([deviceId, deviceElevators], index) => (
-        <section key={deviceId} id={`device-${deviceId}`}>
-            <h3 className="text-2xl font-bold text-primary mb-4 flex items-center gap-2"><Landmark/> {getDeviceName(deviceId)}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).map(elevator => (
-                    <ElevatorCard key={elevator.id} elevator={elevator} />
-                ))}
-            </div>
-            {index < Object.keys(elevatorsByDevice).length - 1 && <Separator className="my-8" />}
-        </section>
-      ))}
+      {Object.entries(elevatorsByDevice).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true})).map(([deviceId, deviceElevators], index) => {
+        if (deviceElevators.length === 0) return null; // Don't render empty blocks (e.g., if only a placeholder existed)
+        return (
+            <section key={deviceId} id={`device-${deviceId}`}>
+                <h3 className="text-2xl font-bold text-primary mb-4 flex items-center gap-2"><Landmark/> {getDeviceName(deviceId)}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {deviceElevators.sort((a,b) => a.elevatorNum - b.elevatorNum).map(elevator => (
+                        <ElevatorCard key={elevator.id} elevator={elevator} />
+                    ))}
+                </div>
+                {index < Object.keys(elevatorsByDevice).length - 1 && <Separator className="my-8" />}
+            </section>
+        );
+      })}
     </div>
   );
 }
