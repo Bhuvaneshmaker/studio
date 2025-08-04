@@ -18,6 +18,7 @@ const API_PATH_PARSER = '/api/parser';
 const API_PATH_ELEVATORS = '/api/elevators';
 const INI_FILE_PATH = path.join(__dirname, 'ini_ip.ini');
 const POLLING_INTERVAL_MS = 2000; // Poll hardware every 2 seconds.
+const DISCOVERY_BROADCAST_IP = '255.255.255.255'; // Use broadcast for discovery
 const DISCOVERY_MESSAGE = 'ELEVATEMS_DISCOVERY_REQUEST';
 
 // Frame Constants
@@ -34,8 +35,12 @@ const REQ_DATA_FRAME = 0x05;
 
 // --- Helper Functions ---
 function calculateChecksum(bytes) {
-    // The checksum is a simple sum of all bytes, overflowing at 255 (uint8_t).
-    const sum = bytes.reduce((acc, byte) => acc + byte, 0);
+    // The checksum is a simple sum of all bytes from index 0 up to (but not including) the checksum byte itself.
+    // Based on the C++ and Python examples, this seems to be the intended logic.
+    // The C++ frame was 55 bytes, checksumming bytes 0-52.
+    // The Python script checksums bytes 0-52 for a 55-byte frame.
+    const dataForChecksum = bytes.slice(0, bytes.length - 2);
+    const sum = dataForChecksum.reduce((acc, byte) => acc + byte, 0);
     return sum & 0xFF; // Return only the last 8 bits.
 }
 
@@ -60,6 +65,9 @@ function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
             socket.close();
             reject(err);
         });
+
+        // Enable broadcasting on the socket. This is necessary to send to 255.255.255.255
+        socket.setBroadcast(true);
 
         socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
             if (err) {
@@ -118,10 +126,6 @@ function postToApi(data, apiPath) {
 
 
 // --- Main Logic: Data Listener ---
-
-let dataFrameBatch = [];
-let batchTimeout = null;
-
 const dataListener = dgram.createSocket('udp4');
 
 dataListener.on('error', (err) => {
@@ -220,7 +224,7 @@ async function handleNewDeviceDiscovery(deviceIp) {
 
         console.log(`Discovery: Assigning new Block ID '${newDeviceId}' to device at ${deviceIp}`);
 
-        // 1. Configure the hardware device itself
+        // 1. Configure the hardware device itself by broadcasting the command
         const result = await setDeviceConfig(newDeviceId, deviceIp);
         if (!result.success) {
             throw new Error(result.error || `Failed to send configuration to new device.`);
@@ -248,7 +252,10 @@ async function setDeviceConfig(deviceId, ipAddress) {
     
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_DEVICE_IP;
-    frame[2] = 0x00; // Source device ID is 0 for initial configuration
+    // For initial configuration, send from Device ID 0 to be accepted by any unconfigured device.
+    // The Python script implies this should be the CURRENT ID, but for discovery, 0 is safer.
+    // If we're setting an existing device, we should use its current ID. For discovery, this is fine.
+    frame[2] = 0x00; 
     frame[3] = deviceId.charCodeAt(0);
     
     const ipParts = ipAddress.split('.').map(Number);
@@ -256,13 +263,16 @@ async function setDeviceConfig(deviceId, ipAddress) {
         frame[4 + i] = ipParts[i];
     }
     
-    const dataForChecksum = frame.slice(0, 53);
-    frame[53] = calculateChecksum(dataForChecksum);
+    // Checksum calculation on a 55-byte frame is on bytes 0-52
+    let checksumFrame = frame.slice(0, 53); // Create a temporary array for checksum
+    checksumFrame.push(0); // placeholder for checksum byte
+    frame[53] = calculateChecksum(checksumFrame.slice(0, -1)); // Checksum bytes 0-52
     frame[54] = FRAME_FOOTER;
     
     try {
-        await sendUdpCommand(frame, ipAddress); // Send directly to the device's IP
-        console.log("Set Device ID/IP command sent.");
+        // Broadcast the set command so the unconfigured device can receive it
+        await sendUdpCommand(frame, DISCOVERY_BROADCAST_IP);
+        console.log("Set Device ID/IP command broadcasted.");
 
         // Update the local config file
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
@@ -283,7 +293,7 @@ async function setDeviceConfig(deviceId, ipAddress) {
 
 async function setSlaveConfig(deviceId, slaveId, floorCount) {
     console.log(`--- Configuring Slave ID: ${slaveId} for Device: ${deviceId} with ${floorCount} floors ---`);
-    let frame = new Array(6).fill(0);
+    let frame = new Array(7).fill(0);
 
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_SLAVE_ID;
@@ -404,3 +414,5 @@ dataListener.bind(LISTENER_PORT);
 // Start polling immediately and then on an interval
 pollHardware();
 setInterval(pollHardware, POLLING_INTERVAL_MS);
+
+    
