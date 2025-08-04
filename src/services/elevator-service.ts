@@ -43,14 +43,72 @@ export function addDevice(deviceId: string, ipAddress: string, slaves: Slave[]):
             errorCode: 0,
             totalFloors: MAX_FLOORS,
             destinationFloor: 1,
-            mainPower: false,
+            mainPower: true, // Start with power on after manual config
             emergencyStop: false,
         };
     });
 
+    // Handle placeholder for auto-discovered blocks with no slaves
+    if (slaves.length === 0) {
+        newElevators.push({
+            id: `${deviceId}-placeholder`,
+            deviceId: deviceId,
+            elevatorNum: 0,
+            ipAddress: ipAddress,
+            currentFloor: 0,
+            direction: 'IDLE',
+            status: 'IDLE',
+            doorState: 'CLOSED',
+            errorCode: 0,
+            destinationFloor: 0,
+            totalFloors: 0,
+            mainPower: false,
+            emergencyStop: false,
+        });
+    }
+
     elevators = [...elevators, ...newElevators];
     return { success: true };
 }
+
+export function addElevatorToBlock(deviceId: string, slaveId: string): { success: boolean; error?: string, elevators?: ElevatorData[] } {
+    const device = elevators.find(e => e.deviceId === deviceId);
+    if (!device) {
+        return { success: false, error: `Device with ID ${deviceId} not found.` };
+    }
+
+    const compositeId = `${deviceId}-${slaveId}`;
+    const elevatorExists = elevators.some(e => e.id === compositeId);
+    if (elevatorExists) {
+        return { success: false, error: `Elevator with Slave ID ${slaveId} already exists in Block ${deviceId}.` };
+    }
+
+    // Remove the placeholder if it exists for this device
+    const placeholderIndex = elevators.findIndex(e => e.id === `${deviceId}-placeholder`);
+    if (placeholderIndex > -1) {
+        elevators.splice(placeholderIndex, 1);
+    }
+    
+    const newElevator: ElevatorData = {
+        id: compositeId,
+        deviceId,
+        elevatorNum: parseInt(slaveId, 10),
+        ipAddress: device.ipAddress,
+        currentFloor: 1,
+        direction: 'IDLE',
+        status: 'IDLE',
+        doorState: 'CLOSED',
+        errorCode: 0,
+        totalFloors: MAX_FLOORS,
+        destinationFloor: 1,
+        mainPower: true, // Assume power on for newly added elevator
+        emergencyStop: false,
+    };
+
+    elevators.push(newElevator);
+    return { success: true, elevators: getElevatorData() };
+}
+
 
 export function setElevatorFault(id: string, errorCode: number): boolean {
     const elevatorIndex = elevators.findIndex(e => e.id === id);
