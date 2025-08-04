@@ -9,15 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { PlusCircle, Landmark, Server, Network, Loader2, AlertCircle, SlidersHorizontal, Trash2, CaseSensitive, Hash, TextCursorInput } from 'lucide-react';
+import { PlusCircle, Landmark, Server, Network, Loader2, AlertCircle, SlidersHorizontal, Trash2, Hash, TextCursorInput } from 'lucide-react';
 import type { ElevatorData } from '@/types/elevator';
 import { useNaming } from '@/hooks/use-naming';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Separator } from './ui/separator';
+import { MAX_FLOORS } from '@/lib/constants';
 
 const slaveSchema = z.object({
   slaveId: z.string().min(1, "Slave ID is required."),
-  slaveAddress: z.string().min(1, "Slave Address is required."),
   slaveName: z.string().optional(),
 });
 
@@ -59,7 +59,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
       deviceId: "",
       deviceName: "",
       ipAddress: "",
-      slaves: [{ slaveId: "1", slaveAddress: "0x01", slaveName: "" }],
+      slaves: [{ slaveId: "1", slaveName: "" }],
     },
   });
 
@@ -68,25 +68,23 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
     name: "slaves",
   });
 
+  const handleOpenChange = (newOpenState: boolean) => {
+    if (!isSubmitting) {
+        onOpenChange(newOpenState);
+        if (!newOpenState) {
+            form.reset();
+            setSubmissionStatus(null);
+        }
+    }
+  }
+
   const onSubmit = async (values: z.infer<typeof addBlockSchema>) => {
     setIsSubmitting(true);
     setSubmissionStatus("Registering block and elevators in ElevateView...");
     form.clearErrors("root.serverError");
 
     try {
-        // Step 1: Add device to the application state
-        const appStateResponse = await fetch('/api/elevators', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(values),
-        });
-        if (!appStateResponse.ok) {
-            const result = await appStateResponse.json();
-            throw new Error(result.error || "Failed to add block to application.");
-        }
-        const appStateResult = await appStateResponse.json();
-
-        // Step 2: Configure the hardware via the backend
+        // Step 1: Configure the hardware via the backend
         setSubmissionStatus(`Configuring hardware for Block ${values.deviceId}...`);
         await configureDeviceOnBackend('set_device', {
             deviceId: values.deviceId,
@@ -98,7 +96,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
              await configureDeviceOnBackend('set_slave', {
                 deviceId: values.deviceId,
                 slaveId: slave.slaveId,
-                floorCount: "15" // Default floor count
+                floorCount: MAX_FLOORS
             });
              if (slave.slaveName) {
                 const newElevatorId = `${values.deviceId}-${slave.slaveId}`;
@@ -106,15 +104,25 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
             }
         }
         
+        // Step 2: Add device to the application state
+        const appStateResponse = await fetch('/api/elevators', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(values),
+        });
+        if (!appStateResponse.ok) {
+            const result = await appStateResponse.json();
+            throw new Error(result.error || "Failed to add block to application.");
+        }
+        const appStateResult = await appStateResponse.json();
+        
         // If all successful, update UI state
         setDeviceName(appStateResult.newDeviceId, values.deviceName);
         onBlockAdded(appStateResult.elevators);
         
         setSubmissionStatus("Configuration successful!");
         setTimeout(() => {
-            onOpenChange(false);
-            form.reset();
-            setSubmissionStatus(null);
+            handleOpenChange(false);
         }, 1500);
 
     } catch (error) {
@@ -128,9 +136,9 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {children}
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <PlusCircle /> Add New Block
@@ -188,7 +196,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
                     <FormLabel className="flex items-center gap-2 text-base"><SlidersHorizontal/> Elevators (Slaves)</FormLabel>
                     {fields.map((field, index) => (
                         <div key={field.id} className="grid grid-cols-12 gap-x-4 gap-y-2 items-end p-3 border rounded-lg bg-muted/50 relative">
-                            <div className="col-span-12 sm:col-span-2">
+                            <div className="col-span-12 sm:col-span-4">
                                 <FormField
                                 control={form.control}
                                 name={`slaves.${index}.slaveId`}
@@ -203,22 +211,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
                                 )}
                                 />
                             </div>
-                            <div className="col-span-12 sm:col-span-4">
-                                 <FormField
-                                control={form.control}
-                                name={`slaves.${index}.slaveAddress`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel className="flex items-center gap-1 text-xs"><CaseSensitive /> Slave Address</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., 0x01" {...field} />
-                                    </FormControl>
-                                     <FormMessage/>
-                                    </FormItem>
-                                )}
-                                />
-                            </div>
-                            <div className="col-span-12 sm:col-span-6">
+                            <div className="col-span-12 sm:col-span-8">
                                 <FormField
                                 control={form.control}
                                 name={`slaves.${index}.slaveName`}
@@ -250,7 +243,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => append({ slaveId: (fields.length + 1).toString(), slaveAddress: `0x0${fields.length + 1}`, slaveName: '' })}
+                        onClick={() => append({ slaveId: (fields.length + 1).toString(), slaveName: '' })}
                         >
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Another Elevator

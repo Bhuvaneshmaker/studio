@@ -14,19 +14,27 @@ export default function Home() {
   const [elevators, setElevators] = useState<ElevatorData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async () => {
+    try {
       const res = await fetch('/api/elevators', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setElevators(data);
       }
-      setLoading(false);
-    };
+    } catch (error) {
+        console.error("Failed to fetch elevator data:", error);
+        // Optionally, set an error state to show in the UI
+    } finally {
+        if (loading) {
+            setLoading(false);
+        }
+    }
+  };
 
+  useEffect(() => {
     fetchData(); // Initial fetch
     
-    const interval = setInterval(fetchData, 5000); // Poll for updates every 5 seconds
+    const interval = setInterval(fetchData, 1000); // Poll for updates every 1 second
     return () => clearInterval(interval); // Cleanup interval on component unmount
   }, []);
   

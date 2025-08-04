@@ -36,11 +36,13 @@ export default function BlocksPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
-      setLoading(true);
+      // Don't set loading to true on subsequent fetches to avoid flicker
       const res = await fetch('/api/elevators');
       const data = await res.json();
       setElevators(data);
-      setLoading(false);
+      if (loading) {
+          setLoading(false);
+      }
   };
   
   useEffect(() => {

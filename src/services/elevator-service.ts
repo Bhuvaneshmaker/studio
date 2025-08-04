@@ -7,26 +7,12 @@
 
 import type { ElevatorData } from '@/types/elevator';
 import type { ParsedElevatorData } from '@/types/parser';
-import { 
-    generateInitialElevators,
-} from '@/lib/elevator-simulation';
 import type { Slave } from '@/types/elevator';
 import { getElevatorDataFromIni } from './ini-service';
+import { MAX_FLOORS } from '@/lib/constants';
 
+// Initialize the state from the configuration file.
 let elevators: ElevatorData[] = getElevatorDataFromIni(); 
-let simulationInterval: NodeJS.Timeout | null = null;
-
-export function startSimulation() {
-    console.log("Simulation is disabled in favor of real-time data.");
-}
-
-export function stopSimulation() {
-    if (simulationInterval) {
-        clearInterval(simulationInterval);
-        simulationInterval = null;
-        console.log("Elevator simulation stopped.");
-    }
-}
 
 export function getElevatorData(): ElevatorData[] {
     return elevators;
@@ -42,20 +28,20 @@ export function addDevice(deviceId: string, ipAddress: string, slaves: Slave[]):
         return { success: false, error: `Device with ID ${deviceId} already exists.` };
     }
     
+    // If slaves are provided, create them. Otherwise, just create the block (for auto-discovery).
     const newElevators: ElevatorData[] = slaves.map(slave => {
         const compositeId = `${deviceId}-${slave.slaveId}`;
         return {
             id: compositeId,
             deviceId,
             elevatorNum: parseInt(slave.slaveId, 10),
-            slaveAddress: slave.slaveAddress,
             ipAddress,
             currentFloor: 1,
             direction: 'IDLE',
             status: 'IDLE',
             doorState: 'CLOSED',
             errorCode: 0,
-            totalFloors: 15, // Default floor count
+            totalFloors: MAX_FLOORS,
             destinationFloor: 1,
             mainPower: false,
             emergencyStop: false,
@@ -129,13 +115,16 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
             
             let newStatus: ElevatorData['status'] = currentElevator.status;
             
+            // Critical overrides
             if (data.emergencyStop) {
                 newStatus = 'ERROR';
             } else if (data.responseStatus !== 'Positive') {
                  newStatus = 'ERROR';
             } else if (currentElevator.status === 'MAINTENANCE') {
+                // Maintenance mode is sticky until manually cleared.
                 newStatus = 'MAINTENANCE';
             } else {
+                 // Normal operation logic
                  if (data.direction !== 'IDLE') {
                     newStatus = 'MOVING';
                  } else {
@@ -146,6 +135,7 @@ export function updateElevatorsFromParsedData(parsedData: ParsedElevatorData[]):
             elevators[elevatorIndex] = {
                 ...currentElevator,
                 currentFloor: data.currentFloor,
+                // Only update destination if the elevator is actually moving.
                 destinationFloor: newStatus === 'MOVING' ? currentElevator.destinationFloor : data.currentFloor,
                 direction: data.direction,
                 doorState: data.doorState,

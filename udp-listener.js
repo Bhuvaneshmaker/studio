@@ -13,11 +13,12 @@ const path = require('path');
 const LISTENER_PORT = 41234; // The port this listener will bind to.
 const HARDWARE_PORT = 1234; // The port to send commands to on the hardware.
 const API_HOST = 'localhost';
-const API_PORT = 9002;
+const API_PORT = 9002; // Default Next.js dev port
 const API_PATH_PARSER = '/api/parser';
 const API_PATH_ELEVATORS = '/api/elevators';
 const INI_FILE_PATH = path.join(__dirname, 'ini_ip.ini');
 const POLLING_INTERVAL_MS = 2000; // Poll hardware every 2 seconds.
+const DISCOVERY_MESSAGE = 'ELEVATEVIEW_DISCOVERY_REQUEST';
 
 // Frame Constants
 const FRAME_HEADER = 0x80;
@@ -32,11 +33,23 @@ const REQ_GET_SLAVE_ID_DATA = 0x04; // This is used to poll for data
 const REQ_DATA_FRAME = 0x05;
 
 // --- Helper Functions ---
-function calculateChecksum(bytes, start, end) {
-    // The checksum is a simple sum of specified bytes, overflowing at 255 (uint8_t).
-    const dataForChecksum = bytes.slice(start, end);
+function calculateChecksum(bytes) {
+    // The checksum is a simple sum of all bytes from index 0 up to (but not including) the checksum byte itself.
+    const dataForChecksum = bytes.slice(0, 53);
     const sum = dataForChecksum.reduce((acc, byte) => acc + byte, 0);
     return sum & 0xFF; // Return only the last 8 bits.
+}
+
+function ensureIniFileExists() {
+  if (!fs.existsSync(INI_FILE_PATH)) {
+    try {
+      fs.writeFileSync(INI_FILE_PATH, '; ElevateView Hardware Configuration\n', 'utf-8');
+      console.log(`Created empty config file at: ${INI_FILE_PATH}`);
+    } catch (error) {
+       console.error("FATAL: Could not create ini_ip.ini file.", error);
+       process.exit(1); // Exit if config is not writable
+    }
+  }
 }
 
 function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
@@ -44,9 +57,13 @@ function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
         const socket = dgram.createSocket('udp4');
         const buffer = Buffer.from(frame);
 
+        socket.on('error', (err) => {
+            socket.close();
+            reject(err);
+        });
+
         socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
             if (err) {
-                // We will handle this gracefully in the calling function
                 socket.close();
                 return reject(err);
             }
@@ -77,16 +94,15 @@ function postToApi(data, apiPath) {
             res.on('data', (chunk) => { responseBody += chunk; });
             res.on('end', () => {
                 try {
-                    const parsedResponse = JSON.parse(responseBody);
-                     if (res.statusCode >= 400) {
-                        console.error(`API response error (${res.statusCode}): ${parsedResponse.error || responseBody}`);
-                        reject(new Error(parsedResponse.error || `API returned status ${res.statusCode}`));
-                    } else {
-                        resolve(parsedResponse);
+                    if (res.statusCode >= 400) {
+                       const parsedError = JSON.parse(responseBody);
+                       console.error(`API Error (${res.statusCode}) on ${apiPath}: ${parsedError.error || responseBody}`);
+                       return reject(new Error(parsedError.error || `API returned status ${res.statusCode}`));
                     }
+                    resolve(JSON.parse(responseBody));
                 } catch (e) {
-                     console.error(`Failed to parse API JSON response: ${responseBody}`);
-                     reject(e);
+                    console.error(`Failed to parse API JSON response from ${apiPath}: ${responseBody}`);
+                    reject(e);
                 }
             });
         });
@@ -115,8 +131,9 @@ dataListener.on('error', (err) => {
 });
 
 dataListener.on('message', async (msg, rinfo) => {
-    // Auto-discovery: Listen for a specific broadcast message from unconfigured devices
-    if (msg.toString() === 'ELEVATEVIEW_DISCOVERY_REQUEST') {
+    // Check for auto-discovery message first.
+    // Compare the message buffer directly with the discovery string.
+    if (Buffer.from(DISCOVERY_MESSAGE).equals(msg)) {
         console.log(`Discovery: Received discovery request from new device at ${rinfo.address}`);
         await handleNewDeviceDiscovery(rinfo.address);
         return;
@@ -125,7 +142,7 @@ dataListener.on('message', async (msg, rinfo) => {
     // Regular data frame processing
     const receivedBytes = Array.from(msg);
     if (receivedBytes[0] === FRAME_HEADER && receivedBytes[1] === REQ_DATA_FRAME) {
-        dataFrameBatch.push(receivedBytes);
+        dataFrameBatch.push(msg.toString('hex')); // Send hex string to parser
         if (!batchTimeout) {
             batchTimeout = setTimeout(() => {
                 // console.log(`Processing batch of ${dataFrameBatch.length} frames.`);
@@ -133,7 +150,7 @@ dataListener.on('message', async (msg, rinfo) => {
                     .catch(err => console.error("Error posting frame batch to API:", err.message));
                 dataFrameBatch = [];
                 batchTimeout = null;
-            }, 50); // Batch frames over a 50ms window
+            }, 100); // Batch frames over a 100ms window
         }
     } else if (receivedBytes[0] === FRAME_ACK_HEADER) {
         // This is an ACK, can be handled if needed for command confirmation
@@ -147,8 +164,6 @@ dataListener.on('listening', () => {
     console.log(`UDP data listener started. Listening on ${address.address}:${address.port}`);
     console.log('---------------------------------------------------------');
 });
-
-dataListener.bind(LISTENER_PORT);
 
 
 // --- Hardware Polling ---
@@ -166,7 +181,7 @@ async function pollHardware() {
                 frame[0] = FRAME_HEADER;
                 frame[1] = REQ_GET_SLAVE_ID_DATA;
                 frame[2] = block.block_id.charCodeAt(0); // Device ID of the block we are polling
-                frame[53] = calculateChecksum(frame, 0, 53);
+                frame[53] = calculateChecksum(frame);
                 frame[54] = FRAME_FOOTER;
 
                 await sendUdpCommand(frame, block.ip_address, HARDWARE_PORT)
@@ -186,10 +201,6 @@ async function pollHardware() {
     }
 }
 
-// Start polling immediately and then on an interval
-pollHardware();
-setInterval(pollHardware, POLLING_INTERVAL_MS);
-
 
 // --- Command Functions & Auto-Discovery ---
 
@@ -205,7 +216,7 @@ async function handleNewDeviceDiscovery(deviceIp) {
         }
 
         // Determine the next available block ID
-        const existingIds = Object.values(config).map(b => b.block_id.charCodeAt(0));
+        const existingIds = Object.values(config).map(b => (b.block_id || '').charCodeAt(0)).filter(c => c > 0);
         let nextCharCode = 'A'.charCodeAt(0);
         while(existingIds.includes(nextCharCode)) {
             nextCharCode++;
@@ -225,7 +236,7 @@ async function handleNewDeviceDiscovery(deviceIp) {
             deviceId: newDeviceId,
             deviceName: `Block ${newDeviceId}`, // Default name
             ipAddress: deviceIp,
-            slaves: [], // No slaves initially
+            slaves: [], // No slaves initially, they must be added manually
         };
         await postToApi(newBlockPayload, API_PATH_ELEVATORS);
 
@@ -250,7 +261,7 @@ async function setDeviceConfig(deviceId, ipAddress) {
         frame[4 + i] = ipParts[i];
     }
     
-    frame[53] = calculateChecksum(frame, 0, 53);
+    frame[53] = calculateChecksum(frame);
     frame[54] = FRAME_FOOTER;
     
     try {
@@ -284,7 +295,7 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
     frame[3] = parseInt(slaveId, 10);
     frame[4] = parseInt(floorCount, 10);
     
-    frame[53] = calculateChecksum(frame, 0, 53);
+    frame[53] = calculateChecksum(frame);
     frame[54] = FRAME_FOOTER;
 
     let targetIp = '';
@@ -375,6 +386,23 @@ const commandServer = http.createServer(async (req, res) => {
 });
 
 const COMMAND_PORT = 9003; // A separate port for the command server
+commandServer.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`FATAL: Port ${COMMAND_PORT} is already in use. Please close the other process or change the COMMAND_PORT.`);
+        process.exit(1);
+    } else {
+        console.error('Command server error:', err);
+    }
+});
+
 commandServer.listen(COMMAND_PORT, () => {
     console.log(`Command server listening for UI commands on http://localhost:${COMMAND_PORT}`);
 });
+
+
+// --- Startup ---
+ensureIniFileExists();
+dataListener.bind(LISTENER_PORT);
+// Start polling immediately and then on an interval
+pollHardware();
+setInterval(pollHardware, POLLING_INTERVAL_MS);
