@@ -12,7 +12,7 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <title>ElevateView</title>
         <meta name="description" content="Real-time Elevator Management System" />
