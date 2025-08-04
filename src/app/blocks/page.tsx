@@ -85,7 +85,7 @@ export default function BlocksPage() {
                 <Building className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
-                ElevateView
+                ElevateMS
               </h1>
             </Link>
             <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
@@ -134,7 +134,7 @@ export default function BlocksPage() {
       </main>
       <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
         <p className="text-center text-sm text-muted-foreground">
-          ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
+          ElevateMS &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
         </p>
       </footer>
     </div>

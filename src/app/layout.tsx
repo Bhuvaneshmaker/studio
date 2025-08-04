@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <title>ElevateView</title>
+        <title>ElevateMS</title>
         <meta name="description" content="Real-time Elevator Management System" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

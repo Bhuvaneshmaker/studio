@@ -68,7 +68,7 @@ export default function LoginPage() {
                 <Building className="w-10 h-10" />
             </div>
             <h1 className="text-4xl font-bold text-primary font-headline">
-                ElevateView
+                ElevateMS
             </h1>
             <p className="text-muted-foreground mt-2">Sign in to access the control room</p>
         </div>
@@ -147,7 +147,7 @@ export default function LoginPage() {
           </AlertDescription>
         </Alert>
          <p className="text-center text-sm text-muted-foreground">
-          ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
+          ElevateMS &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
         </p>
       </div>
     </div>

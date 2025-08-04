@@ -116,7 +116,7 @@ export function ElevatorGrid({ searchQuery, deviceFilter }: { searchQuery: strin
               <AddBlockFormWrapper onBlockAdded={handleBlockAdded}>
                 <Button size="lg">
                   <PlusCircle className="mr-2 h-5 w-5" />
-                  Add New Elevator to ElevateView
+                  Add New Block to ElevateMS
                 </Button>
               </AddBlockFormWrapper>
             </CardContent>

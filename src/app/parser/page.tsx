@@ -26,16 +26,39 @@ export default function ParserPage() {
         setIsLoading(true);
         setApiError(null);
         setApiSuccess(null);
-        
-        const result = parseDataFrame(frameInput);
-        setLastResult(result);
 
-        if (result.success) {
+        // Split by newline and filter out empty lines
+        const frames = frameInput.split('\n').filter(f => f.trim() !== '');
+        
+        const allParsedData: any[] = [];
+        let anyParseFailed = false;
+
+        frames.forEach(frame => {
+            const result = parseDataFrame(frame);
+            if (result.success && result.data) {
+                allParsedData.push(...result.data);
+            } else {
+                anyParseFailed = true;
+                setLastResult(result); // Show the first error
+            }
+        });
+
+        if (anyParseFailed) {
+            setIsLoading(false);
+            return;
+        }
+
+        // For display, just show the result of the first frame if successful
+        if (frames.length > 0) {
+            setLastResult(parseDataFrame(frames[0]));
+        }
+
+        if (allParsedData.length > 0) {
             try {
                 const response = await fetch('/api/parser', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(result.data),
+                    body: JSON.stringify(allParsedData),
                 });
 
                 const responseData = await response.json();
@@ -66,7 +89,7 @@ export default function ParserPage() {
                         <Building className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
-                        ElevateView
+                        ElevateMS
                     </h1>
                     </Link>
                     <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
@@ -84,7 +107,7 @@ export default function ParserPage() {
                         <CardHeader>
                             <CardTitle>UDP Frame Input</CardTitle>
                             <CardDescription>
-                                Paste the raw hexadecimal data frame string from the Teensy device below.
+                                Paste one or more raw hexadecimal data frame strings from the hardware below, separated by new lines.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -108,7 +131,7 @@ export default function ParserPage() {
                         <CardHeader>
                             <CardTitle>Parsing Results</CardTitle>
                             <CardDescription>
-                                The extracted data from the last submitted frame.
+                                The extracted data from the last submitted frame(s).
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -150,7 +173,7 @@ export default function ParserPage() {
                                     {lastResult.success && lastResult.data && (
                                         <>
                                             <Separator />
-                                            <h4 className="font-semibold flex items-center gap-2"><FileJson2 className="w-4 h-4" />Parsed Elevator Data</h4>
+                                            <h4 className="font-semibold flex items-center gap-2"><FileJson2 className="w-4 h-4" />Parsed Elevator Data (First Frame)</h4>
                                             <ScrollArea className="h-48 border rounded-lg p-2">
                                                 <div className="space-y-3">
                                                 {lastResult.data.map((d, i) => (

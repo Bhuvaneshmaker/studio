@@ -7,36 +7,11 @@ import { MAX_FLOORS } from '@/lib/constants';
 
 const iniFilePath = path.join(process.cwd(), 'ini_ip.ini');
 
-const DEFAULT_INI_CONTENT = `
-; This file stores the configuration for your elevator hardware blocks.
-; The udp-listener.js script reads from and writes to this file.
-;
-; [BLOCK_A] is a section header for a specific block. Use unique names.
-; block_id: The unique identifier for the hardware device (controller).
-; ip_address: The IP address of the hardware device.
-; elevator_N: The slave ID for the Nth elevator connected to this block.
-; elevator_N_floor_count: The number of floors this elevator serves.
-
-[BLOCK_A]
-block_id = A
-ip_address = 192.168.0.30
-elevator_1 = 1
-elevator_1_floor_count = 15
-elevator_2 = 2
-elevator_2_floor_count = 15
-
-[BLOCK_B]
-block_id = B
-ip_address = 192.168.0.31
-elevator_1 = 1
-elevator_1_floor_count = 15
-`;
-
 function ensureIniFileExists() {
   if (!fs.existsSync(iniFilePath)) {
     try {
       // Create an empty file first, to be populated by the application/discovery
-      fs.writeFileSync(iniFilePath, '; ElevateView Hardware Configuration\n', 'utf-8');
+      fs.writeFileSync(iniFilePath, '; ElevateMS Hardware Configuration\n', 'utf-8');
       console.log('Created empty ini_ip.ini file.');
     } catch (error) {
        console.error("Fatal: Could not create ini_ip.ini file.", error);

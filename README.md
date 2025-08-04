@@ -1,6 +1,7 @@
-# ElevateView: Real-Time Elevator Management System
 
-ElevateView is a modern, web-based application designed for real-time monitoring and management of an entire elevator network. Built with Next.js, it provides a dynamic and responsive interface for tracking elevator status, managing system faults, and configuring hardware devices.
+# ElevateMS: Real-Time Elevator Management System
+
+ElevateMS is a modern, web-based application designed for real-time monitoring and management of an entire elevator network. Built with Next.js, it provides a dynamic and responsive interface for tracking elevator status, managing system faults, and configuring hardware devices.
 
 ## Core Features
 

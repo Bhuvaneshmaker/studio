@@ -18,7 +18,7 @@ const API_PATH_PARSER = '/api/parser';
 const API_PATH_ELEVATORS = '/api/elevators';
 const INI_FILE_PATH = path.join(__dirname, 'ini_ip.ini');
 const POLLING_INTERVAL_MS = 2000; // Poll hardware every 2 seconds.
-const DISCOVERY_MESSAGE = 'ELEVATEVIEW_DISCOVERY_REQUEST';
+const DISCOVERY_MESSAGE = 'ELEVATEMS_DISCOVERY_REQUEST';
 
 // Frame Constants
 const FRAME_HEADER = 0x80;
@@ -34,16 +34,15 @@ const REQ_DATA_FRAME = 0x05;
 
 // --- Helper Functions ---
 function calculateChecksum(bytes) {
-    // The checksum is a simple sum of all bytes from index 0 up to (but not including) the checksum byte itself.
-    const dataForChecksum = bytes.slice(0, 53);
-    const sum = dataForChecksum.reduce((acc, byte) => acc + byte, 0);
+    // The checksum is a simple sum of all bytes, overflowing at 255 (uint8_t).
+    const sum = bytes.reduce((acc, byte) => acc + byte, 0);
     return sum & 0xFF; // Return only the last 8 bits.
 }
 
 function ensureIniFileExists() {
   if (!fs.existsSync(INI_FILE_PATH)) {
     try {
-      fs.writeFileSync(INI_FILE_PATH, '; ElevateView Hardware Configuration\n', 'utf-8');
+      fs.writeFileSync(INI_FILE_PATH, '; ElevateMS Hardware Configuration\n', 'utf-8');
       console.log(`Created empty config file at: ${INI_FILE_PATH}`);
     } catch (error) {
        console.error("FATAL: Could not create ini_ip.ini file.", error);
@@ -142,16 +141,9 @@ dataListener.on('message', async (msg, rinfo) => {
     // Regular data frame processing
     const receivedBytes = Array.from(msg);
     if (receivedBytes[0] === FRAME_HEADER && receivedBytes[1] === REQ_DATA_FRAME) {
-        dataFrameBatch.push(msg.toString('hex')); // Send hex string to parser
-        if (!batchTimeout) {
-            batchTimeout = setTimeout(() => {
-                // console.log(`Processing batch of ${dataFrameBatch.length} frames.`);
-                postToApi(dataFrameBatch, API_PATH_PARSER)
-                    .catch(err => console.error("Error posting frame batch to API:", err.message));
-                dataFrameBatch = [];
-                batchTimeout = null;
-            }, 100); // Batch frames over a 100ms window
-        }
+        // Post each frame individually as it comes in
+        postToApi([msg.toString('hex')], API_PATH_PARSER)
+            .catch(err => console.error("Error posting frame to API:", err.message));
     } else if (receivedBytes[0] === FRAME_ACK_HEADER) {
         // This is an ACK, can be handled if needed for command confirmation
         // console.log(`Received ACK from ${rinfo.address}:`, msg.toString('hex'));
@@ -177,12 +169,15 @@ async function pollHardware() {
             const block = config[blockKey];
             if (block.ip_address && block.block_id) {
                 // Frame to request data from all slaves on the block
-                let frame = new Array(55).fill(0);
+                let frame = new Array(5).fill(0);
                 frame[0] = FRAME_HEADER;
                 frame[1] = REQ_GET_SLAVE_ID_DATA;
                 frame[2] = block.block_id.charCodeAt(0); // Device ID of the block we are polling
-                frame[53] = calculateChecksum(frame);
-                frame[54] = FRAME_FOOTER;
+                
+                // Per protocol, checksum is sum of bytes.
+                const checksum = (frame[0] + frame[1] + frame[2]) & 0xFF;
+                frame[3] = checksum;
+                frame[4] = FRAME_FOOTER;
 
                 await sendUdpCommand(frame, block.ip_address, HARDWARE_PORT)
                     .catch(err => {
@@ -216,9 +211,9 @@ async function handleNewDeviceDiscovery(deviceIp) {
         }
 
         // Determine the next available block ID
-        const existingIds = Object.values(config).map(b => (b.block_id || '').charCodeAt(0)).filter(c => c > 0);
+        const existingIds = Object.values(config).map(b => (b.block_id || '')).filter(c => c);
         let nextCharCode = 'A'.charCodeAt(0);
-        while(existingIds.includes(nextCharCode)) {
+        while(existingIds.includes(String.fromCharCode(nextCharCode))) {
             nextCharCode++;
         }
         const newDeviceId = String.fromCharCode(nextCharCode);
@@ -261,7 +256,8 @@ async function setDeviceConfig(deviceId, ipAddress) {
         frame[4 + i] = ipParts[i];
     }
     
-    frame[53] = calculateChecksum(frame);
+    const dataForChecksum = frame.slice(0, 53);
+    frame[53] = calculateChecksum(dataForChecksum);
     frame[54] = FRAME_FOOTER;
     
     try {
@@ -287,7 +283,7 @@ async function setDeviceConfig(deviceId, ipAddress) {
 
 async function setSlaveConfig(deviceId, slaveId, floorCount) {
     console.log(`--- Configuring Slave ID: ${slaveId} for Device: ${deviceId} with ${floorCount} floors ---`);
-    let frame = new Array(55).fill(0);
+    let frame = new Array(6).fill(0);
 
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_SLAVE_ID;
@@ -295,14 +291,15 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
     frame[3] = parseInt(slaveId, 10);
     frame[4] = parseInt(floorCount, 10);
     
-    frame[53] = calculateChecksum(frame);
-    frame[54] = FRAME_FOOTER;
+    const checksum = (frame[0] + frame[1] + frame[2] + frame[3] + frame[4]) & 0xFF;
+    frame[5] = checksum;
+    frame[6] = FRAME_FOOTER;
 
     let targetIp = '';
     try {
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
-        const targetBlockKey = `BLOCK_${deviceId}`;
-        if (config[targetBlockKey] && config[targetBlockKey].ip_address) {
+        const targetBlockKey = Object.keys(config).find(key => config[key].block_id === deviceId);
+        if (targetBlockKey && config[targetBlockKey].ip_address) {
             targetIp = config[targetBlockKey].ip_address;
         } else {
              throw new Error(`IP for Device ${deviceId} not found in ini file.`);
@@ -316,8 +313,9 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
         console.log(`Set Slave ID command sent to ${targetIp}.`);
         
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
-        const targetBlockKey = `BLOCK_${deviceId}`;
-        if (config[targetBlockKey]) {
+        const targetBlockKey = Object.keys(config).find(key => config[key].block_id === deviceId);
+
+        if (targetBlockKey) {
             // Find the key for this slave or create a new one
             let elevatorKey = Object.keys(config[targetBlockKey]).find(k => config[targetBlockKey][k] === slaveId && k.startsWith('elevator_'));
             if (!elevatorKey) {
@@ -332,7 +330,7 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
             console.log(`ini_ip.ini updated for slave ${slaveId} in ${targetBlockKey}.`);
             return { success: true, message: `Slave ${slaveId} configured.` };
         } else {
-             throw new Error(`Device block [${targetBlockKey}] not found in config.`);
+             throw new Error(`Device block for ID ${deviceId} not found in config.`);
         }
     } catch (e) {
         console.error("Error during setSlaveConfig:", e.message);

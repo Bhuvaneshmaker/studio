@@ -103,7 +103,7 @@ export default function AnalyticsPage() {
         const dateString = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         const logTypeName = logType.charAt(0).toUpperCase() + logType.slice(1);
 
-        let logContent = `ElevateView - ${logTypeName} System Status Log\n`;
+        let logContent = `ElevateMS - ${logTypeName} System Status Log\n`;
         logContent += `==================================\n\n`;
         logContent += `Date Generated: ${dateString}\n`;
         logContent += `Timestamp: ${timestamp}\n\n`;
@@ -177,7 +177,7 @@ export default function AnalyticsPage() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `ElevateView_${logTypeName}_Log_${today.toISOString().split('T')[0]}.txt`;
+        link.download = `ElevateMS_${logTypeName}_Log_${today.toISOString().split('T')[0]}.txt`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -194,7 +194,7 @@ export default function AnalyticsPage() {
                         <Building className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <h1 className="text-xl sm:text-3xl font-bold text-primary font-headline hidden sm:block">
-                        ElevateView
+                        ElevateMS
                     </h1>
                     </Link>
                     <span className="text-xl sm:text-2xl text-muted-foreground">/</span>
@@ -312,7 +312,7 @@ export default function AnalyticsPage() {
             </main>
              <footer className="container mx-auto p-4 sm:p-6 border-t mt-8">
                 <p className="text-center text-sm text-muted-foreground">
-                    ElevateView &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
+                    ElevateMS &copy; {new Date().getFullYear()}. For support, contact <a href="mailto:support@bhuvitech.com" className="underline hover:text-primary">support@bhuvitech.com</a>.
                 </p>
             </footer>
         </div>

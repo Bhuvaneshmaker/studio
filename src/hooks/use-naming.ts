@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { CustomNames } from '@/types/naming';
 
-const NAMING_STORAGE_KEY = 'elevateview-custom-names';
+const NAMING_STORAGE_KEY = 'elevatems-custom-names';
 
 const defaultNames: CustomNames = {
   devices: {},
