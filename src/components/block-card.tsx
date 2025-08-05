@@ -91,7 +91,7 @@ export function BlockCard({ deviceId, elevators, onElevatorAdded }: { deviceId: 
               className="w-full" 
               variant="secondary" 
               onClick={() => setIsAddElevatorOpen(true)}
-              disabled={!isIncomplete && elevators.length >= NUM_ELEVATORS_PER_BLOCK}
+              disabled={elevators.length >= NUM_ELEVATORS_PER_BLOCK}
             >
               <PlusCircle className="mr-2 w-4 h-4" /> Add Elevator
             </Button>

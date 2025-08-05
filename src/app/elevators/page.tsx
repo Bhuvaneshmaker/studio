@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ElevatorGrid } from '@/components/elevator-grid';
-import { Building, Search, X, Landmark, PlusCircle, SlidersHorizontal } from 'lucide-react';
+import { Building, Search, X, Landmark, PlusCircle, SlidersHorizontal, Info } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useNaming } from '@/hooks/use-naming';
@@ -12,6 +12,7 @@ import { BackButton } from '@/components/back-button';
 import { AddBlockFormWrapper } from '@/components/add-block-form-wrapper';
 import { Button } from '@/components/ui/button';
 import type { ElevatorData } from '@/types/elevator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function ElevatorsPage() {
   const searchParams = useSearchParams();
@@ -67,6 +68,15 @@ export default function ElevatorsPage() {
       </header>
       <main className="container mx-auto p-4 sm:p-6 space-y-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex-grow">
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>How to Add an Elevator?</AlertTitle>
+              <AlertDescription>
+                To add a new elevator to an existing block, please navigate to the <Button variant="link" className="p-0 h-auto" asChild><Link href="/blocks">Blocks Page</Link></Button> and use the "Add Elevator" button on the corresponding block card.
+              </AlertDescription>
+            </Alert>
+          </div>
            {deviceFilter && (
                 <div className="flex items-center gap-2">
                     <Link href="/elevators" className="text-sm inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
@@ -75,7 +85,7 @@ export default function ElevatorsPage() {
                     </Link>
                 </div>
             )}
-            <div className="relative w-full sm:w-auto sm:ml-auto">
+            <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
                     placeholder="Search by name or ID..." 
