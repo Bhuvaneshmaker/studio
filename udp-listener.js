@@ -10,8 +10,7 @@ const ini = require('ini');
 const path = require('path');
 
 // --- Configuration ---
-const LISTENER_PORT = 41234; // The port this listener will bind to.
-const HARDWARE_PORT = 1234; // The port to send commands to on the hardware.
+const HARDWARE_PORT = 1234; // The single port for all UDP communication.
 const API_HOST = 'localhost';
 const API_PORT = 9002; // Default Next.js dev port
 const API_PATH_PARSER = '/api/parser';
@@ -36,9 +35,6 @@ const REQ_DATA_FRAME = 0x05;
 // --- Helper Functions ---
 function calculateChecksum(bytes) {
     // The checksum is a simple sum of all bytes from index 0 up to (but not including) the checksum byte itself.
-    // Based on the C++ and Python examples, this seems to be the intended logic.
-    // The C++ frame was 55 bytes, checksumming bytes 0-52.
-    // The Python script checksums bytes 0-52 for a 55-byte frame.
     const dataForChecksum = bytes.slice(0, bytes.length - 2);
     const sum = dataForChecksum.reduce((acc, byte) => acc + byte, 0);
     return sum & 0xFF; // Return only the last 8 bits.
@@ -253,8 +249,6 @@ async function setDeviceConfig(deviceId, ipAddress) {
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_DEVICE_IP;
     // For initial configuration, send from Device ID 0 to be accepted by any unconfigured device.
-    // The Python script implies this should be the CURRENT ID, but for discovery, 0 is safer.
-    // If we're setting an existing device, we should use its current ID. For discovery, this is fine.
     frame[2] = 0x00; 
     frame[3] = deviceId.charCodeAt(0);
     
@@ -410,9 +404,12 @@ commandServer.listen(COMMAND_PORT, () => {
 
 // --- Startup ---
 ensureIniFileExists();
-dataListener.bind(LISTENER_PORT);
+// Bind the listener to the single hardware port
+dataListener.bind(HARDWARE_PORT); 
 // Start polling immediately and then on an interval
 pollHardware();
 setInterval(pollHardware, POLLING_INTERVAL_MS);
+
+    
 
     
