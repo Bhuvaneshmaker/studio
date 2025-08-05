@@ -8,27 +8,22 @@ import type { ParsedElevatorData } from '@/types/parser';
 
 export async function POST(request: Request) {
     try {
-        const frameStrings: string[] = await request.json();
+        const frameBytes: number[] = await request.json();
 
-        if (!Array.isArray(frameStrings) || frameStrings.length === 0) {
-            return NextResponse.json({ error: 'Invalid or empty data provided. Expected an array of hex strings.' }, { status: 400 });
+        if (!Array.isArray(frameBytes) || frameBytes.length === 0) {
+            return NextResponse.json({ error: 'Invalid or empty data provided. Expected an array of bytes.' }, { status: 400 });
         }
         
         const allParsedData: ParsedElevatorData[] = [];
-        const parsingErrors: string[] = [];
+        
+        // The frame now comes as a single byte array representing one UDP packet
+        const result = parseDataFrame(frameBytes);
 
-        frameStrings.forEach(frame => {
-            const result = parseDataFrame(frame);
-            if (result.success && result.data) {
-                allParsedData.push(...result.data);
-            } else {
-                parsingErrors.push(result.error || `Failed to parse frame: ${frame}`);
-            }
-        });
-
-        if (allParsedData.length === 0) {
-            return NextResponse.json({ error: 'No valid data could be parsed from the provided frames.', details: parsingErrors }, { status: 400 });
+        if (!result.success || !result.data) {
+            return NextResponse.json({ error: result.error || 'Failed to parse frame.'}, { status: 400 });
         }
+        
+        allParsedData.push(...result.data);
         
         const updateResult = updateElevatorsFromParsedData(allParsedData);
 

@@ -147,7 +147,7 @@ dataListener.on('message', async (msg, rinfo) => {
     const receivedBytes = Array.from(msg);
     if (receivedBytes[0] === FRAME_HEADER && receivedBytes[1] === REQ_DATA_FRAME) {
         // Forward valid data frames to the application's parser API
-        postToApi([msg.toString('hex')], API_PATH_PARSER)
+        postToApi(receivedBytes, API_PATH_PARSER)
             .catch(err => console.error("Error posting frame to API:", err.message));
     } else {
         // console.log(`Received unhandled frame type 0x${receivedBytes[1].toString(16)} from ${rinfo.address}`);

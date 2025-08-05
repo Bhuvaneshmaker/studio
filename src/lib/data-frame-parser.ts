@@ -2,10 +2,6 @@
 import type { ParsedElevatorData, FrameParseResult } from '@/types/parser';
 import type { ElevatorDirection, DoorState } from '@/types/elevator';
 
-function hexToDec(hex: string): number {
-    return parseInt(hex, 16);
-}
-
 function getBit(byte: number, bitPosition: number): number {
     return (byte >> bitPosition) & 1;
 }
@@ -17,20 +13,10 @@ function calculateChecksum(bytes: number[]): number {
     return sum & 0xFF; // Return only the last 8 bits.
 }
 
-export function parseDataFrame(frame: string): FrameParseResult {
-    const cleanedFrame = frame.replace(/\s+/g, '').toLowerCase();
-
-    // The frame is a string of hex characters, 2 chars per byte.
-    const frameBytes: number[] = [];
-    for (let i = 0; i < cleanedFrame.length; i += 2) {
-        frameBytes.push(hexToDec(cleanedFrame.substring(i, i + 2)));
-    }
+export function parseDataFrame(frameBytes: number[]): FrameParseResult {
 
     if (frameBytes.length < 6) { // Min frame: Header(1),Type(1),DevID(1),CRC(1),Footer(1) = 5 bytes. Let's say at least one slave data (+5) is not always there, but min length is still essential.
         return { success: false, error: 'Frame is too short.' };
-    }
-    if (!/^[0-9a-f]+$/.test(cleanedFrame)) {
-        return { success: false, error: 'Frame contains invalid hexadecimal characters.' };
     }
 
     const header = frameBytes[0];
@@ -60,7 +46,7 @@ export function parseDataFrame(frame: string): FrameParseResult {
     }
 
 
-    const deviceId = frameBytes[2].toString();
+    const deviceId = String.fromCharCode(frameBytes[2]);
     const elevatorsData: ParsedElevatorData[] = [];
     // The data for all slaves is between the device ID (byte 2) and the CRC/Footer (last 2 bytes)
     const slaveDataBytes = frameBytes.slice(3, frameBytes.length - 2);
