@@ -17,29 +17,25 @@ const API_PATH_PARSER = '/api/parser';
 const API_PATH_ELEVATORS = '/api/elevators';
 const INI_FILE_PATH = path.join(__dirname, 'ini_ip.ini');
 const POLLING_INTERVAL_MS = 2000; // Poll hardware every 2 seconds.
-const DISCOVERY_BROADCAST_IP = '255.255.255.255'; // Use broadcast for discovery
+const DISCOVERY_BROADCAST_IP = '255.255.255.255';
 const DISCOVERY_MESSAGE = 'ELEVATEMS_DISCOVERY_REQUEST';
 
 // Frame Constants
 const FRAME_HEADER = 0x80;
-const FRAME_ACK_HEADER = 0x81;
 const FRAME_FOOTER = 0xFF;
 
 // Request Types
 const REQ_SET_DEVICE_IP = 0x01;
-const REQ_GET_DEVICE_IP = 0x02;
-const REQ_SET_SLAVE_ID = 0x03;
-const REQ_GET_SLAVE_ID_DATA = 0x04; // This is used to poll for data
+const REQ_GET_SLAVE_ID_DATA = 0x04;
 const REQ_DATA_FRAME = 0x05;
+const REQ_SET_SLAVE_ID = 0x03;
+
 
 // --- Helper Functions ---
-function calculateChecksum(bytes) {
-    // The checksum is a simple sum of all bytes from index 0 up to (but not including) the checksum byte itself.
-    const dataForChecksum = bytes.slice(0, bytes.length - 2);
-    const sum = dataForChecksum.reduce((acc, byte) => acc + byte, 0);
-    return sum & 0xFF; // Return only the last 8 bits.
-}
 
+/**
+ * Ensures the INI configuration file exists, creating an empty one if not.
+ */
 function ensureIniFileExists() {
   if (!fs.existsSync(INI_FILE_PATH)) {
     try {
@@ -47,11 +43,17 @@ function ensureIniFileExists() {
       console.log(`Created empty config file at: ${INI_FILE_PATH}`);
     } catch (error) {
        console.error("FATAL: Could not create ini_ip.ini file.", error);
-       process.exit(1); // Exit if config is not writable
+       process.exit(1);
     }
   }
 }
 
+/**
+ * Sends a UDP command frame to a target IP and port.
+ * @param {number[]} frame - The byte array to send.
+ * @param {string} targetIp - The destination IP address.
+ * @param {number} targetPort - The destination port.
+ */
 function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
      return new Promise((resolve, reject) => {
         const socket = dgram.createSocket('udp4');
@@ -62,7 +64,7 @@ function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
             reject(err);
         });
 
-        // Enable broadcasting on the socket. This is necessary to send to 255.255.255.255
+        // Enable broadcasting on the socket for discovery messages.
         socket.setBroadcast(true);
 
         socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
@@ -70,13 +72,17 @@ function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
                 socket.close();
                 return reject(err);
             }
-            // console.log(`UDP command packet sent to ${targetIp}:${targetPort}`);
             socket.close();
             resolve();
         });
     });
 }
 
+/**
+ * Posts data to the Next.js application's internal API.
+ * @param {object} data - The JSON payload to send.
+ * @param {string} apiPath - The API endpoint path.
+ */
 function postToApi(data, apiPath) {
     return new Promise((resolve, reject) => {
         const postData = JSON.stringify(data);
@@ -131,7 +137,6 @@ dataListener.on('error', (err) => {
 
 dataListener.on('message', async (msg, rinfo) => {
     // Check for auto-discovery message first.
-    // Compare the message buffer directly with the discovery string.
     if (Buffer.from(DISCOVERY_MESSAGE).equals(msg)) {
         console.log(`Discovery: Received discovery request from new device at ${rinfo.address}`);
         await handleNewDeviceDiscovery(rinfo.address);
@@ -141,12 +146,11 @@ dataListener.on('message', async (msg, rinfo) => {
     // Regular data frame processing
     const receivedBytes = Array.from(msg);
     if (receivedBytes[0] === FRAME_HEADER && receivedBytes[1] === REQ_DATA_FRAME) {
-        // Post each frame individually as it comes in
+        // Forward valid data frames to the application's parser API
         postToApi([msg.toString('hex')], API_PATH_PARSER)
             .catch(err => console.error("Error posting frame to API:", err.message));
-    } else if (receivedBytes[0] === FRAME_ACK_HEADER) {
-        // This is an ACK, can be handled if needed for command confirmation
-        // console.log(`Received ACK from ${rinfo.address}:`, msg.toString('hex'));
+    } else {
+        // console.log(`Received unhandled frame type 0x${receivedBytes[1].toString(16)} from ${rinfo.address}`);
     }
 });
 
@@ -160,33 +164,34 @@ dataListener.on('listening', () => {
 
 // --- Hardware Polling ---
 
+/**
+ * Periodically sends a request to all configured hardware blocks to get their status.
+ */
 async function pollHardware() {
     try {
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
-        const blocks = Object.keys(config);
         
-        for (const blockKey of blocks) {
+        for (const blockKey of Object.keys(config)) {
             const block = config[blockKey];
             if (block.ip_address && block.block_id) {
                 // Frame to request data from all slaves on the block
-                let frame = new Array(5).fill(0);
-                frame[0] = FRAME_HEADER;
-                frame[1] = REQ_GET_SLAVE_ID_DATA;
-                frame[2] = block.block_id.charCodeAt(0); // Device ID of the block we are polling
+                const frame = [
+                    FRAME_HEADER,
+                    REQ_GET_SLAVE_ID_DATA,
+                    block.block_id.charCodeAt(0), // Device ID
+                    0, // Checksum placeholder
+                    FRAME_FOOTER
+                ];
                 
-                // Per protocol, checksum is sum of bytes.
                 const checksum = (frame[0] + frame[1] + frame[2]) & 0xFF;
                 frame[3] = checksum;
-                frame[4] = FRAME_FOOTER;
 
                 await sendUdpCommand(frame, block.ip_address, HARDWARE_PORT)
                     .catch(err => {
                         if (err.code === 'ENETUNREACH' || err.code === 'EHOSTUNREACH') {
-                            // This is a common, non-critical error if hardware is offline. Log quietly.
                             console.warn(`Hardware Poll Warning: Block '${block.block_id}' (${block.ip_address}) is unreachable.`);
                         } else {
-                            // Log other errors more verbosely.
-                            console.error(`Hardware Poll: Failed to send poll command to ${block.ip_address}.`, err);
+                            console.error(`Hardware Poll Error: Failed to send poll command to ${block.ip_address}.`, err);
                         }
                     });
             }
@@ -199,18 +204,20 @@ async function pollHardware() {
 
 // --- Command Functions & Auto-Discovery ---
 
+/**
+ * Handles the auto-discovery and configuration of a new hardware device.
+ * @param {string} deviceIp - The IP address of the newly discovered device.
+ */
 async function handleNewDeviceDiscovery(deviceIp) {
     try {
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
         
-        // Check if this IP is already configured
         const isKnownIp = Object.values(config).some(block => block.ip_address === deviceIp);
         if (isKnownIp) {
             console.log(`Discovery: Device at ${deviceIp} is already configured. Ignoring.`);
             return;
         }
 
-        // Determine the next available block ID
         const existingIds = Object.values(config).map(b => (b.block_id || '')).filter(c => c);
         let nextCharCode = 'A'.charCodeAt(0);
         while(existingIds.includes(String.fromCharCode(nextCharCode))) {
@@ -220,7 +227,7 @@ async function handleNewDeviceDiscovery(deviceIp) {
 
         console.log(`Discovery: Assigning new Block ID '${newDeviceId}' to device at ${deviceIp}`);
 
-        // 1. Configure the hardware device itself by broadcasting the command
+        // 1. Send configuration to the new hardware device
         const result = await setDeviceConfig(newDeviceId, deviceIp);
         if (!result.success) {
             throw new Error(result.error || `Failed to send configuration to new device.`);
@@ -229,9 +236,9 @@ async function handleNewDeviceDiscovery(deviceIp) {
         // 2. Add the new (empty) block to the application state via API
         const newBlockPayload = {
             deviceId: newDeviceId,
-            deviceName: `Block ${newDeviceId}`, // Default name
+            deviceName: `Block ${newDeviceId}`,
             ipAddress: deviceIp,
-            slaves: [], // No slaves initially, they must be added manually
+            slaves: [], // No slaves initially
         };
         await postToApi(newBlockPayload, API_PATH_ELEVATORS);
 
@@ -242,25 +249,28 @@ async function handleNewDeviceDiscovery(deviceIp) {
     }
 }
 
+/**
+ * Configures a device's ID and IP, then updates the local INI file.
+ * @param {string} deviceId - The new Device ID to assign (e.g., 'A', 'B').
+ * @param {string} ipAddress - The IP address of the device.
+ */
 async function setDeviceConfig(deviceId, ipAddress) {
     console.log(`--- Configuring Device ID: ${deviceId}, IP: ${ipAddress} ---`);
-    let frame = new Array(55).fill(0);
+    const ipParts = ipAddress.split('.').map(Number);
+    const frame = new Array(55).fill(0);
     
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_DEVICE_IP;
-    // For initial configuration, send from Device ID 0 to be accepted by any unconfigured device.
-    frame[2] = 0x00; 
+    frame[2] = 0x00; // From Device ID 0 for initial configuration
     frame[3] = deviceId.charCodeAt(0);
+    frame[4] = ipParts[0];
+    frame[5] = ipParts[1];
+    frame[6] = ipParts[2];
+    frame[7] = ipParts[3];
     
-    const ipParts = ipAddress.split('.').map(Number);
-    for (let i = 0; i < 4; i++) {
-        frame[4 + i] = ipParts[i];
-    }
-    
-    // Checksum calculation on a 55-byte frame is on bytes 0-52
-    let checksumFrame = frame.slice(0, 53); // Create a temporary array for checksum
-    checksumFrame.push(0); // placeholder for checksum byte
-    frame[53] = calculateChecksum(checksumFrame.slice(0, -1)); // Checksum bytes 0-52
+    // Checksum is sum of bytes 0-52
+    const checksum = frame.slice(0, 53).reduce((acc, byte) => acc + byte, 0) & 0xFF;
+    frame[53] = checksum;
     frame[54] = FRAME_FOOTER;
     
     try {
@@ -271,11 +281,10 @@ async function setDeviceConfig(deviceId, ipAddress) {
         // Update the local config file
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
         const targetBlock = `BLOCK_${deviceId}`;
-        if (!config[targetBlock]) {
-            config[targetBlock] = {};
-        }
-        config[targetBlock]['block_id'] = deviceId;
-        config[targetBlock]['ip_address'] = ipAddress;
+        config[targetBlock] = {
+            block_id: deviceId,
+            ip_address: ipAddress
+        };
         fs.writeFileSync(INI_FILE_PATH, ini.stringify(config));
         console.log(`ini_ip.ini updated for ${targetBlock}.`);
         return { success: true, message: `Device ${deviceId} configured.` };
@@ -285,9 +294,15 @@ async function setDeviceConfig(deviceId, ipAddress) {
     }
 }
 
+/**
+ * Configures a slave (elevator) on a specific device, then updates the local INI file.
+ * @param {string} deviceId - The device ID of the parent block.
+ * @param {string} slaveId - The new slave ID to assign.
+ * @param {number} floorCount - The number of floors for this slave.
+ */
 async function setSlaveConfig(deviceId, slaveId, floorCount) {
     console.log(`--- Configuring Slave ID: ${slaveId} for Device: ${deviceId} with ${floorCount} floors ---`);
-    let frame = new Array(7).fill(0);
+    const frame = new Array(7).fill(0);
 
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_SLAVE_ID;
@@ -299,43 +314,25 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
     frame[5] = checksum;
     frame[6] = FRAME_FOOTER;
 
-    let targetIp = '';
     try {
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
         const targetBlockKey = Object.keys(config).find(key => config[key].block_id === deviceId);
-        if (targetBlockKey && config[targetBlockKey].ip_address) {
-            targetIp = config[targetBlockKey].ip_address;
-        } else {
-             throw new Error(`IP for Device ${deviceId} not found in ini file.`);
+        if (!targetBlockKey || !config[targetBlockKey].ip_address) {
+            throw new Error(`IP for Device ${deviceId} not found in ini file.`);
         }
-    } catch (e) {
-        return { success: false, error: `Could not read ini file to find IP: ${e.message}` };
-    }
-    
-    try {
-        await sendUdpCommand(frame, targetIp);
-        console.log(`Set Slave ID command sent to ${targetIp}.`);
         
-        const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
-        const targetBlockKey = Object.keys(config).find(key => config[key].block_id === deviceId);
+        await sendUdpCommand(frame, config[targetBlockKey].ip_address);
+        console.log(`Set Slave ID command sent to ${config[targetBlockKey].ip_address}.`);
+        
+        const existingElevatorKeys = Object.keys(config[targetBlockKey]).filter(k => k.startsWith('elevator_') && !k.endsWith('_floor_count'));
+        const newElevatorNum = existingElevatorKeys.length + 1;
+        const elevatorKey = `elevator_${newElevatorNum}`;
 
-        if (targetBlockKey) {
-            // Find the key for this slave or create a new one
-            let elevatorKey = Object.keys(config[targetBlockKey]).find(k => config[targetBlockKey][k] === slaveId && k.startsWith('elevator_'));
-            if (!elevatorKey) {
-                const existingElevatorKeys = Object.keys(config[targetBlockKey]).filter(k => k.startsWith('elevator_') && !k.endsWith('_floor_count'));
-                const nextElevatorNum = existingElevatorKeys.length + 1;
-                elevatorKey = `elevator_${nextElevatorNum}`;
-            }
-
-            config[targetBlockKey][elevatorKey] = slaveId;
-            config[targetBlockKey][`${elevatorKey}_floor_count`] = floorCount;
-            fs.writeFileSync(INI_FILE_PATH, ini.stringify(config));
-            console.log(`ini_ip.ini updated for slave ${slaveId} in ${targetBlockKey}.`);
-            return { success: true, message: `Slave ${slaveId} configured.` };
-        } else {
-             throw new Error(`Device block for ID ${deviceId} not found in config.`);
-        }
+        config[targetBlockKey][elevatorKey] = slaveId;
+        config[targetBlockKey][`${elevatorKey}_floor_count`] = floorCount;
+        fs.writeFileSync(INI_FILE_PATH, ini.stringify(config));
+        console.log(`ini_ip.ini updated for slave ${slaveId} in ${targetBlockKey}.`);
+        return { success: true, message: `Slave ${slaveId} configured.` };
     } catch (e) {
         console.error("Error during setSlaveConfig:", e.message);
         return { success: false, error: `Failed to configure slave or update config file: ${e.message}` };
@@ -409,7 +406,3 @@ dataListener.bind(HARDWARE_PORT);
 // Start polling immediately and then on an interval
 pollHardware();
 setInterval(pollHardware, POLLING_INTERVAL_MS);
-
-    
-
-    
