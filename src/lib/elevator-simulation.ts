@@ -1,10 +1,8 @@
+// This file is now primarily for generating sample data for development or testing.
+// The main application logic should rely on the ini-service for initial state.
 
 import type { ElevatorData } from '@/types/elevator';
-
-export const NUM_ELEVATORS_PER_BLOCK = 10;
-export const NUM_BLOCKS = 15;
-export const MAX_FLOORS = 15;
-export const TOTAL_ELEVATORS = NUM_BLOCKS * NUM_ELEVATORS_PER_BLOCK;
+import { MAX_FLOORS } from './constants';
 
 const maintenanceReasons = [
   "Scheduled monthly inspection.",
@@ -15,89 +13,6 @@ const maintenanceReasons = [
   "Calibrating floor leveling system.",
   "Emergency brake system check.",
 ];
-
-const numberToLetter = (num: number) => {
-    if (num <= 0) return '';
-    let letter = '';
-    while (num > 0) {
-        const remainder = (num - 1) % 26;
-        letter = String.fromCharCode(65 + remainder) + letter;
-        num = Math.floor((num - 1) / 26);
-    }
-    return letter;
-};
-
-
-export const createInitialDevice = (deviceId: string, numElevators: number): ElevatorData[] => {
-    const elevators: ElevatorData[] = [];
-    for (let i = 1; i <= numElevators; i++) {
-        const elevatorNum = i; // This is the Slave ID
-        const compositeId = `${deviceId}-${elevatorNum}`;
-        
-        elevators.push({
-          id: compositeId,
-          deviceId,
-          elevatorNum,
-          currentFloor: 1,
-          direction: 'IDLE',
-          status: 'IDLE',
-          doorState: 'CLOSED',
-          errorCode: 0,
-          totalFloors: MAX_FLOORS,
-          destinationFloor: 1,
-          mainPower: true,
-          emergencyStop: false,
-        });
-    }
-    return elevators;
-}
-
-export const generateInitialElevators = (numDevices = NUM_BLOCKS, elevatorsPerDevice = NUM_ELEVATORS_PER_BLOCK): ElevatorData[] => {
-  let elevators: ElevatorData[] = [];
-  
-  for (let deviceNum = 1; deviceNum <= numDevices; deviceNum++) {
-    const deviceId = numberToLetter(deviceNum); // Generate alphabetical ID
-    const elevatorsForThisDevice = deviceId === 'C' ? 8 : elevatorsPerDevice; // Adjusted for 'C' instead of '3'
-    const newDevice = createInitialDevice(deviceId, elevatorsForThisDevice);
-    
-    // Randomize initial state for generated devices
-    const randomizedBlock = newDevice.map(elevator => {
-        const currentFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
-        
-        let status: ElevatorData['status'] = 'IDLE';
-        let direction: ElevatorData['direction'] = 'IDLE';
-        let doorState: ElevatorData['doorState'] = 'CLOSED';
-        let destinationFloor = currentFloor;
-        let maintenanceDetails: string | undefined = undefined;
-
-        const rand = Math.random();
-        if (rand < 0.1) {
-          status = 'MAINTENANCE';
-          maintenanceDetails = maintenanceReasons[Math.floor(Math.random() * maintenanceReasons.length)];
-        } else if (rand < 0.3) {
-          status = 'MOVING';
-          destinationFloor = Math.floor(Math.random() * MAX_FLOORS) + 1;
-          if (destinationFloor === currentFloor) destinationFloor = (currentFloor % MAX_FLOORS) + 1;
-          direction = destinationFloor > currentFloor ? 'UP' : 'DOWN';
-        }
-
-        return {
-            ...elevator,
-            currentFloor,
-            direction,
-            status,
-            doorState,
-            destinationFloor,
-            mainPower: Math.random() > 0.05,
-            maintenanceDetails
-        };
-    });
-
-    elevators.push(...randomizedBlock);
-  }
-  return elevators;
-};
-
 
 interface AlertInfo {
     id: string;

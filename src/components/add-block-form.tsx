@@ -80,7 +80,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
 
   const onSubmit = async (values: z.infer<typeof addBlockSchema>) => {
     setIsSubmitting(true);
-    setSubmissionStatus("Registering block and elevators in ElevateView...");
+    setSubmissionStatus("Registering block and elevators in ElevateMS...");
     form.clearErrors("root.serverError");
 
     try {

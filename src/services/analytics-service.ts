@@ -3,7 +3,6 @@
 
 import type { AnalyticsData, ChartDataPoint, KpiData, HistoricalData, HistoricalPeriod } from '@/types/analytics';
 import { getElevatorData } from './elevator-service';
-import { NUM_BLOCKS } from '@/lib/elevator-simulation';
 
 const numberToLetter = (num: number) => {
     if (num <= 0) return '';
@@ -22,8 +21,10 @@ const getDeviceNameServer = (deviceId: string) => `Block ${deviceId}`;
 
 
 function generateDailyAnalytics(): AnalyticsData {
-    // KPIs
     const elevators = getElevatorData();
+    const uniqueDevices = [...new Set(elevators.map(e => e.deviceId))];
+    
+    // KPIs
     const operationalElevators = elevators.filter(e => e.mainPower && !e.emergencyStop && e.status !== 'MAINTENANCE').length;
     const uptimePercentage = parseFloat(((operationalElevators / elevators.length) * 100).toFixed(1));
     
@@ -35,8 +36,8 @@ function generateDailyAnalytics(): AnalyticsData {
     };
 
     // Chart Data
-    const usageByBlock: ChartDataPoint[] = Array.from({ length: NUM_BLOCKS }, (_, i) => ({
-        name: numberToLetter(i + 1),
+    const usageByBlock: ChartDataPoint[] = uniqueDevices.map(deviceId => ({
+        name: deviceId,
         trips: Math.floor(Math.random() * 400) + 100, // 100-500 trips
     }));
 
@@ -84,6 +85,8 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
 
 function generateHistoricalData(period: HistoricalPeriod): HistoricalData {
     const elevators = getElevatorData();
+    const uniqueDevices = [...new Set(elevators.map(e => e.deviceId))];
+
     const kpis: KpiData = {
         uptimePercentage: parseFloat((Math.random() * (99.8 - 95.0) + 95.0).toFixed(1)), // 95.0% - 99.8%
         averageWaitTime: Math.floor(Math.random() * 10) + 20, // 20-30s
@@ -91,8 +94,8 @@ function generateHistoricalData(period: HistoricalPeriod): HistoricalData {
         peakUsageHour: ['9:00 AM', '5:00 PM', '12:00 PM'][Math.floor(Math.random() * 3)],
     };
 
-    const usageByBlock: ChartDataPoint[] = Array.from({ length: NUM_BLOCKS }, (_, i) => ({
-        name: numberToLetter(i + 1),
+    const usageByBlock: ChartDataPoint[] = uniqueDevices.map(deviceId => ({
+        name: deviceId,
         trips: 0 // Calculated below
     }));
 

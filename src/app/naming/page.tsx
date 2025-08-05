@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
 import { Building, Home, Save, Trash2, Info, Search, Landmark, SlidersHorizontal, MapPin, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
-import { MAX_FLOORS } from '@/lib/elevator-simulation';
+import { MAX_FLOORS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BackButton } from '@/components/back-button';
