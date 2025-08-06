@@ -50,22 +50,24 @@ function ensureIniFileExists() {
 
 /**
  * Sends a UDP command frame to a target IP and port.
- * @param {number[]} frame - The byte array to send.
+ * @param {Buffer} buffer - The buffer to send.
  * @param {string} targetIp - The destination IP address.
  * @param {number} targetPort - The destination port.
  */
-function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
-     return new Promise((resolve, reject) => {
+function sendUdpCommand(buffer, targetIp, targetPort = HARDWARE_PORT) {
+    return new Promise((resolve, reject) => {
         const socket = dgram.createSocket('udp4');
-        const buffer = Buffer.from(frame);
 
         socket.on('error', (err) => {
+            console.error(`Socket error for ${targetIp}:${targetPort}:`, err);
             socket.close();
             reject(err);
         });
-
-        // Enable broadcasting on the socket for discovery messages.
-        socket.setBroadcast(true);
+        
+        // Only set broadcast if the target is a broadcast address
+        if (targetIp === DISCOVERY_BROADCAST_IP) {
+            socket.setBroadcast(true);
+        }
 
         socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
             if (err) {
@@ -77,6 +79,7 @@ function sendUdpCommand(frame, targetIp, targetPort = HARDWARE_PORT) {
         });
     });
 }
+
 
 /**
  * Posts data to the Next.js application's internal API.
@@ -185,8 +188,9 @@ async function pollHardware() {
                 
                 const checksum = (frame[0] + frame[1] + frame[2]) & 0xFF;
                 frame[3] = checksum;
+                const buffer = Buffer.from(frame);
 
-                await sendUdpCommand(frame, block.ip_address, HARDWARE_PORT)
+                await sendUdpCommand(buffer, block.ip_address, HARDWARE_PORT)
                     .catch(err => {
                         if (err.code === 'ENETUNREACH' || err.code === 'EHOSTUNREACH') {
                             console.warn(`Hardware Poll Warning: Block '${block.block_id}' (${block.ip_address}) is unreachable.`);
@@ -272,10 +276,11 @@ async function setDeviceConfig(deviceId, ipAddress) {
     const checksum = frame.slice(0, 53).reduce((acc, byte) => acc + byte, 0) & 0xFF;
     frame[53] = checksum;
     frame[54] = FRAME_FOOTER;
+    const buffer = Buffer.from(frame);
     
     try {
         // Broadcast the set command so the unconfigured device can receive it
-        await sendUdpCommand(frame, DISCOVERY_BROADCAST_IP);
+        await sendUdpCommand(buffer, DISCOVERY_BROADCAST_IP);
         console.log("Set Device ID/IP command broadcasted.");
 
         // Update the local config file
@@ -313,6 +318,7 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
     const checksum = (frame[0] + frame[1] + frame[2] + frame[3] + frame[4]) & 0xFF;
     frame[5] = checksum;
     frame[6] = FRAME_FOOTER;
+    const buffer = Buffer.from(frame);
 
     try {
         const config = ini.parse(fs.readFileSync(INI_FILE_PATH, 'utf-8'));
@@ -321,7 +327,7 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
             throw new Error(`IP for Device ${deviceId} not found in ini file.`);
         }
         
-        await sendUdpCommand(frame, config[targetBlockKey].ip_address);
+        await sendUdpCommand(buffer, config[targetBlockKey].ip_address);
         console.log(`Set Slave ID command sent to ${config[targetBlockKey].ip_address}.`);
         
         const existingElevatorKeys = Object.keys(config[targetBlockKey]).filter(k => k.startsWith('elevator_') && !k.endsWith('_floor_count'));
@@ -406,3 +412,5 @@ dataListener.bind(HARDWARE_PORT);
 // Start polling immediately and then on an interval
 pollHardware();
 setInterval(pollHardware, POLLING_INTERVAL_MS);
+
+    
