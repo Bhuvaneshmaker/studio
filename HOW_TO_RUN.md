@@ -1,23 +1,21 @@
-
 # How to Run ElevateMS
 
-ElevateMS consists of two main parts that must be run simultaneously in separate terminal windows:
+This guide provides the steps to run the ElevateMS application suite, which includes the main web interface and the hardware listener script.
 
-1.  **The Next.js Web Application:** This is the user interface you interact with in your browser.
-2.  **The UDP Hardware Listener:** This is a Node.js script that acts as the bridge, listening for real-time data from your hardware and handling configuration commands sent from the UI.
+**You must run these two components in two separate terminals.**
 
 ---
 
-## Step-by-Step Instructions
-
 ### Terminal 1: Run the Web Application
+
+This terminal will run the Next.js user interface and its backend APIs.
 
 1.  **Navigate to the project directory:**
     ```bash
     cd /path/to/your/project
     ```
 
-2.  **Install dependencies (only needs to be done once):**
+2.  **Install dependencies (only need to do this once):**
     ```bash
     npm install
     ```
@@ -27,51 +25,31 @@ ElevateMS consists of two main parts that must be run simultaneously in separate
     npm run dev
     ```
 
-4.  **Access the application:**
-    *   Open your web browser and go to **http://localhost:9002**.
+4.  The application will now be running. You can access it in your browser at:
+    **[http://localhost:9002](http://localhost:9002)**
 
 ---
 
-### Terminal 2: Run the UDP Hardware Listener
+### Terminal 2: Run the Hardware Listener
 
-1.  **Navigate to the project directory in a new terminal window:**
+This script handles all direct communication with the elevator hardware. It must be running for the application to receive real-time data or configure devices.
+
+1.  **Open a new terminal and navigate to the project directory:**
     ```bash
     cd /path/to/your/project
     ```
 
-2.  **Start the listener script:**
+2.  **Start the listener script using Node.js:**
     ```bash
     node udp-listener.js
     ```
 
-3.  **Monitor the output:**
-    *   This terminal will show logs for incoming data packets, hardware polling, and any configuration commands sent from the UI. Keep it running alongside the web application.
+3.  You will see output confirming that the listener is running on port `1234` and the command server is running on port `9003`.
 
----
+    ```
+    Command server listening for UI commands on http://localhost:9003
+    UDP data listener started. Listening on 0.0.0.0:1234
+    ---------------------------------------------------------
+    ```
 
-## System Architecture
-
-Here is a diagram showing how the different parts of the system communicate:
-
-```
-+----------------+      (HTTP API)      +--------------------+      (UDP)      +-------------------+
-|                | <------------------> |                    | <-------------> |                   |
-|   Web Browser  |                      |  Next.js App / API |                 |  Hardware Devices |
-| (localhost:9002) |                      |  (localhost:9002)  |                 | (Teensy Boards)   |
-|                |                      |                    |                 |                   |
-+----------------+                      +---------^----------+                 +----------^--------+
-                                                  |                                       |
-                                                  | (HTTP Commands)                       | (UDP Real-time Data)
-                                                  |                                       |
-                                                  v                                       v
-                                        +--------------------+
-                                        |                    |
-                                        | udp-listener.js    |
-                                        | (localhost:9003)   |
-                                        | (Listening on 41234) |
-                                        +--------------------+
-```
-
--   The **Web Browser** talks to the **Next.js App**.
--   The **Next.js App** sends commands to the **udp-listener.js** script via an internal HTTP API.
--   The **udp-listener.js** script sends UDP commands to and receives real-time UDP data from the **Hardware Devices**.
+**With both terminals running, the application is fully operational.**
