@@ -412,5 +412,3 @@ dataListener.bind(HARDWARE_PORT);
 // Start polling immediately and then on an interval
 pollHardware();
 setInterval(pollHardware, POLLING_INTERVAL_MS);
-
-    
