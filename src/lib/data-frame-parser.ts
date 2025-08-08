@@ -46,7 +46,7 @@ export function parseDataFrame(frameBytes: number[]): FrameParseResult {
     }
 
 
-    const deviceId = String.fromCharCode(frameBytes[2]);
+    const deviceId = frameBytes[2].toString();
     const elevatorsData: ParsedElevatorData[] = [];
     // The data for all slaves is between the device ID (byte 2) and the CRC/Footer (last 2 bytes)
     const slaveDataBytes = frameBytes.slice(3, frameBytes.length - 2);

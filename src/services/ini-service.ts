@@ -33,6 +33,7 @@ export function getElevatorDataFromIni(): ElevatorData[] {
       if (typeof section !== 'object' || section === null) continue;
 
       const deviceId = section.block_id;
+      const deviceName = section.block_name || `Block ${deviceId}`;
       const ipAddress = section.ip_address;
 
       if (!deviceId) continue;
@@ -44,6 +45,7 @@ export function getElevatorDataFromIni(): ElevatorData[] {
         elevators.push({
             id: `${deviceId}-placeholder`,
             deviceId: deviceId,
+            deviceName: deviceName,
             elevatorNum: 0, // Placeholder
             ipAddress: ipAddress,
             currentFloor: 0,
@@ -66,6 +68,7 @@ export function getElevatorDataFromIni(): ElevatorData[] {
             elevators.push({
                 id: compositeId,
                 deviceId,
+                deviceName,
                 elevatorNum: parseInt(slaveId, 10),
                 ipAddress,
                 currentFloor: 1,

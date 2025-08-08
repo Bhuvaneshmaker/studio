@@ -1,3 +1,4 @@
+
 // This is a Node.js script to listen for UDP packets from the hardware
 // and forward them to the Next.js application's API endpoint.
 // It also exposes functions to be called by the Next.js app to configure hardware.
@@ -56,27 +57,15 @@ function ensureIniFileExists() {
 function sendUdpCommand(buffer, targetIp, targetPort = HARDWARE_PORT) {
     return new Promise((resolve, reject) => {
         const socket = dgram.createSocket('udp4');
+        const isBroadcast = targetIp === DISCOVERY_BROADCAST_IP;
 
         socket.on('error', (err) => {
             console.error(`Socket error for ${targetIp}:${targetPort}:`, err);
             socket.close();
             reject(err);
         });
-        
-        // Only set broadcast if the target is a broadcast address
-        if (targetIp === DISCOVERY_BROADCAST_IP) {
-            socket.bind(() => {
-                socket.setBroadcast(true);
-                socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
-                    if (err) {
-                        socket.close();
-                        return reject(err);
-                    }
-                    socket.close();
-                    resolve();
-                });
-            });
-        } else {
+
+        const send = () => {
             socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
                 if (err) {
                     socket.close();
@@ -85,6 +74,15 @@ function sendUdpCommand(buffer, targetIp, targetPort = HARDWARE_PORT) {
                 socket.close();
                 resolve();
             });
+        };
+        
+        if (isBroadcast) {
+             socket.bind(() => {
+                socket.setBroadcast(true);
+                send();
+            });
+        } else {
+            send();
         }
     });
 }
@@ -191,7 +189,7 @@ async function pollHardware() {
                 const frame = [
                     FRAME_HEADER,
                     REQ_GET_SLAVE_ID_DATA,
-                    block.block_id.charCodeAt(0), // Device ID
+                    parseInt(block.block_id, 10), // Device ID as number
                     0, // Checksum placeholder
                     FRAME_FOOTER
                 ];
@@ -232,17 +230,18 @@ async function handleNewDeviceDiscovery(deviceIp) {
             return;
         }
 
-        const existingIds = Object.values(config).map(b => (b.block_id || '')).filter(c => c);
-        let nextCharCode = 'A'.charCodeAt(0);
-        while(existingIds.includes(String.fromCharCode(nextCharCode))) {
-            nextCharCode++;
+        const existingIds = Object.values(config).map(b => parseInt(b.block_id, 10) || 0).filter(id => id > 0);
+        let nextId = 101;
+        while(existingIds.includes(nextId)) {
+            nextId++;
         }
-        const newDeviceId = String.fromCharCode(nextCharCode);
+        const newDeviceId = nextId.toString();
+        const newDeviceName = `Block ${newDeviceId}`;
 
         console.log(`Discovery: Assigning new Block ID '${newDeviceId}' to device at ${deviceIp}`);
 
         // 1. Send configuration to the new hardware device
-        const result = await setDeviceConfig(newDeviceId, deviceIp);
+        const result = await setDeviceConfig(newDeviceId, newDeviceName, deviceIp);
         if (!result.success) {
             throw new Error(result.error || `Failed to send configuration to new device.`);
         }
@@ -250,7 +249,7 @@ async function handleNewDeviceDiscovery(deviceIp) {
         // 2. Add the new (empty) block to the application state via API
         const newBlockPayload = {
             deviceId: newDeviceId,
-            deviceName: `Block ${newDeviceId}`,
+            deviceName: newDeviceName,
             ipAddress: deviceIp,
             slaves: [], // No slaves initially
         };
@@ -265,18 +264,19 @@ async function handleNewDeviceDiscovery(deviceIp) {
 
 /**
  * Configures a device's ID and IP, then updates the local INI file.
- * @param {string} deviceId - The new Device ID to assign (e.g., 'A', 'B').
+ * @param {string} deviceId - The new Device ID to assign (e.g., '101', '102').
+ * @param {string} deviceName - The friendly name for the device.
  * @param {string} ipAddress - The IP address of the device.
  */
-async function setDeviceConfig(deviceId, ipAddress) {
-    console.log(`--- Configuring Device ID: ${deviceId}, IP: ${ipAddress} ---`);
+async function setDeviceConfig(deviceId, deviceName, ipAddress) {
+    console.log(`--- Configuring Device ID: ${deviceId}, Name: ${deviceName}, IP: ${ipAddress} ---`);
     const ipParts = ipAddress.split('.').map(Number);
     const frame = new Array(55).fill(0);
     
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_DEVICE_IP;
     frame[2] = 0x00; // From Device ID 0 for initial configuration
-    frame[3] = deviceId.charCodeAt(0);
+    frame[3] = parseInt(deviceId, 10);
     frame[4] = ipParts[0];
     frame[5] = ipParts[1];
     frame[6] = ipParts[2];
@@ -298,6 +298,7 @@ async function setDeviceConfig(deviceId, ipAddress) {
         const targetBlock = `BLOCK_${deviceId}`;
         config[targetBlock] = {
             block_id: deviceId,
+            block_name: deviceName,
             ip_address: ipAddress
         };
         fs.writeFileSync(INI_FILE_PATH, ini.stringify(config));
@@ -321,7 +322,7 @@ async function setSlaveConfig(deviceId, slaveId, floorCount) {
 
     frame[0] = FRAME_HEADER;
     frame[1] = REQ_SET_SLAVE_ID;
-    frame[2] = deviceId.charCodeAt(0);
+    frame[2] = parseInt(deviceId, 10);
     frame[3] = parseInt(slaveId, 10);
     frame[4] = parseInt(floorCount, 10);
     
@@ -370,8 +371,8 @@ const commandServer = http.createServer(async (req, res) => {
                 console.log(`Received command: ${action}`, payload);
 
                 if (action === 'set_device') {
-                    const { deviceId, ipAddress } = payload;
-                    result = await setDeviceConfig(deviceId, ipAddress);
+                    const { deviceId, deviceName, ipAddress } = payload;
+                    result = await setDeviceConfig(deviceId, deviceName, ipAddress);
                 } else if (action === 'set_slave') {
                     const { deviceId, slaveId, floorCount } = payload;
                     result = await setSlaveConfig(deviceId, slaveId, floorCount);

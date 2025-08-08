@@ -140,6 +140,13 @@ export const useNaming = () => {
     });
   }, []);
 
+  const loadInitialDeviceNames = useCallback((initialNames: Record<string, string>) => {
+    setCustomNames(prev => ({
+      ...prev,
+      devices: { ...initialNames, ...prev.devices }
+    }));
+  }, []);
+
 
   return {
     customNames,
@@ -153,5 +160,6 @@ export const useNaming = () => {
     deleteDeviceName,
     deleteElevatorName,
     deleteFloorName,
+    loadInitialDeviceNames,
   };
 };

@@ -4,9 +4,10 @@ export type ElevatorStatus = 'MOVING' | 'IDLE' | 'MAINTENANCE' | 'ERROR';
 export type DoorState = 'OPEN' | 'CLOSED' | 'OPENING' | 'CLOSING';
 
 export interface ElevatorData {
-  // Composite ID for React keys, e.g., "A-1" for Device A, Elevator/Slave 1
+  // Composite ID for React keys, e.g., "101-1" for Device 101, Elevator/Slave 1
   id: string; 
   deviceId: string;
+  deviceName: string;
   elevatorNum: number; // This is the Slave ID
   slaveAddress?: string; // Slave address
   ipAddress?: string; // IP address of the parent device

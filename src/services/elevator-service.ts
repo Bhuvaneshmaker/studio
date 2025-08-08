@@ -22,7 +22,7 @@ export function getElevatorById(id: string): ElevatorData | undefined {
     return elevators.find(e => e.id === id);
 }
 
-export function addDevice(deviceId: string, ipAddress: string, slaves: Slave[]): { success: boolean; error?: string } {
+export function addDevice(deviceId: string, deviceName: string, ipAddress: string, slaves: Slave[]): { success: boolean; error?: string } {
     const deviceExists = elevators.some(e => e.deviceId === deviceId);
     if (deviceExists) {
         return { success: false, error: `Device with ID ${deviceId} already exists.` };
@@ -34,6 +34,7 @@ export function addDevice(deviceId: string, ipAddress: string, slaves: Slave[]):
         return {
             id: compositeId,
             deviceId,
+            deviceName,
             elevatorNum: parseInt(slave.slaveId, 10),
             ipAddress,
             currentFloor: 1,
@@ -53,11 +54,12 @@ export function addDevice(deviceId: string, ipAddress: string, slaves: Slave[]):
         newElevators.push({
             id: `${deviceId}-placeholder`,
             deviceId: deviceId,
-            elevatorNum: 0,
+            deviceName: deviceName,
+            elevatorNum: 0, // Placeholder
             ipAddress: ipAddress,
             currentFloor: 0,
             direction: 'IDLE',
-            status: 'IDLE',
+            status: 'IDLE', // Or a new 'UNCONFIGURED' status
             doorState: 'CLOSED',
             errorCode: 0,
             destinationFloor: 0,
@@ -92,6 +94,7 @@ export function addElevatorToBlock(deviceId: string, slaveId: string): { success
     const newElevator: ElevatorData = {
         id: compositeId,
         deviceId,
+        deviceName: device.deviceName,
         elevatorNum: parseInt(slaveId, 10),
         ipAddress: device.ipAddress,
         currentFloor: 1,

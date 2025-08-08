@@ -22,7 +22,7 @@ const slaveSchema = z.object({
 });
 
 const addBlockSchema = z.object({
-  deviceId: z.string().min(1, "Device ID is required."),
+  deviceId: z.string().regex(/^\d+$/, "Device ID must be a number."),
   deviceName: z.string().min(1, { message: "Block name is required." }),
   ipAddress: z.string().ip({ version: "v4", message: "Invalid IP address." }),
   slaves: z.array(slaveSchema).min(1, "At least one elevator (slave) is required."),
@@ -51,7 +51,7 @@ async function configureDeviceOnBackend(action: string, payload: object) {
 export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: AddBlockFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submissionStatus, setSubmissionStatus] = React.useState<string | null>(null);
-  const { setDeviceName, setElevatorName } = useNaming();
+  const { setDeviceName } = useNaming();
   
   const form = useForm<z.infer<typeof addBlockSchema>>({
     resolver: zodResolver(addBlockSchema),
@@ -88,6 +88,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
         setSubmissionStatus(`Configuring hardware for Block ${values.deviceId}...`);
         await configureDeviceOnBackend('set_device', {
             deviceId: values.deviceId,
+            deviceName: values.deviceName, // Pass name to be saved in INI
             ipAddress: values.ipAddress
         });
         
@@ -158,7 +159,7 @@ export function AddBlockForm({ open, onOpenChange, onBlockAdded, children }: Add
                         <FormItem>
                           <FormLabel className="flex items-center gap-2"><Server/> Device ID</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., A" {...field} />
+                            <Input placeholder="e.g., 101" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
