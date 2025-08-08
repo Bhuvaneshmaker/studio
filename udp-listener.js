@@ -1,4 +1,3 @@
-
 // This is a Node.js script to listen for UDP packets from the hardware
 // and forward them to the Next.js application's API endpoint.
 // It also exposes functions to be called by the Next.js app to configure hardware.
@@ -66,17 +65,27 @@ function sendUdpCommand(buffer, targetIp, targetPort = HARDWARE_PORT) {
         
         // Only set broadcast if the target is a broadcast address
         if (targetIp === DISCOVERY_BROADCAST_IP) {
-            socket.setBroadcast(true);
-        }
-
-        socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
-            if (err) {
+            socket.bind(() => {
+                socket.setBroadcast(true);
+                socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
+                    if (err) {
+                        socket.close();
+                        return reject(err);
+                    }
+                    socket.close();
+                    resolve();
+                });
+            });
+        } else {
+            socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
+                if (err) {
+                    socket.close();
+                    return reject(err);
+                }
                 socket.close();
-                return reject(err);
-            }
-            socket.close();
-            resolve();
-        });
+                resolve();
+            });
+        }
     });
 }
 
@@ -139,6 +148,7 @@ dataListener.on('error', (err) => {
 });
 
 dataListener.on('message', async (msg, rinfo) => {
+    console.log(`Received UDP message from ${rinfo.address}:${rinfo.port}`);
     // Check for auto-discovery message first.
     if (Buffer.from(DISCOVERY_MESSAGE).equals(msg)) {
         console.log(`Discovery: Received discovery request from new device at ${rinfo.address}`);
@@ -407,8 +417,8 @@ commandServer.listen(COMMAND_PORT, () => {
 
 // --- Startup ---
 ensureIniFileExists();
-// Bind the listener to the single hardware port
-dataListener.bind(HARDWARE_PORT); 
+// Bind the listener to the single hardware port on all network interfaces
+dataListener.bind(HARDWARE_PORT, '0.0.0.0'); 
 // Start polling immediately and then on an interval
 pollHardware();
 setInterval(pollHardware, POLLING_INTERVAL_MS);

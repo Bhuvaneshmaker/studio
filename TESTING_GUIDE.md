@@ -17,13 +17,15 @@ This simulates a hardware block sending its status to your application.
 3.  Configure the packet with the following details:
     - **Name:** `Block A Status Update`
     - **ASCII:** (Leave this blank)
-    - **HEX:** `80 05 41 01 00 f0 01 02 00 f0 02 ...` (See **Example Data Frames** below)
-    - **Address:** `127.0.0.1` (sends to your local machine)
+    - **HEX:** `80 05 41 01 10 01 02 10 02 70 255` (See **Example Data Frames** below)
+    - **Address:** `127.0.0.1` (This is crucial. It sends the packet to your local machine).
     - **Port:** `1234`
     - **Method:** `UDP`
 4.  Click **Send**.
 
-Immediately, you should see the elevators in the ElevateMS dashboard update their status, floor, direction, etc., based on the data you sent.
+Immediately, you should see output in the `udp-listener.js` terminal saying `Received UDP message...`, and the elevators in the ElevateMS dashboard will update their status based on the data you sent.
+
+**If you do not see the "Received UDP message" log in your terminal, it means a firewall is blocking the packet or you are not sending it to the correct address.**
 
 ### Example Data Frames
 
@@ -49,7 +51,7 @@ This frame shows elevator 1 moving up at floor 5, and elevator 2 in a fault stat
 
 Understanding this flow is key to understanding the whole system.
 
-1.  **Packet Sender (The Fake Hardware):** You send a UDP packet containing a hex string to `localhost:1234`.
+1.  **Packet Sender (The Fake Hardware):** You send a UDP packet containing a hex string to `127.0.0.1:1234`.
 
 2.  **`udp-listener.js` (The Receiver):** The Node.js script is listening on port `1234`. It receives your packet. It doesn't analyze the data itself; its job is to act as a secure bridge.
 
