@@ -67,11 +67,8 @@ function sendUdpCommand(buffer, targetIp, targetPort = HARDWARE_PORT) {
 
         const send = () => {
             socket.send(buffer, 0, buffer.length, targetPort, targetIp, (err) => {
-                if (err) {
-                    socket.close();
-                    return reject(err);
-                }
                 socket.close();
+                if (err) return reject(err);
                 resolve();
             });
         };
@@ -418,8 +415,10 @@ commandServer.listen(COMMAND_PORT, () => {
 
 // --- Startup ---
 ensureIniFileExists();
-// Bind the listener to the single hardware port on all network interfaces
-dataListener.bind(HARDWARE_PORT, '0.0.0.0'); 
+// Bind the listener and enable broadcast receiving.
+dataListener.bind(HARDWARE_PORT, '0.0.0.0', () => {
+    dataListener.setBroadcast(true);
+});
 // Start polling immediately and then on an interval
 pollHardware();
 setInterval(pollHardware, POLLING_INTERVAL_MS);
