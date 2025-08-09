@@ -6,17 +6,15 @@ function getBit(byte: number, bitPosition: number): number {
     return (byte >> bitPosition) & 1;
 }
 
-// This function mimics the CheckSum logic from your C++ code.
 function calculateChecksum(bytes: number[]): number {
-    // The checksum is a simple sum of all bytes, overflowing at 255 (uint8_t).
     const sum = bytes.reduce((acc, byte) => acc + byte, 0);
-    return sum & 0xFF; // Return only the last 8 bits.
+    return sum & 0xFF;
 }
 
 export function parseDataFrame(frameBytes: number[]): FrameParseResult {
 
-    if (frameBytes.length < 6) { // Min frame: Header(1),Type(1),DevID(1),CRC(1),Footer(1) = 5 bytes. Let's say at least one slave data (+5) is not always there, but min length is still essential.
-        return { success: false, error: 'Frame is too short.' };
+    if (frameBytes.length !== 55) {
+        return { success: false, error: `Invalid frame length. Expected 55 bytes, got ${frameBytes.length}.` };
     }
 
     const header = frameBytes[0];
@@ -30,42 +28,39 @@ export function parseDataFrame(frameBytes: number[]): FrameParseResult {
     }
 
     const footer = frameBytes[frameBytes.length - 1];
-    if (footer !== 0xff) {
+    if (footer !== 0xFF) {
         return { success: false, error: `Invalid footer. Expected 0xFF, got 0x${footer.toString(16)}.` };
     }
-
-    // Per your C++ code, checksum is on all bytes *except* the last two (checksum and footer).
-    const dataForChecksum = frameBytes.slice(0, frameBytes.length - 2);
+    
+    // Checksum is on bytes from index 0 to 52 (53 bytes total)
+    const dataForChecksum = frameBytes.slice(0, 53);
     const calculatedChecksum = calculateChecksum(dataForChecksum);
-    const receivedChecksum = frameBytes[frameBytes.length - 2];
+    const receivedChecksum = frameBytes[53];
 
     if (calculatedChecksum !== receivedChecksum) {
-        // We can make this a soft warning instead of a hard error if needed.
-        // For now, we will enforce it for data integrity.
         return { success: false, error: `Checksum mismatch. Calculated 0x${calculatedChecksum.toString(16)} but received 0x${receivedChecksum.toString(16)}.` };
     }
 
-
     const deviceId = frameBytes[2].toString();
     const elevatorsData: ParsedElevatorData[] = [];
-    // The data for all slaves is between the device ID (byte 2) and the CRC/Footer (last 2 bytes)
-    const slaveDataBytes = frameBytes.slice(3, frameBytes.length - 2);
-
-    if (slaveDataBytes.length % 5 !== 0) {
-        return { success: false, error: 'Slave data section has incorrect length. Each slave should have 5 bytes.' };
-    }
-
-    for (let i = 0; i < slaveDataBytes.length; i += 5) {
-        const slaveChunk = slaveDataBytes.slice(i, i + 5);
+    
+    // The slave data is in 5-byte chunks starting from index 3 up to index 52.
+    // This gives us 50 bytes for 10 slaves.
+    for (let i = 0; i < 10; i++) {
+        const offset = 3 + (i * 5);
+        const slaveChunk = frameBytes.slice(offset, offset + 5);
         
         const slaveId = slaveChunk[0];
-        const responseCode = slaveChunk[1];
-        // dataByte1 is slaveChunk[2], but seems unused in favor of bits from dataByte2 and dataByte3
-        const dataByte2 = slaveChunk[3]; // Contains status bits
-        const dataByte3 = slaveChunk[4]; // Contains floor count
-
-        // --- Parsing logic based on the spec ---
         
+        // If slaveId is 0, it's an unconfigured/unused slot, so we skip it.
+        if (slaveId === 0) {
+            continue;
+        }
+
+        const responseCode = slaveChunk[1];
+        const dataByte2 = slaveChunk[3]; // Contains status bits
+        const dataByte3 = slaveChunk[4]; // Contains floor number
+
         let responseStatus: 'Positive' | 'No Response' | 'Frame Error' = 'Positive';
         if (responseCode === 1) responseStatus = 'No Response';
         else if (responseCode === 2) responseStatus = 'Frame Error';
@@ -103,7 +98,7 @@ export function parseDataFrame(frameBytes: number[]): FrameParseResult {
     }
 
     if (elevatorsData.length === 0) {
-        return { success: false, error: 'No slave data could be parsed from the frame.' };
+        return { success: true, deviceId, data: [], error: 'Frame contained no active elevator data.' };
     }
 
     return {
